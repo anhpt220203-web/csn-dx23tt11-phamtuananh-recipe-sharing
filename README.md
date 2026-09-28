@@ -1,109 +1,86 @@
-# Website Quản lý và Chia sẻ Công thức Nấu Ăn
- 
-> Đồ án thực tập cơ sở ngành — Học phần 220265 (3 tín chỉ)
-> Tháng 9–10/2026
- 
-## Giới thiệu
- 
-Website cho phép người dùng xem, tìm kiếm công thức nấu ăn theo nhóm món; lưu yêu thích; đánh giá sao; quản trị nội dung qua trang admin.
- 
-## Tính năng chính
- 
-| Mã | Chức năng | Mô tả |
-|---|---|---|
-| FR1 | Hiển thị công thức theo nhóm | 7 danh mục: Món chính, Món tráng miệng, Món khai vị, Món canh, Món chay, Đồ uống, Món ăn vặt |
-| FR2 | Chi tiết công thức | Nguyên liệu (checklist), các bước thực hiện, thời gian, độ khó |
-| FR3 | Tìm kiếm | Theo tên món, nguyên liệu, nhóm món + bộ lọc + sắp xếp |
-| FR4 | Tài khoản | Đăng ký / đăng nhập / đăng xuất (session/cookie) |
-| FR5 | Yêu thích | Lưu/bỏ công thức yêu thích |
-| FR6 | Đánh giá | Sao 1–5 + nhận xét, 1 người / 1 đánh giá / 1 công thức |
-| FR7 | Quản trị | CRUD công thức, danh mục, upload ảnh, thống kê |
- 
-## Công nghệ
- 
-| Thành phần | Công nghệ |
-|---|---|
-| Framework | Next.js 15 (App Router) + TypeScript |
-| ORM | Prisma |
-| Database | PostgreSQL (Supabase) |
-| Storage ảnh | Supabase Storage |
-| UI | Tailwind CSS + shadcn/ui |
-| Auth | Better-Auth / Auth.js |
-| Deploy | Vercel |
-| Version Control | GitHub |
- 
-## Cài đặt & Chạy dự án
- 
-### Yêu cầu
-- Node.js >= 18
-- npm hoặc bun
-- Tài khoản Supabase (miễn phí)
- 
-### Các bước
- 
+# Website Quản lý & Chia sẻ Công thức Nấu Ăn
+
+Đồ án học phần **Thực tập đồ án cơ sở ngành (220265)** — Trường Đại học Trà Vinh.
+Sinh viên: Phạm Tuấn Anh (DX23TT11) | GVHD: ThS. Trầm Hoàng Nam.
+
+## Yêu cầu runtime
+
+- **Node.js 24 LTS** (xem `src/.nvmrc`)
+- npm (đi kèm Node)
+
+## Cài đặt & chạy
+
 ```bash
-# 1. Clone repo
-git clone https://github.com/anhpt220203-web/csn-dx23tt11-phamtuananh-recipe-sharing.git
-cd csn-dx23tt11-phamtuananh-recipe-sharing
- 
-# 2. Cài dependencies
-npm install
- 
-# 3. Cấu hình biến môi trường
-cp .env.example .env.local
-# Chỉnh sửa .env.local với thông tin Supabase của bạn
- 
-# 4. Chạy Prisma migration
-npx prisma migrate dev
- 
-# 5. Seed dữ liệu mẫu
-npx prisma db seed
- 
-# 6. Chạy dev server
-npm run dev
+git clone <repo-url> recipe-sharing && cd recipe-sharing
+cd src                            # Next.js project root
+pnpm install
+cp .env.example .env.local        # điền giá trị Supabase
+pnpm exec prisma migrate dev      # tạo cấu trúc dữ liệu
+pnpm exec prisma db seed          # nạp dữ liệu mẫu
+pnpm dev
 ```
- 
-Truy cập: http://localhost:3000
- 
-### Biến môi trường (.env.local)
- 
-```env
-DATABASE_URL="postgresql://..."
-SUPABASE_URL="https://xxx.supabase.co"
-SUPABASE_ANON_KEY="eyJ..."
-```
- 
+
+Mở `http://localhost:3000` — trang chủ tiếng Việt hiển thị.
+
 ## Cấu trúc thư mục
- 
+
 ```
-├── src/
-│   ├── app/              # Next.js App Router (trang + API routes)
-│   ├── components/       # React components
-│   ├── lib/              # Utility, Prisma client, auth config
-│   └── styles/           # Global styles (Tailwind)
-├── prisma/
-│   ├── schema.prisma     # Database schema
-│   └── seed.ts           # Dữ liệu mẫu
-├── public/               # Static assets
-├── progress-report/      # Báo cáo tiến độ hằng tuần
-└── README.md
+src/                          # Next.js project root (full-stack)
+├── app/                      # App Router: pages, layouts, globals.css, api/ (routes)
+│   └── api/auth/[...all]/    # Endpoint Better-Auth
+├── components/ui/            # UI components (shadcn/ui)
+├── lib/                      # prisma.ts (singleton), auth.ts (server), auth-client.ts, utils.ts
+├── services/                 # Business logic (tầng service — NFR6, dùng từ FR1+)
+├── prisma/                   # schema.prisma + seed.ts
+├── generated/prisma/         # Prisma client auto-gen (gitignored)
+├── public/                   # Tài nguyên tĩnh
+├── package.json              # Dependencies (pnpm)
+├── prisma.config.ts          # Prisma v6 config
+└── next.config.ts / tsconfig.json / eslint.config.mjs / components.json
 ```
- 
-## Dữ liệu mẫu
- 
-- >= 30 công thức nấu ăn thật (có ảnh)
-- 7 danh mục món ăn
-- >= 5 tài khoản dùng thử
- 
-## Liên hệ
- 
-| | Thông tin |
-|---|---|
-| Sinh viên | Phạm Tuấn Anh |
-| MSSV | 170123497 |
-| Lớp | DX23TT11 |
-| GVHD | ThS. Trầm Hoàng Nam |
- 
-## License
- 
-Đồ án học phần — Trường Đại học Trà Vinh
+
+Import alias: `@/*` (ví dụ `@/lib/prisma`, `@/components/ui/button`).
+
+## Biến môi trường
+
+`src/.env.local` (xem `.env.example`):
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — từ dashboard Supabase > Connect
+- `DATABASE_URL` — Supabase pooler (port 6543, `?pgbouncer=true&connection_limit=1`)
+- `DIRECT_URL` — Supabase direct (port 5432, cho migration)
+- `BETTER_AUTH_SECRET` — sinh random: `openssl rand -base64 32`
+
+Supabase client đã tích hợp qua shadcn registry (`@supabase/supabase-js` +
+`@supabase/ssr`): `src/lib/client.ts` (browser), `src/lib/server.ts` (server
+components/route handlers), `src/lib/middleware.ts` (helper `updateSession` —
+wire vào middleware khi cần refresh session Supabase).
+
+## Lệnh hữu ích
+
+| Lệnh | Thư mục | Mô tả |
+|---|---|---|
+| `pnpm dev` | Dev server localhost:3000 |
+| `pnpm build` | Build production |
+| `pnpm lint` / `pnpm lint:fix` | Kiểm tra / tự sửa ESLint |
+| `pnpm exec prisma migrate dev` | Tạo/áp dụng migration |
+| `pnpm exec prisma db seed` | Nạp dữ liệu mẫu |
+| `pnpm exec prisma studio` | Quản lý data qua UI |
+
+## Agent tooling (Next.js AI Agents guide)
+
+- `src/AGENTS.md` + `src/CLAUDE.md` — hướng dẫn coding agent, khối
+  `nextjs-agent-rules` trỏ vào docs bundled `node_modules/next/dist/docs/`
+  (tự cập nhật theo phiên bản Next.js bởi `next dev`).
+- `.mcp.json` — Next.js MCP server (`next-devtools-mcp`): agent đọc lỗi
+  build/runtime/type trực tiếp từ dev server qua `/_next/mcp`. Chạy `pnpm dev`
+  trước để MCP có dữ liệu.
+- `.zcode/skills/next-*` — 5 skills Next.js chính thức: `next-dev-loop`
+  (verify runtime sau mỗi edit), các skill adoption/optimizer cho Cache Components
+  và Partial Prefetching (dùng khi tối ưu hiệu năng ở feature FR1+).
+
+## Tech Stack
+
+- Next.js 16 (App Router, Turbopack) + TypeScript — full-stack trong `src/`
+- Prisma v6 + PostgreSQL (Supabase)
+- Tailwind CSS v4 + shadcn/ui
+- Better-Auth (email/password)
+- pnpm v12 · Node.js 24 LTS · Deploy: Vercel (Root Directory = `src`)
