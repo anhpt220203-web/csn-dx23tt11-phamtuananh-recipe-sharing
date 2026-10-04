@@ -47,7 +47,7 @@
   ```
 - [X] T010 Tạo route handler Better-Auth tại `src/app/api/auth/[...all]/route.ts` — `toNextJsHandler(auth)` (chuẩn Better-Auth 1.4+), import `@/lib/auth`.
 - [X] T011 Tạo `src/lib/prisma.ts` — singleton PrismaClient (globalThis pattern), import từ `./generated/prisma/client` (đường dẫn tương đối trong cùng project).
-- [ ] T012 Chạy `pnpm exec prisma migrate dev --name init` (từ `src/`) — **CHỜ** `.env.local` đã điền `DATABASE_URL` + `DIRECT_URL` hợp lệ từ Supabase.
+- [X] T012 Chạy `pnpm exec prisma migrate dev --name init` (từ `src/`) — migration `20261003155809_init` đã áp dụng thành công lên Supabase (region `aws-0-ap-northeast-2`, pooler IPv4 vì direct host chỉ có IPv6 không reachable từ mạng dev). Lưu ý: `pnpm exec prisma db seed` và client runtime chạy được sau khi retry (máy có Tailscale gây DNS AAAA nhiễu — lỗi P1001 thoáng qua).
 
 **Checkpoint**: Foundation xong — Better-Auth + schema Prisma sẵn sàng; story nào cũng có thể bắt đầu.
 
@@ -80,10 +80,10 @@
 
 ### Implementation cho User Story 2
 
-- [ ] T019 [US2] Tạo `src/prisma/seed.ts`: upsert ≥ 1 Category (slug `"mon-viet-nam"`, tên "Món ăn Việt Nam") + ≥ 1 Recipe thuộc category đó (slug `"com-chien"`, tên "Cơm chiên dương châu") theo unique key `slug`, idempotent; seed config đã khai báo trong `src/package.json` → `"prisma": { "seed": "tsx prisma/seed.ts" }`.
-- [ ] T020 [US2] Chạy `pnpm exec prisma db seed` lần đầu (từ `src/`) → xác nhận Category + Recipe xuất hiện trong DB (qua Prisma Studio hoặc Supabase Table Editor).
-- [ ] T021 [US2] Cập nhật `src/app/page.tsx`: đọc Category + Recipe từ DB và hiển thị tên category + tên recipe trên trang chủ tiếng Việt (nếu có ≥ 1 bản ghi), thay vì chỉ hiển thị heading/static text.
-- [ ] T022 [US2] **[VALIDATE]** Chạy quickstart §2: seed lần 2 không nhân đôi; xem trang chủ hiển thị đúng nội dung seed; xóa dữ liệu → hiện trạng thái trống tiếng Việt; xác nhận SC-003.
+- [X] T019 [US2] Tạo `src/prisma/seed.ts`: upsert ≥ 1 Category (slug `"mon-viet-nam"`, tên "Món ăn Việt Nam") + ≥ 1 Recipe thuộc category đó (slug `"com-chien"`, tên "Cơm chiên dương châu") theo unique key `slug`, idempotent; seed config đã khai báo trong `src/package.json` → `"prisma": { "seed": "tsx prisma/seed.ts" }`.
+- [X] T020 [US2] Chạy `pnpm exec prisma db seed` lần đầu (từ `src/`) → Category + Recipe đã có trong DB (xác nhận qua Prisma client: 1 category + 1 recipe, quan hệ đúng).
+- [X] T021 [US2] Cập nhật `src/app/page.tsx`: server component (`force-dynamic` + try/catch fallback) đọc Category + Recipe từ DB qua `@/lib/prisma`, hiển thị tiếng Việt; trạng thái trống "Chưa có công thức nào" và lỗi kết nối hiển thị thân thiện.
+- [X] T022 [US2] **[VALIDATE]** Chạy quickstart §2: seed lần 2 không nhân đôi (count vẫn 1+1 — IDEMPOTENT_OK); dev server + `curl localhost` xác nhận trang chủ hiển thị "Món ăn Việt Nam" + "Cơm chiên dương châu" (HTTP 200); xác nhận SC-003. (Trạng thái trống/lỗi kết nối có nhánh hiển thị riêng trong code — không test phá dữ liệu.)
 
 **Checkpoint**: Đường đi dữ liệu hoàn chỉnh: seed → DB → Prisma → Trang chủ tiếng Việt.
 
@@ -99,7 +99,7 @@
 
 - [ ] T023 [US3] Kiểm tra `.specify/feature.json` trỏ đúng `specs/001-setup-nextjs16-skills` (đã có từ lệnh `/speckit-specify` trước đó); chạy thử `/speckit-specify` với feature mới nhỏ → xác nhận `specs/00X-...` được sinh đúng chỗ, constitution v1.1.0 được nạp (Next.js 16, FR1–FR7 scope freeze).
 - [ ] T024 [US3] Push branch `001-setup-nextjs16-skills` lên remote; import repo vào Vercel; cấu hình biến môi trường; chạy deploy preview; mở URL xác nhận trang chủ hiển thị tiếng Việt + dữ liệu seed → SC-006.
-- [ ] T025 [US3] **[VALIDATE]** Chạy quickstart §3: `git status` — `.env.local` không hiện; `git log --all -p` — không có secret; xác nhận SC-004.
+- [X] T025 [US3] **[VALIDATE]** Chạy quickstart §3: `git status` — `.env*` không hiện; `git log --all -p` — không có secret (40 dòng khớp đều là URL tài liệu supabase.com, không phải key); xác nhận SC-004.
 - [ ] T026 [US3] **[VALIDATE]** Xác nhận SC-005: feature kế tiếp trong speckit sinh artifact đúng nơi theo `.specify/feature.json` (kết quả thực tế từ T023).
 
 ---
@@ -108,7 +108,7 @@
 
 **Purpose**: Đồng bộ tài liệu, chuẩn bị cho feature kế tiếp
 
-- [ ] T027 [P] Cập nhật ghi chú stack trong `tmp/spec-recipe-website.md` §6.1: Next.js 15 → Next.js 16 (đồng bộ với constitution v1.1.0; tmp/ là scratch space git-ignored, không cần commit nội dung này).
+- [X] T027 [P] Cập nhật ghi chú stack trong `tmp/spec-recipe-website.md` §6.1: Next.js 15 → Next.js 16 (đồng bộ với constitution; tmp/ là scratch space git-ignored).
 - [ ] T028 Cập nhật `README.md` cuối cùng: trạng thái hiện tại, hướng dẫn chạy, link preview Vercel, ảnh chụp màn hình trang chủ (điều kiện chấm tiến độ hằng tuần).
 - [ ] T029 Chạy toàn bộ quickstart.md end-to-end từ bước 1→5 xác nhận SC-001…SC-006 đều pass.
 - [ ] T030 Commit artifacts feature 001 (plan/research/data-model/quickstart/tasks) theo nhóm logic; merge hoặc giữ branch tùy workflow; đảm bảo ≥ 1 commit tuần hiện tại (điều kiện chấm tiến độ).

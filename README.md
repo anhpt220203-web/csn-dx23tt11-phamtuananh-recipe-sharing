@@ -45,8 +45,8 @@ Import alias: `@/*` (ví dụ `@/lib/prisma`, `@/components/ui/button`).
 
 `src/.env.local` (xem `.env.example`):
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — từ dashboard Supabase > Connect
-- `DATABASE_URL` — Supabase pooler (port 6543, `?pgbouncer=true&connection_limit=1`)
-- `DIRECT_URL` — Supabase direct (port 5432, cho migration)
+- `DATABASE_URL` / `DIRECT_URL` — Supavisor pooler (IPv4): `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require`
+  - ⚠️ Host direct `db.<ref>.supabase.co` chỉ có **IPv6** — mạng không hỗ trợ IPv6 sẽ báo `P1001`; dùng pooler cho cả hai biến (session pooler 5432 chạy được cả migration)
 - `BETTER_AUTH_SECRET` — sinh random: `openssl rand -base64 32`
 
 Supabase client đã tích hợp qua shadcn registry (`@supabase/supabase-js` +
