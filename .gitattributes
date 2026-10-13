@@ -1,0 +1,9 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Shell scripts phải luôn dùng LF (tránh lỗi '\r': command not found trên Linux)
+*.sh text eol=lf
+Makefile text eol=lf
+*.sql text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
