@@ -5,9 +5,15 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Màu thương hiệu theo tông đỏ/cam của các trang công thức Việt Nam */
+  --color-brand: #ec2028;
+  --color-brand-dark: #c8161d;
+  --color-cream: #fef6f6;
+  --color-ink: #0a0a0a;
+  --font-script: var(--font-lobster);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-open-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);

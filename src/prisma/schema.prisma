@@ -54,13 +54,14 @@ model account {
   @@unique([providerId, accountId])
 }
 
+// Better-Auth 1.7: bảng verification cần `identifier` + `value` (không có `token`).
 model verification {
-  id         String    @id @default(cuid())
+  id         String   @id @default(cuid())
   identifier String
-  token      String    @unique
+  value      String
   expiresAt  DateTime
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 // ─── Nghiệp vụ: Category + Recipe tối thiểu (theo ERD SRS §4, Clarifications 2026-09-28) ───
@@ -80,6 +81,14 @@ model Recipe {
   title       String
   slug        String   @unique
   description String?
+  imageUrl    String?
+  ingredients String[]
+  steps       String[]
+  servings    Int?
+  cookTime    Int?
+  difficulty  String?
+  sourceName  String?
+  sourceUrl   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
