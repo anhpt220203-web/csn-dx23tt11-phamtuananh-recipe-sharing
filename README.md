@@ -84,3 +84,14 @@ wire vào middleware khi cần refresh session Supabase).
 - Tailwind CSS v4 + shadcn/ui
 - Better-Auth (email/password)
 - pnpm v12 · Node.js 24 LTS · Deploy: Vercel (Root Directory = `src`)
+
+## Tài khoản demo
+
+Chạy `pnpm exec prisma db seed` trong thư mục `src`, sau đó đăng nhập tại `/dang-nhap`:
+
+| Vai trò | Email | Mật khẩu |
+|---|---|---|
+| Quản trị viên | `phamtuananh@example.com` | `Demo@123456` |
+| Người dùng | `tranbich@example.com` | `Demo@123456` |
+
+Đây là thông tin dùng riêng cho môi trường trình diễn; không dùng cho production.

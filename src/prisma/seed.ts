@@ -5,14 +5,14 @@ import { CATEGORY_SEED, RECIPE_SEED } from "./data/recipes";
 
 const prisma = new PrismaClient();
 
-// ≥ 5 tài khoản demo (NFR5). Mật khẩu mẫu dùng chung cho buổi demo đồ án.
+// ≥ 5 tài khoản demo (NFR5). Chỉ dùng cho demo, không dùng trên production.
 const DEMO_PASSWORD = "Demo@123456";
 const DEMO_USERS = [
-  { name: "Phạm Tuấn Anh", email: "phamtuananh@example.com" },
-  { name: "Trần Thị Bích", email: "tranbich@example.com" },
-  { name: "Nguyễn Minh Khôi", email: "minhkhoi@example.com" },
-  { name: "Lê Hoàng Yến", email: "hoangyen@example.com" },
-  { name: "Võ Đức Huy", email: "duchuy@example.com" },
+  { name: "Phạm Tuấn Anh", email: "phamtuananh@example.com", role: "admin" },
+  { name: "Trần Thị Bích", email: "tranbich@example.com", role: "user" },
+  { name: "Nguyễn Minh Khôi", email: "minhkhoi@example.com", role: "user" },
+  { name: "Lê Hoàng Yến", email: "hoangyen@example.com", role: "user" },
+  { name: "Võ Đức Huy", email: "duchuy@example.com", role: "user" },
 ];
 
 type ImageCredit = {
@@ -88,21 +88,21 @@ async function seedDemoUsers() {
       where: { email: user.email },
       select: { id: true },
     });
-    if (existing) continue;
-
-    await auth.api.signUpEmail({
-      body: {
-        name: user.name,
-        email: user.email,
-        password: DEMO_PASSWORD,
-      },
-    });
+    if (!existing) {
+      await auth.api.signUpEmail({
+        body: {
+          name: user.name,
+          email: user.email,
+          password: DEMO_PASSWORD,
+        },
+      });
+    }
     // Tài khoản demo không cần xác thực email để đăng nhập.
     await prisma.user.update({
       where: { email: user.email },
-      data: { emailVerified: true },
+      data: { emailVerified: true, role: user.role, banned: false, banReason: null, banExpires: null },
     });
-    created += 1;
+    if (!existing) created += 1;
   }
 
   return { total: DEMO_USERS.length, created };
@@ -134,7 +134,7 @@ async function main() {
   ]);
 
   console.log(
-    `Seed xong — danh mục: ${categories}, công thức: ${recipes}, người dùng: ${users} (tạo mới ${demoUsers.created}/${demoUsers.total} tài khoản demo, mật khẩu: ${DEMO_PASSWORD}).`,
+    `Seed xong — danh mục: ${categories}, công thức: ${recipes}, người dùng: ${users} (tạo mới ${demoUsers.created}/${demoUsers.total} tài khoản demo).`,
   );
 }
 

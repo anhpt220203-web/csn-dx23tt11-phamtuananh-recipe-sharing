@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 export type NavCategory = { name: string; slug: string };
 
@@ -24,7 +26,16 @@ function Logo() {
 }
 
 export function SiteNav({ categories }: { categories: NavCategory[] }) {
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session } = authClient.useSession();
+  const user = session?.user as { name: string; role?: string } | undefined;
+
+  async function signOut() {
+    await authClient.signOut();
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <>
@@ -84,6 +95,18 @@ export function SiteNav({ categories }: { categories: NavCategory[] }) {
           >
             Chia sẻ công thức
           </Link>
+          {user ? (
+            <>
+              {user.role === "admin" ? <Link href="/admin/tai-khoan" className="rounded px-3 py-2 text-sm font-bold text-brand">Quản lý</Link> : null}
+              <span className="max-w-28 truncate px-2 text-sm text-zinc-600">{user.name}</span>
+              <button type="button" onClick={signOut} className="rounded px-2 py-2 text-sm font-bold text-ink hover:text-brand">Đăng xuất</button>
+            </>
+          ) : (
+            <>
+              <Link href="/dang-nhap" className="rounded px-3 py-2 text-sm font-bold text-ink hover:text-brand">Đăng nhập</Link>
+              <Link href="/dang-ky" className="rounded-lg border border-brand px-3 py-2 text-sm font-bold text-brand hover:bg-cream">Đăng ký</Link>
+            </>
+          )}
         </nav>
 
         {/* Nút menu mobile */}
@@ -122,6 +145,8 @@ export function SiteNav({ categories }: { categories: NavCategory[] }) {
               { href: "/#moi-ra-lo", label: "Công thức mới" },
               { href: "/#danh-muc", label: "Danh mục món" },
               { href: "/#chia-se", label: "Chia sẻ công thức" },
+              ...(user?.role === "admin" ? [{ href: "/admin/tai-khoan", label: "Quản lý tài khoản" }] : []),
+              ...(!user ? [{ href: "/dang-nhap", label: "Đăng nhập" }, { href: "/dang-ky", label: "Đăng ký" }] : []),
             ].map((item) => (
               <Link
                 key={item.href}
@@ -132,6 +157,7 @@ export function SiteNav({ categories }: { categories: NavCategory[] }) {
                 {item.label}
               </Link>
             ))}
+            {user ? <button type="button" onClick={signOut} className="rounded px-2 py-2 text-left text-sm font-bold text-ink">Đăng xuất ({user.name})</button> : null}
           </div>
         </nav>
       ) : null}
