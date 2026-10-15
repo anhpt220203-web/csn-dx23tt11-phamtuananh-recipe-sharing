@@ -7,6 +7,7 @@ import {
   type RatingSummary,
   type RecipeDetail,
   type RecipeSchema,
+  type RecipeSearchRow,
   type RecipeWithCategory,
 } from './database';
 
@@ -68,7 +69,75 @@ function toRecipeWithCategory(row: RecipeQueryRow): RecipeWithCategory {
 }
 
 const RECIPE_COLUMNS =
-  'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,difficulty,created_by,categories(name,slug)';
+  'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,difficulty,created_by,created_at,categories(name,slug)';
+
+/**
+ * Cách sắp xếp kết quả tìm kiếm (FR3).
+ * - 'moi-nhat': công thức mới nhất trước.
+ * - 'danh-gia-cao': điểm đánh giá trung bình cao nhất trước.
+ */
+export type SearchSort = 'moi-nhat' | 'danh-gia-cao';
+
+/**
+ * Chuẩn hoá giá trị sort từ query param — giá trị lạ về 'moi-nhat'.
+ */
+export function parseSearchSort(value: string | undefined): SearchSort {
+  return value === 'danh-gia-cao' ? 'danh-gia-cao' : 'moi-nhat';
+}
+
+/**
+ * Kết quả tìm kiếm: công thức kèm điểm đánh giá tổng hợp (để hiển thị
+ * và sắp xếp theo 'danh-gia-cao' mà không cần query thêm).
+ */
+export type RecipeSearchResult = RecipeWithCategory & {
+  rating: RatingSummary;
+};
+
+function toRecipeSearchResult(row: RecipeSearchRow): RecipeSearchResult {
+  const {
+    id,
+    category_id,
+    title,
+    slug,
+    description,
+    image_url,
+    status,
+    source_name,
+    source_url,
+    servings,
+    cook_time,
+    difficulty,
+    created_by,
+    category_name,
+    category_slug,
+    rating_average,
+    rating_count,
+  } = row;
+
+  return {
+    id,
+    category_id,
+    title,
+    slug,
+    description,
+    image_url,
+    status,
+    source_name,
+    source_url,
+    servings,
+    cook_time,
+    difficulty,
+    created_by,
+    category_name,
+    category_slug,
+    // PostgREST có thể trả numeric/bigint dạng string — ép về number
+    // để `rating.average.toFixed(1)` trong RecipeCard không crash.
+    rating: {
+      average: rating_average === null ? null : Number(rating_average),
+      count: Number(rating_count),
+    },
+  };
+}
 
 /**
  * Danh sách nhóm món, sắp theo thứ tự id.
@@ -134,13 +203,18 @@ export async function getRecipesByCategorySlug(
 }
 
 /**
- * Tìm kiếm công thức theo tên món hoặc mô tả (không phân biệt hoa thường).
- * Có thể giới hạn theo slug danh mục. Trả về mảng rỗng nếu từ khóa trống.
+ * Tìm kiếm công thức theo tên món, mô tả, TÊN NGUYÊN LIỆU hoặc
+ * TÊN NHÓM MÓN (không phân biệt hoa thường, không phân biệt dấu tiếng Việt
+ * nhờ RPC `public.search_recipes` dùng kit.unaccent trên DB).
+ * Có thể giới hạn theo slug danh mục và sắp xếp kết quả.
+ * Chỉ trả về công thức đã xuất bản (status='published').
+ * Trả về mảng rỗng nếu từ khóa trống.
  */
 export async function searchRecipes(params: {
   q: string;
   categorySlug?: string;
-}): Promise<RecipeWithCategory[]> {
+  sort?: SearchSort;
+}): Promise<RecipeSearchResult[]> {
   const q = params.q.trim();
 
   if (!q) {
@@ -149,31 +223,17 @@ export async function searchRecipes(params: {
 
   const client = getClient();
 
-  // Escape các ký tự đặc biệt của LIKE để từ khóa được hiểu đúng.
-  const escaped = q.replace(/[%_\\]/g, (char) => `\\${char}`);
-  const pattern = `%${escaped}%`;
-
-  let query = client
-    .from('recipes')
-    .select(RECIPE_COLUMNS)
-    .eq('status', 'published')
-    .or(`title.ilike.${pattern},description.ilike.${pattern}`);
-
-  if (params.categorySlug) {
-    query = query.eq('categories.slug', params.categorySlug);
-  }
-
-  const { data, error } = await query.order('created_at', {
-    ascending: false,
+  const { data, error } = await client.rpc('search_recipes', {
+    p_query: q,
+    p_category_slug: params.categorySlug ?? null,
+    p_sort: params.sort ?? 'moi-nhat',
   });
 
   if (error) {
     throw new Error(`Tìm kiếm công thức thất bại: ${error.message}`);
   }
 
-  return ((data ?? []) as unknown as RecipeQueryRow[]).map(
-    toRecipeWithCategory,
-  );
+  return ((data ?? []) as RecipeSearchRow[]).map(toRecipeSearchResult);
 }
 
 /**
