@@ -22,6 +22,11 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif
 
 const DIFFICULTIES = ['Dễ', 'Trung bình', 'Khó'] as const;
 
+const STATUSES = ['draft', 'published'] as const;
+
+/** Trạng thái xuất bản hợp lệ của công thức. */
+type RecipeStatus = (typeof STATUSES)[number];
+
 type AdminClient = ReturnType<typeof getSupabaseServerAdminClient<RecipeSchema>>;
 
 /**
@@ -169,6 +174,20 @@ export async function saveRecipeAction(
       ? difficultyRaw
       : 'Trung bình';
 
+    // Trạng thái chỉ chấp nhận 2 giá trị hợp lệ; mặc định là Nháp để
+    // công thức mới không bị public ngay lập tức.
+    const statusRaw = String(formData.get('status') ?? '').trim();
+
+    if (
+      statusRaw.length > 0 &&
+      !(STATUSES as readonly string[]).includes(statusRaw)
+    ) {
+      return { ok: false, message: 'Trạng thái công thức không hợp lệ.' };
+    }
+
+    const status: RecipeStatus =
+      statusRaw === 'published' ? 'published' : 'draft';
+
     const ingredients = splitLines(formData.get('ingredients'));
     const steps = splitLines(formData.get('steps'));
 
@@ -199,6 +218,7 @@ export async function saveRecipeAction(
       servings,
       cook_time: cookTime,
       difficulty,
+      status,
     };
 
     let recipeId = id;

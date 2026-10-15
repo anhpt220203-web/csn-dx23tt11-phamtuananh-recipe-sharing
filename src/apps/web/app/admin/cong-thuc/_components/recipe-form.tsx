@@ -18,6 +18,11 @@ import { RECIPE_ACTION_INITIAL, saveRecipeAction } from '../actions';
 
 const DIFFICULTIES = ['Dễ', 'Trung bình', 'Khó'];
 
+const STATUSES = [
+  { value: 'draft', label: 'Nháp' },
+  { value: 'published', label: 'Xuất bản' },
+];
+
 type RecipeFormProps = {
   categories: CategoryRow[];
   initial?: RecipeDetail | null;
@@ -121,6 +126,27 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
               </NativeSelectOption>
             ))}
           </NativeSelect>
+        </div>
+
+        <div className={'grid gap-1.5'}>
+          <Label htmlFor={'status'}>Trạng thái</Label>
+
+          <NativeSelect
+            id={'status'}
+            name={'status'}
+            defaultValue={initial?.status === 'published' ? 'published' : 'draft'}
+            className={'w-full'}
+          >
+            {STATUSES.map((status) => (
+              <NativeSelectOption key={status.value} value={status.value}>
+                {status.label}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+
+          <p className={'text-muted-foreground text-xs'}>
+            Bài ở trạng thái Nháp sẽ không hiển thị trên trang công khai.
+          </p>
         </div>
 
         <div className={'grid gap-1.5'}>

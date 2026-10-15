@@ -20,14 +20,39 @@ export const metadata: Metadata = {
   title: 'Quản lý công thức',
 };
 
-export default async function RecipesAdminPage() {
+const STATUS_FILTERS = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'published', label: 'Đã xuất bản' },
+  { value: 'draft', label: 'Nháp' },
+] as const;
+
+type StatusFilter = (typeof STATUS_FILTERS)[number]['value'];
+
+export default async function RecipesAdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status: statusParam } = await searchParams;
+
+  const statusFilter: StatusFilter =
+    statusParam === 'published' || statusParam === 'draft'
+      ? statusParam
+      : 'all';
+
   const admin = getSupabaseServerAdminClient<RecipeSchema>();
 
-  const { data, error } = await admin
+  const query = admin
     .from('recipes')
-    .select('id,title,slug,image_url,difficulty,cook_time,categories(name)')
+    .select(
+      'id,title,slug,image_url,difficulty,cook_time,status,categories(name)',
+    )
     .order('id', { ascending: false })
     .limit(200);
+
+  const { data, error } = await (
+    statusFilter === 'all' ? query : query.eq('status', statusFilter)
+  );
 
   if (error) {
     throw new Error(`Không tải được công thức: ${error.message}`);
@@ -49,6 +74,31 @@ export default async function RecipesAdminPage() {
         </div>
 
         <Button nativeButton={false} render={<Link href={'/admin/cong-thuc/moi'}>Thêm công thức</Link>} />
+      </div>
+
+      <div className={'flex flex-wrap gap-2'}>
+        {STATUS_FILTERS.map((filter) => {
+          const active = statusFilter === filter.value;
+
+          return (
+            <Link
+              key={filter.value}
+              href={
+                filter.value === 'all'
+                  ? '/admin/cong-thuc'
+                  : `/admin/cong-thuc?status=${filter.value}`
+              }
+              aria-current={active ? 'page' : undefined}
+              className={
+                active
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-1.5 text-sm font-medium'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-3 py-1.5 text-sm font-medium'
+              }
+            >
+              {filter.label}
+            </Link>
+          );
+        })}
       </div>
 
       {recipes.length === 0 ? (
@@ -97,6 +147,16 @@ export default async function RecipesAdminPage() {
                       </CardDescription>
 
                       <div className={'mt-1.5 flex flex-wrap gap-1'}>
+                        <Badge
+                          variant={
+                            recipe.status === 'draft'
+                              ? 'secondary'
+                              : 'default'
+                          }
+                        >
+                          {recipe.status === 'draft' ? 'Nháp' : 'Đã xuất bản'}
+                        </Badge>
+
                         <Badge variant={'secondary'}>{categoryName}</Badge>
 
                         {recipe.difficulty && (
