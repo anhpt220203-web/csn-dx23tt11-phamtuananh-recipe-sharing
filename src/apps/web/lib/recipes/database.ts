@@ -98,6 +98,15 @@ export type RecipeSchema = {
         Args: { p_user_id: string };
         Returns: number;
       };
+      /** Tìm kiếm công thức theo SRS FR3 (migration 20261015230500). */
+      search_recipes: {
+        Args: {
+          p_query: string;
+          p_category_slug: string | null;
+          p_sort: string;
+        };
+        Returns: RecipeSearchRow[];
+      };
     };
     Enums: {
       [_ in never]: never;
@@ -109,6 +118,33 @@ export type RecipeSchema = {
 export type RecipeWithCategory = RecipeRow & {
   category_name: string;
   category_slug: string;
+};
+
+/**
+ * Một dòng kết quả của RPC `public.search_recipes` (FR3):
+ * công thức + tên nhóm món + điểm đánh giá tổng hợp.
+ */
+export type RecipeSearchRow = {
+  id: number;
+  category_id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  status: string;
+  source_name: string | null;
+  source_url: string | null;
+  servings: number | null;
+  cook_time: number | null;
+  difficulty: string | null;
+  created_by: string | null;
+  /** Thời điểm tạo (ISO string) — có trong kết quả RPC search_recipes. */
+  created_at: string;
+  category_name: string;
+  category_slug: string;
+  /** Điểm trung bình, null khi chưa có lượt đánh giá nào. */
+  rating_average: number | null;
+  rating_count: number;
 };
 
 /** Công thức đầy đủ kèm nguyên liệu + các bước — dùng cho trang chi tiết. */

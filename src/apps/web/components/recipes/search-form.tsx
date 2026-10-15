@@ -17,24 +17,33 @@ import {
 } from '@kit/ui/select';
 
 import type { CategoryRow } from '~/lib/recipes/database';
+import type { SearchSort } from '~/lib/recipes/queries';
 
 type SearchFormProps = {
   categories: CategoryRow[];
   defaultQuery?: string;
   defaultCategory?: string;
+  defaultSort?: SearchSort;
 };
 
+const SORT_OPTIONS: { value: SearchSort; label: string }[] = [
+  { value: 'moi-nhat', label: 'Mới nhất' },
+  { value: 'danh-gia-cao', label: 'Đánh giá cao nhất' },
+];
+
 /**
- * Form tìm kiếm: gửi query param `q` và `category` tới route /tim-kiem.
+ * Form tìm kiếm: gửi query param `q`, `category` và `sort` tới route /tim-kiem.
  */
 export function SearchForm({
   categories,
   defaultQuery = '',
   defaultCategory = 'all',
+  defaultSort = 'moi-nhat',
 }: SearchFormProps) {
   const router = useRouter();
   const [query, setQuery] = useState(defaultQuery);
   const [category, setCategory] = useState(defaultCategory);
+  const [sort, setSort] = useState<SearchSort>(defaultSort);
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -48,6 +57,10 @@ export function SearchForm({
 
     if (category && category !== 'all') {
       params.set('category', category);
+    }
+
+    if (sort !== 'moi-nhat') {
+      params.set('sort', sort);
     }
 
     router.push(`/tim-kiem?${params.toString()}`);
@@ -77,7 +90,7 @@ export function SearchForm({
 
       <Select value={category} onValueChange={(value) => setCategory(value ?? 'all')}>
         <SelectTrigger
-          className={'w-full sm:w-52'}
+          className={'w-full sm:w-44'}
           aria-label={'Lọc theo nhóm món'}
         >
           <SelectValue placeholder={'Tất cả nhóm món'} />
@@ -89,6 +102,29 @@ export function SearchForm({
           {categories.map((item) => (
             <SelectItem key={item.slug} value={item.slug}>
               {item.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={sort}
+        onValueChange={(value) =>
+          setSort(value === 'danh-gia-cao' ? 'danh-gia-cao' : 'moi-nhat')
+        }
+      >
+        <SelectTrigger
+          className={'w-full sm:w-44'}
+          aria-label={'Sắp xếp kết quả'}
+          data-test={'search-sort-select'}
+        >
+          <SelectValue placeholder={'Sắp xếp'} />
+        </SelectTrigger>
+
+        <SelectContent>
+          {SORT_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
             </SelectItem>
           ))}
         </SelectContent>
