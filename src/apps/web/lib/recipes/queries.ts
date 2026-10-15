@@ -69,7 +69,7 @@ function toRecipeWithCategory(row: RecipeQueryRow): RecipeWithCategory {
 }
 
 const RECIPE_COLUMNS =
-  'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,difficulty,created_by,categories(name,slug)';
+  'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,difficulty,created_by,created_at,categories(name,slug)';
 
 /**
  * Cách sắp xếp kết quả tìm kiếm (FR3).
@@ -130,7 +130,12 @@ function toRecipeSearchResult(row: RecipeSearchRow): RecipeSearchResult {
     created_by,
     category_name,
     category_slug,
-    rating: { average: rating_average, count: rating_count },
+    // PostgREST có thể trả numeric/bigint dạng string — ép về number
+    // để `rating.average.toFixed(1)` trong RecipeCard không crash.
+    rating: {
+      average: rating_average === null ? null : Number(rating_average),
+      count: Number(rating_count),
+    },
   };
 }
 
