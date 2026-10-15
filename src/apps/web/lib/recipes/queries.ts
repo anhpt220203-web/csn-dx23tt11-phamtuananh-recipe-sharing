@@ -121,6 +121,7 @@ export async function getRecipesByCategorySlug(
     .from('recipes')
     .select(RECIPE_COLUMNS)
     .eq('categories.slug', slug)
+    .eq('status', 'published')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -155,6 +156,7 @@ export async function searchRecipes(params: {
   let query = client
     .from('recipes')
     .select(RECIPE_COLUMNS)
+    .eq('status', 'published')
     .or(`title.ilike.${pattern},description.ilike.${pattern}`);
 
   if (params.categorySlug) {
@@ -189,6 +191,7 @@ export async function getRecipeBySlug(
       `${RECIPE_COLUMNS},recipe_ingredients(name,position),recipe_steps(step,position)`,
     )
     .eq('slug', slug)
+    .eq('status', 'published')
     .order('position', {
       referencedTable: 'recipe_ingredients',
       ascending: true,
