@@ -11,8 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@kit/ui/card';
+import { Input } from '@kit/ui/input';
 
 import type { RecipeSchema } from '~/lib/recipes/database';
+import { getCategories } from '~/lib/recipes/queries';
 
 import { DeleteRecipeButton } from './_components/delete-recipe-button';
 
@@ -28,21 +30,68 @@ const STATUS_FILTERS = [
 
 type StatusFilter = (typeof STATUS_FILTERS)[number]['value'];
 
+type AdminRecipeParams = {
+  status: StatusFilter;
+  q: string;
+  category: string | null;
+};
+
+/**
+ * Dựng URL trang quản lý công thức, giữ lại các bộ lọc đang dùng.
+ */
+function buildRecipesHref({ status, q, category }: AdminRecipeParams): string {
+  const params = new URLSearchParams();
+
+  if (status !== 'all') {
+    params.set('status', status);
+  }
+
+  const trimmed = q.trim();
+
+  if (trimmed) {
+    params.set('q', trimmed);
+  }
+
+  if (category) {
+    params.set('category', category);
+  }
+
+  const queryString = params.toString();
+
+  return queryString ? `/admin/cong-thuc?${queryString}` : '/admin/cong-thuc';
+}
+
+/**
+ * Escape ký tự đặc biệt của LIKE để từ khoá tìm kiếm của admin
+ * không bị hiểu nhầm thành wildcard.
+ */
+function escapeLike(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
 export default async function RecipesAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; category?: string }>;
 }) {
-  const { status: statusParam } = await searchParams;
+  const { status: statusParam, q: qParam, category: categoryParam } =
+    await searchParams;
 
   const statusFilter: StatusFilter =
     statusParam === 'published' || statusParam === 'draft'
       ? statusParam
       : 'all';
 
+  const searchTerm = (qParam ?? '').trim();
+
+  const categories = await getCategories();
+
+  const activeCategory =
+    categories.find((category) => category.slug === categoryParam) ?? null;
+
   const admin = getSupabaseServerAdminClient<RecipeSchema>();
 
-  const query = admin
+  const baseQuery = admin
     .from('recipes')
     .select(
       'id,title,slug,image_url,difficulty,cook_time,status,categories(name)',
@@ -50,15 +99,27 @@ export default async function RecipesAdminPage({
     .order('id', { ascending: false })
     .limit(200);
 
-  const { data, error } = await (
-    statusFilter === 'all' ? query : query.eq('status', statusFilter)
-  );
+  const statusQuery =
+    statusFilter === 'all' ? baseQuery : baseQuery.eq('status', statusFilter);
+
+  const searchQuery = searchTerm
+    ? statusQuery.ilike('title', `%${escapeLike(searchTerm)}%`)
+    : statusQuery;
+
+  const filteredQuery =
+    activeCategory !== null
+      ? searchQuery.eq('category_id', activeCategory.id)
+      : searchQuery;
+
+  const { data, error } = await filteredQuery;
 
   if (error) {
     throw new Error(`Không tải được công thức: ${error.message}`);
   }
 
   const recipes = data ?? [];
+
+  const hasActiveFilter = searchTerm !== '' || activeCategory !== null;
 
   return (
     <div className={'flex flex-col gap-6'}>
@@ -83,11 +144,11 @@ export default async function RecipesAdminPage({
           return (
             <Link
               key={filter.value}
-              href={
-                filter.value === 'all'
-                  ? '/admin/cong-thuc'
-                  : `/admin/cong-thuc?status=${filter.value}`
-              }
+              href={buildRecipesHref({
+                status: filter.value,
+                q: searchTerm,
+                category: activeCategory?.slug ?? null,
+              })}
               aria-current={active ? 'page' : undefined}
               className={
                 active
@@ -101,11 +162,91 @@ export default async function RecipesAdminPage({
         })}
       </div>
 
+      <form
+        action={'/admin/cong-thuc'}
+        method={'GET'}
+        role={'search'}
+        className={'flex flex-col gap-2 sm:flex-row sm:items-end'}
+      >
+        <input type={'hidden'} name={'status'} value={statusFilter} />
+
+        <div className={'flex-1'}>
+          <label
+            htmlFor={'admin-recipe-search'}
+            className={'mb-1 block text-xs font-medium'}
+          >
+            Tìm kiếm theo tên món
+          </label>
+
+          <Input
+            id={'admin-recipe-search'}
+            name={'q'}
+            type={'search'}
+            defaultValue={searchTerm}
+            placeholder={'Nhập tên món…'}
+            className={'max-w-md'}
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor={'admin-recipe-category'}
+            className={'mb-1 block text-xs font-medium'}
+          >
+            Danh mục
+          </label>
+
+          <select
+            id={'admin-recipe-category'}
+            name={'category'}
+            defaultValue={activeCategory?.slug ?? ''}
+            className={
+              'border-input bg-transparent h-8 rounded-lg border px-2.5 text-sm outline-none'
+            }
+          >
+            <option value={''}>Tất cả danh mục</option>
+
+            {categories.map((category) => (
+              <option key={category.id} value={category.slug}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className={'flex gap-2'}>
+          <Button type={'submit'} size={'sm'}>
+            Lọc
+          </Button>
+
+          {hasActiveFilter && (
+            <Button
+              nativeButton={false}
+              size={'sm'}
+              variant={'outline'}
+              render={
+                <Link
+                  href={buildRecipesHref({
+                    status: statusFilter,
+                    q: '',
+                    category: null,
+                  })}
+                >
+                  Xoá lọc
+                </Link>
+              }
+            />
+          )}
+        </div>
+      </form>
+
       {recipes.length === 0 ? (
         <Card>
           <CardContent className={'py-10 text-center'}>
             <p className={'text-muted-foreground text-sm'}>
-              Chưa có công thức nào. Hãy thêm công thức đầu tiên.
+              {hasActiveFilter
+                ? 'Không tìm thấy công thức nào với bộ lọc hiện tại.'
+                : 'Chưa có công thức nào. Hãy thêm công thức đầu tiên.'}
             </p>
           </CardContent>
         </Card>
