@@ -20,7 +20,7 @@ function getUserId(formData: FormData): string | null {
 }
 
 function isActive(user: {
-  banned_until: string | null | undefined;
+  banned_until?: string | null;
 }): boolean {
   return (
     !user.banned_until || new Date(user.banned_until).getTime() <= Date.now()
