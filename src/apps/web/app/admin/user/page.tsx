@@ -17,9 +17,13 @@ import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
 
 import type { RecipeSchema } from '~/lib/recipes/database';
+import { requireAdminInServerComponent } from '~/lib/server/require-admin';
 
 import {
+  DeleteAccountButton,
+  GrantAdminButton,
   LockAccountButton,
+  RevokeAdminButton,
   UnlockAccountButton,
 } from './_components/account-actions';
 
@@ -76,6 +80,10 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
 
   const params = await searchParams;
   const query = (params.q ?? '').trim().toLowerCase();
+
+  // ID của admin đang đăng nhập (đã cache ở layout) — dùng để khóa các nút
+  // thao tác nguy hiểm trên chính dòng tài khoản của mình.
+  const { userId: currentAdminId } = await requireAdminInServerComponent();
 
   const adminClient = getSupabaseServerAdminClient<RecipeSchema>();
 
@@ -135,7 +143,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
             <Button
               nativeButton={false}
               variant={'outline'}
-              render={<Link href={'/admin/tai-khoan'}>Xóa lọc</Link>}
+              render={<Link href={'/admin/user'}>Xóa lọc</Link>}
             />
           )}
         </div>
@@ -156,6 +164,8 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
           {users.map((user) => {
             const banned = isBanned(user);
             const admin = isAdmin(user);
+            // Không cho thao tác nguy hiểm lên chính tài khoản đang đăng nhập.
+            const isSelf = user.id === currentAdminId;
 
             return (
               <Card key={user.id}>
@@ -191,7 +201,17 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                     'flex flex-wrap items-center justify-between gap-3 pt-0'
                   }
                 >
-                  <dl className={'text-muted-foreground text-xs'}>
+                  <dl className={'text-muted-foreground space-y-1 text-xs'}>
+                    <div className={'flex gap-1'}>
+                      <dt>Vai trò:</dt>
+                      <dd>{admin ? 'Quản trị viên' : 'Người dùng'}</dd>
+                    </div>
+
+                    <div className={'flex gap-1'}>
+                      <dt>Trạng thái:</dt>
+                      <dd>{banned ? 'Đã khóa' : 'Hoạt động'}</dd>
+                    </div>
+
                     <div className={'flex gap-1'}>
                       <dt>Tạo lúc:</dt>
                       <dd>{formatDateTime(user.created_at)}</dd>
@@ -203,12 +223,36 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                     </div>
                   </dl>
 
-                  {!admin &&
-                    (banned ? (
-                      <UnlockAccountButton userId={user.id} />
+                  <div className={'flex flex-wrap gap-2'}>
+                    {admin ? (
+                      <RevokeAdminButton
+                        userId={user.id}
+                        disabled={isSelf}
+                        disabledTitle={
+                          'Không thể thu hồi quyền của chính mình'
+                        }
+                      />
                     ) : (
-                      <LockAccountButton userId={user.id} />
-                    ))}
+                      <GrantAdminButton userId={user.id} />
+                    )}
+
+                    {!admin &&
+                      (banned ? (
+                        <UnlockAccountButton userId={user.id} />
+                      ) : (
+                        <LockAccountButton
+                          userId={user.id}
+                          disabled={isSelf}
+                          disabledTitle={'Không thể khóa chính mình'}
+                        />
+                      ))}
+
+                    <DeleteAccountButton
+                      userId={user.id}
+                      disabled={isSelf}
+                      disabledTitle={'Không thể xóa chính mình'}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             );

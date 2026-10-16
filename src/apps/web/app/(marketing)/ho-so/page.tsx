@@ -40,7 +40,7 @@ const PREVIEW_FAVORITE_COUNT = 3;
 
 /**
  * Đọc họ tên hiển thị từ `user_metadata`, cùng thứ tự ưu tiên với
- * trang quản trị tài khoản (`app/admin/tai-khoan/page.tsx`).
+ * trang quản trị tài khoản (`app/admin/user/page.tsx`).
  */
 function getDisplayName(userMetadata: Record<string, unknown>): string {
   const name =
