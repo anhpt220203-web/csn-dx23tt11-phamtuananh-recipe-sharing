@@ -18,7 +18,7 @@ on conflict (slug) do update set
   description = excluded.description,
   updated_at = now();
 
--- ─── Công thức: Cơm chiên dương châu ───
+-- ─── Công thức: Gà chiên vị bơ tỏi ───
 insert into public.recipes (
   category_id, slug, title, description, image_url,
   servings, prep_time, cook_time, difficulty, status,
@@ -27,13 +27,13 @@ insert into public.recipes (
 )
 select
   c.id,
-  'com-chien-duong-chau',
-  'Cơm chiên dương châu',
-  'Hạt cơm chiên tơi, vàng ươm màu trứng, điểm xuyết xúc xích, đậu Hà Lan và cà rốt. Món ăn nhanh gọn, đủ chất cho bữa sáng hay những tối bận rộn.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/com-chien.jpg',
-  3, 15, 20, 'Dễ', 'published',
-  550, 18, 72, 3, 18, 3,
-  'Demo — Công Thức Việt'
+  'ga-chien-vi-bo-toi',
+  'Gà chiên vị bơ tỏi',
+  'Cánh gà chiên giòn rụm với lớp bột tẩm vị bơ tỏi thơm lừng, ăn kèm salad xoài chua ngọt và xốt mayonnaise béo ngậy. Món ăn phù hợp cho bữa cơm gia đình hay tụ họp bạn bè.',
+  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/ga-chien-vi-bo-toi.png',
+  4, 15, 20, 'Dễ', 'published',
+  450, 28, 25, 8, 28, 3,
+  'Tóm tắt từ monngonmoingay.com'
 from public.categories c
 where c.slug = 'mon-chinh'
 on conflict (slug) do update set
@@ -57,36 +57,36 @@ on conflict (slug) do update set
 
 -- ─── Nguyên liệu ───
 delete from public.recipe_ingredients
-where recipe_id = (select id from public.recipes where slug = 'com-chien-duong-chau');
+where recipe_id = (select id from public.recipes where slug = 'ga-chien-vi-bo-toi');
 
 insert into public.recipe_ingredients (recipe_id, position, name)
-select (select id from public.recipes where slug = 'com-chien-duong-chau'), v.position, v.name
+select (select id from public.recipes where slug = 'ga-chien-vi-bo-toi'), v.position, v.name
 from (values
-  (1, 'Cơm trắng đã nấu chín, để nguội — 3 chén'),
-  (2, 'Trứng gà — 2 quả'),
-  (3, 'Xúc xích — 2 cây (có thể thay bằng lạp xưởng)'),
-  (4, 'Đậu Hà Lan — 50g'),
-  (5, 'Cà rốt — 1/2 củ'),
-  (6, 'Hành lá — 2 nhánh'),
-  (7, 'Tỏi băm — 1 muỗng cà phê'),
-  (8, 'Nước mắm — 1 muỗng canh'),
-  (9, 'Hạt nêm — 1 muỗng cà phê'),
-  (10, 'Tiêu xay — 1/2 muỗng cà phê'),
-  (11, 'Dầu ăn — 2 muỗng canh')
+  (1, 'Cánh gà — 400g'),
+  (2, 'Xà lách — 100g'),
+  (3, 'Cà chua bi — 100g'),
+  (4, 'Xoài cát — 1/2 trái'),
+  (5, 'Bột tẩm khô chiên giòn vị bơ tỏi — 1 gói'),
+  (6, 'Xốt Mayonnaise — 2 muỗng canh (24g)'),
+  (7, 'Chanh vàng — 1 trái'),
+  (8, 'Ớt sừng cắt nhỏ — 1/2 muỗng cà phê'),
+  (9, 'Rau húng lủi — 5g'),
+  (10, 'Dầu ăn — vừa đủ để chiên'),
+  (11, 'Muối, tiêu — nêm nếm')
 ) as v(position, name);
 
 -- ─── Các bước thực hiện ───
 delete from public.recipe_steps
-where recipe_id = (select id from public.recipes where slug = 'com-chien-duong-chau');
+where recipe_id = (select id from public.recipes where slug = 'ga-chien-vi-bo-toi');
 
 insert into public.recipe_steps (recipe_id, position, step)
-select (select id from public.recipes where slug = 'com-chien-duong-chau'), v.position, v.step
+select (select id from public.recipes where slug = 'ga-chien-vi-bo-toi'), v.position, v.step
 from (values
-  (1, 'Sơ chế nguyên liệu: cơm nấu chín để nguội (hoặc dùng cơm nguội qua đêm) rồi đánh cho tơi hạt. Trứng đập ra chén, đánh tan với một chút hạt nêm. Cà rốt gọt vỏ, thái hạt lựu rồi luộc sơ cùng đậu Hà Lan khoảng 2 phút, vớt ra để ráo. Xúc xích thái hạt lựu, hành lá thái nhỏ.'),
-  (2, 'Chiên trứng: đun nóng 1 muỗng canh dầu ăn trên lửa vừa, cho trứng vào đảo nhanh tay đến khi trứng vừa chín tơi thì trút ngay ra đĩa, tránh chiên quá khô.'),
-  (3, 'Xào nhân: cho nốt phần dầu ăn vào chảo, phi thơm tỏi băm. Cho xúc xích vào đảo khoảng 1 phút cho săn lại, tiếp theo cho cà rốt và đậu Hà Lan vào đảo đều.'),
-  (4, 'Chiên cơm: cho cơm vào chảo, tăng lửa lớn, đảo đều tay khoảng 3–4 phút cho hạt cơm săn và tơi. Nêm nước mắm và hạt nêm, đảo thêm 1 phút cho gia vị thấm đều.'),
-  (5, 'Hoàn thiện: cho trứng chiên trở lại chảo, đảo nhẹ cho quyện đều. Rắc hành lá và tiêu xay, tắt bếp. Múc cơm ra đĩa, dùng nóng sẽ ngon nhất.')
+  (1, 'Sơ chế: khứa nhẹ vài đường trên cánh gà để thấm gia vị, rửa sạch và để ráo. Xà lách cắt miếng vừa ăn, cà chua bi cắt đôi, xoài gọt vỏ cắt hạt lựu. Húng lủi lặt lấy lá.'),
+  (2, 'Trộn salad: cho xà lách, cà chua bi và xoài hạt lựu vào tô lớn, trộn đều và để riêng.'),
+  (3, 'Tẩm bột và chiên: đun nóng dầu ăn trong chảo sâu lòng. Xóc đều cánh gà với bột tẩm khô vị bơ tỏi sao cho phủ kín. Cho gà vào chiên đến khi chín vàng giòn, vớt ra để ráo dầu.'),
+  (4, 'Pha xốt: trộn đều xốt Mayonnaise với xoài hạt lựu cắt nhỏ, nước cốt chanh, vỏ chanh mài nhuyễn và ớt sừng cắt nhỏ.'),
+  (5, 'Trình bày: xếp gà chiên giòn và salad ra đĩa, rưới xốt mayonnaise lên trên. Dùng ngay khi còn nóng sẽ ngon nhất.')
 ) as v(position, step);
 
 commit;
