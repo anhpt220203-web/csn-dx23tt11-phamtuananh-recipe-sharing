@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 import type { JwtPayload } from '@supabase/supabase-js';
 
-import { ChevronsUpDown, Home, LogOut } from 'lucide-react';
+import { ChevronsUpDown, Home, LogOut, UserRound } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -44,6 +44,11 @@ export function PersonalAccountDropdown({
 
   paths: {
     home: string;
+    /**
+     * Đường dẫn tới trang hồ sơ cá nhân (ví dụ `/ho-so`).
+     * Khi không truyền, mục "Hồ sơ cá nhân" sẽ không hiện trong menu.
+     */
+    profile?: string;
   };
 
   features: {
@@ -147,6 +152,23 @@ export function PersonalAccountDropdown({
             <Trans i18nKey={'common.routes.home'} />
           </span>
         </DropdownMenuItem>
+
+        <If condition={Boolean(paths.profile)}>
+          <DropdownMenuItem
+            render={
+              <Link
+                className={'s-full flex cursor-pointer items-center space-x-2'}
+                href={paths.profile as string}
+              />
+            }
+          >
+            <UserRound className={'h-5'} />
+
+            <span>
+              <Trans i18nKey={'account.profilePage'} />
+            </span>
+          </DropdownMenuItem>
+        </If>
 
         <DropdownMenuSeparator />
 
