@@ -25,7 +25,19 @@ function ActionMessage({ message }: { message?: string }) {
   );
 }
 
-export function LockAccountButton({ userId }: { userId: string }) {
+type ProtectedActionButtonProps = {
+  userId: string;
+  /** Vô hiệu hóa nút (ví dụ: không cho thao tác lên chính mình). */
+  disabled?: boolean;
+  /** Tooltip hiển thị khi nút bị vô hiệu hóa. */
+  disabledTitle?: string;
+};
+
+export function LockAccountButton({
+  userId,
+  disabled,
+  disabledTitle,
+}: ProtectedActionButtonProps) {
   const [state, formAction, pending] = useActionState(
     lockAccountAction,
     ACCOUNT_ACTION_INITIAL,
@@ -39,7 +51,8 @@ export function LockAccountButton({ userId }: { userId: string }) {
         type={'submit'}
         size={'sm'}
         variant={'destructive'}
-        disabled={pending}
+        disabled={pending || disabled}
+        title={disabled ? disabledTitle : undefined}
         onClick={(event) => {
           if (
             !window.confirm(
@@ -121,7 +134,11 @@ export function GrantAdminButton({ userId }: { userId: string }) {
   );
 }
 
-export function RevokeAdminButton({ userId }: { userId: string }) {
+export function RevokeAdminButton({
+  userId,
+  disabled,
+  disabledTitle,
+}: ProtectedActionButtonProps) {
   const [state, formAction, pending] = useActionState(
     revokeAdminAction,
     ACCOUNT_ACTION_INITIAL,
@@ -135,7 +152,8 @@ export function RevokeAdminButton({ userId }: { userId: string }) {
         type={'submit'}
         size={'sm'}
         variant={'outline'}
-        disabled={pending}
+        disabled={pending || disabled}
+        title={disabled ? disabledTitle : undefined}
         onClick={(event) => {
           if (
             !window.confirm(
@@ -156,7 +174,11 @@ export function RevokeAdminButton({ userId }: { userId: string }) {
   );
 }
 
-export function DeleteAccountButton({ userId }: { userId: string }) {
+export function DeleteAccountButton({
+  userId,
+  disabled,
+  disabledTitle,
+}: ProtectedActionButtonProps) {
   const [state, formAction, pending] = useActionState(
     deleteAccountAction,
     ACCOUNT_ACTION_INITIAL,
@@ -170,7 +192,8 @@ export function DeleteAccountButton({ userId }: { userId: string }) {
         type={'submit'}
         size={'sm'}
         variant={'destructive'}
-        disabled={pending}
+        disabled={pending || disabled}
+        title={disabled ? disabledTitle : undefined}
         onClick={(event) => {
           if (
             !window.confirm(
