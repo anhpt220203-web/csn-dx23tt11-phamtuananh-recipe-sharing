@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 import Link from 'next/link';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
@@ -250,6 +251,9 @@ function StatCard({
 }
 
 export default async function AdminDashboardPage() {
+  // Trang admin đọc DB mỗi request, không prerender lúc build.
+  await connection();
+
   const stats = await getStats();
 
   return (
