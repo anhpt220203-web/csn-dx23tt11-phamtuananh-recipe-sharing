@@ -7,7 +7,7 @@ import { cn } from '@kit/ui/utils';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Tổng quan' },
-  { href: '/admin/tai-khoan', label: 'Tài khoản' },
+  { href: '/admin/user', label: 'Người dùng' },
   { href: '/admin/cong-thuc', label: 'Công thức' },
   { href: '/admin/danh-muc', label: 'Danh mục' },
   { href: '/admin/danh-gia', label: 'Đánh giá' },

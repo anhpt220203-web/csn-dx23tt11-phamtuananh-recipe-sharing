@@ -19,7 +19,10 @@ import { Label } from '@kit/ui/label';
 import type { RecipeSchema } from '~/lib/recipes/database';
 
 import {
+  DeleteAccountButton,
+  GrantAdminButton,
   LockAccountButton,
+  RevokeAdminButton,
   UnlockAccountButton,
 } from './_components/account-actions';
 
@@ -135,7 +138,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
             <Button
               nativeButton={false}
               variant={'outline'}
-              render={<Link href={'/admin/tai-khoan'}>Xóa lọc</Link>}
+              render={<Link href={'/admin/user'}>Xóa lọc</Link>}
             />
           )}
         </div>
@@ -191,7 +194,17 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                     'flex flex-wrap items-center justify-between gap-3 pt-0'
                   }
                 >
-                  <dl className={'text-muted-foreground text-xs'}>
+                  <dl className={'text-muted-foreground space-y-1 text-xs'}>
+                    <div className={'flex gap-1'}>
+                      <dt>Vai trò:</dt>
+                      <dd>{admin ? 'Quản trị viên' : 'Người dùng'}</dd>
+                    </div>
+
+                    <div className={'flex gap-1'}>
+                      <dt>Trạng thái:</dt>
+                      <dd>{banned ? 'Đã khóa' : 'Hoạt động'}</dd>
+                    </div>
+
                     <div className={'flex gap-1'}>
                       <dt>Tạo lúc:</dt>
                       <dd>{formatDateTime(user.created_at)}</dd>
@@ -203,12 +216,22 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                     </div>
                   </dl>
 
-                  {!admin &&
-                    (banned ? (
-                      <UnlockAccountButton userId={user.id} />
+                  <div className={'flex flex-wrap gap-2'}>
+                    {admin ? (
+                      <RevokeAdminButton userId={user.id} />
                     ) : (
-                      <LockAccountButton userId={user.id} />
-                    ))}
+                      <GrantAdminButton userId={user.id} />
+                    )}
+
+                    {!admin &&
+                      (banned ? (
+                        <UnlockAccountButton userId={user.id} />
+                      ) : (
+                        <LockAccountButton userId={user.id} />
+                      ))}
+
+                    <DeleteAccountButton userId={user.id} />
+                  </div>
                 </CardContent>
               </Card>
             );
