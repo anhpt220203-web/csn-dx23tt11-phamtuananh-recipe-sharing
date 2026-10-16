@@ -6,6 +6,7 @@ import {
   getCategoryBySlug,
   getRecipesByCategorySlug,
 } from '~/lib/recipes/queries';
+import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
 
 import { RecipeCard } from '~/components/recipes/recipe-card';
 
@@ -49,6 +50,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   const recipes = await getRecipesByCategorySlug(slug);
 
+  const favoriteIds = await getFavoriteRecipeIds(
+    recipes.map((recipe) => recipe.id),
+  );
+
   return (
     <div>
       <SitePageHeader
@@ -74,7 +79,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               className={'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'}
             >
               {recipes.map((recipe) => (
-                <RecipeCard key={recipe.slug} recipe={recipe} />
+                <RecipeCard
+                  key={recipe.slug}
+                  recipe={recipe}
+                  initialFavorited={favoriteIds.has(recipe.id)}
+                />
               ))}
             </div>
           </>

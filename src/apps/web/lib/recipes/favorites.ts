@@ -114,6 +114,38 @@ export async function isRecipeFavorited(recipeId: number): Promise<boolean> {
 }
 
 /**
+ * Tập ID công thức đã được yêu thích trong một danh sách ID cho trước.
+ * Dùng để hiển thị trạng thái yêu thích ban đầu trên các thẻ công thức
+ * (trang chủ, danh mục, tìm kiếm) mà không gây truy vấn N+1.
+ * Trả về tập rỗng khi chưa đăng nhập hoặc danh sách rỗng.
+ */
+export async function getFavoriteRecipeIds(
+  recipeIds: number[],
+): Promise<Set<number>> {
+  const userId = await getCurrentUserId();
+
+  if (!userId || recipeIds.length === 0) {
+    return new Set();
+  }
+
+  const client = getClient();
+
+  const { data, error } = await client
+    .from('favorites')
+    .select('recipe_id')
+    .eq('user_id', userId)
+    .in('recipe_id', recipeIds);
+
+  if (error) {
+    throw new Error(
+      `Không kiểm tra được trạng thái yêu thích: ${error.message}`,
+    );
+  }
+
+  return new Set((data ?? []).map((row) => row.recipe_id));
+}
+
+/**
  * Danh sách công thức yêu thích của người dùng hiện tại, mới nhất trước.
  * Trả về mảng rỗng khi chưa đăng nhập.
  */

@@ -20,6 +20,8 @@ const INTERNAL_PACKAGES = [
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
+  /** Standalone output để đóng Docker image gọn nhẹ (docker/Dockerfile). */
+  output: 'standalone',
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: INTERNAL_PACKAGES,
   images: {

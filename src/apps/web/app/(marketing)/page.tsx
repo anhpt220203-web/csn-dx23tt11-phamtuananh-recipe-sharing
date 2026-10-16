@@ -19,6 +19,7 @@ import { BannerCarousel } from '~/components/content/banner-carousel';
 import appConfig from '~/config/app.config';
 import { getCategories, getLatestRecipes } from '~/lib/recipes/queries';
 import { getActiveBanners, getPublishedTips } from '~/lib/content/queries';
+import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
 
 export const metadata: Metadata = {
   title: 'Trang chủ',
@@ -65,6 +66,11 @@ export default async function HomePage() {
     getActiveBanners(),
     getPublishedTips(2),
   ]);
+
+  // Trạng thái yêu thích ban đầu cho nút trái tim trên thẻ công thức.
+  const favoriteIds = await getFavoriteRecipeIds(
+    latestRecipes.map((recipe) => recipe.id),
+  );
 
   return (
     <div className={'flex flex-col'}>
@@ -192,7 +198,11 @@ export default async function HomePage() {
               className={'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'}
             >
               {latestRecipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  initialFavorited={favoriteIds.has(recipe.id)}
+                />
               ))}
             </div>
           )}
