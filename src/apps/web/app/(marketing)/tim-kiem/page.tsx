@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { getCategories, parseSearchSort, searchRecipes } from '~/lib/recipes/queries';
+import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
 
 import { RecipeCard } from '~/components/recipes/recipe-card';
 import { SearchForm } from '~/components/recipes/search-form';
@@ -26,6 +27,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const categories = await getCategories();
 
   const results = q ? await searchRecipes({ q, categorySlug, sort }) : [];
+
+  const favoriteIds = await getFavoriteRecipeIds(
+    results.map((recipe) => recipe.id),
+  );
 
   const activeCategory = categories.find(
     (category) => category.slug === categorySlug,
@@ -72,6 +77,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     key={recipe.slug}
                     recipe={recipe}
                     rating={recipe.rating}
+                    initialFavorited={favoriteIds.has(recipe.id)}
                   />
                 ))}
               </div>
