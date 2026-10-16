@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 import { notFound } from 'next/navigation';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
@@ -20,6 +21,9 @@ type EditRecipePageProps = {
 };
 
 export default async function EditRecipePage({ params }: EditRecipePageProps) {
+  // Trang admin đọc DB mỗi request, không prerender lúc build.
+  await connection();
+
   const { id: idParam } = await params;
   const id = Number(idParam);
 
@@ -32,12 +36,12 @@ export default async function EditRecipePage({ params }: EditRecipePageProps) {
   const [{ data: categories }, { data: recipe }] = await Promise.all([
     admin
       .from('categories')
-      .select('id,name,slug,description')
+      .select('id,name,slug,description,dimension')
       .order('id', { ascending: true }),
     admin
       .from('recipes')
       .select(
-        'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,difficulty,created_by,categories(name,slug),recipe_ingredients(name,position),recipe_steps(step,position)',
+        'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,prep_time,difficulty,created_by,calories,protein_g,carbs_g,sugar_g,fat_g,fiber_g,categories(name,slug),recipe_ingredients(name,position),recipe_steps(step,position)',
       )
       .eq('id', id)
       .maybeSingle(),
@@ -77,7 +81,14 @@ export default async function EditRecipePage({ params }: EditRecipePageProps) {
     source_url: recipe.source_url,
     servings: recipe.servings,
     cook_time: recipe.cook_time,
+    prep_time: recipe.prep_time ?? null,
     difficulty: recipe.difficulty,
+    calories: recipe.calories == null ? null : Number(recipe.calories),
+    protein_g: recipe.protein_g == null ? null : Number(recipe.protein_g),
+    carbs_g: recipe.carbs_g == null ? null : Number(recipe.carbs_g),
+    sugar_g: recipe.sugar_g == null ? null : Number(recipe.sugar_g),
+    fat_g: recipe.fat_g == null ? null : Number(recipe.fat_g),
+    fiber_g: recipe.fiber_g == null ? null : Number(recipe.fiber_g),
     created_by: recipe.created_by,
     category_name:
       (recipe.categories as { name?: string } | null)?.name ?? '',

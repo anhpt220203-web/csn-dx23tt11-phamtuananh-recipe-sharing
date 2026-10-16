@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
 
@@ -70,6 +71,9 @@ type AccountsPageProps = {
 };
 
 export default async function AccountsPage({ searchParams }: AccountsPageProps) {
+  // Trang admin đọc DB mỗi request, không prerender lúc build.
+  await connection();
+
   const params = await searchParams;
   const query = (params.q ?? '').trim().toLowerCase();
 

@@ -22,6 +22,11 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif
 
 const DIFFICULTIES = ['Dễ', 'Trung bình', 'Khó'] as const;
 
+const STATUSES = ['draft', 'published'] as const;
+
+/** Trạng thái xuất bản hợp lệ của công thức. */
+type RecipeStatus = (typeof STATUSES)[number];
+
 type AdminClient = ReturnType<typeof getSupabaseServerAdminClient<RecipeSchema>>;
 
 /**
@@ -118,6 +123,22 @@ function parseNonNegativeInt(value: FormDataEntryValue | null): number | null {
   return parsed;
 }
 
+function parseNonNegativeNumber(
+  value: FormDataEntryValue | null,
+): number | null {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return parsed;
+}
+
 /**
  * Thêm mới / cập nhật công thức (kèm nguyên liệu, các bước và ảnh đại diện).
  * Form gửi `id` khi sửa; không có `id` là thêm mới.
@@ -161,6 +182,13 @@ export async function saveRecipeAction(
     const sourceUrl = String(formData.get('source_url') ?? '').trim();
     const servings = parsePositiveInt(formData.get('servings'));
     const cookTime = parseNonNegativeInt(formData.get('cook_time'));
+    const prepTime = parseNonNegativeInt(formData.get('prep_time'));
+    const calories = parseNonNegativeNumber(formData.get('calories'));
+    const proteinG = parseNonNegativeNumber(formData.get('protein_g'));
+    const carbsG = parseNonNegativeNumber(formData.get('carbs_g'));
+    const sugarG = parseNonNegativeNumber(formData.get('sugar_g'));
+    const fatG = parseNonNegativeNumber(formData.get('fat_g'));
+    const fiberG = parseNonNegativeNumber(formData.get('fiber_g'));
 
     const difficultyRaw = String(formData.get('difficulty') ?? '');
     const difficulty = (
@@ -168,6 +196,20 @@ export async function saveRecipeAction(
     ).includes(difficultyRaw)
       ? difficultyRaw
       : 'Trung bình';
+
+    // Trạng thái chỉ chấp nhận 2 giá trị hợp lệ; mặc định là Nháp để
+    // công thức mới không bị public ngay lập tức.
+    const statusRaw = String(formData.get('status') ?? '').trim();
+
+    if (
+      statusRaw.length > 0 &&
+      !(STATUSES as readonly string[]).includes(statusRaw)
+    ) {
+      return { ok: false, message: 'Trạng thái công thức không hợp lệ.' };
+    }
+
+    const status: RecipeStatus =
+      statusRaw === 'published' ? 'published' : 'draft';
 
     const ingredients = splitLines(formData.get('ingredients'));
     const steps = splitLines(formData.get('steps'));
@@ -198,7 +240,15 @@ export async function saveRecipeAction(
       source_url: sourceUrl.length > 0 ? sourceUrl : null,
       servings,
       cook_time: cookTime,
+      prep_time: prepTime,
+      calories,
+      protein_g: proteinG,
+      carbs_g: carbsG,
+      sugar_g: sugarG,
+      fat_g: fatG,
+      fiber_g: fiberG,
       difficulty,
+      status,
     };
 
     let recipeId = id;

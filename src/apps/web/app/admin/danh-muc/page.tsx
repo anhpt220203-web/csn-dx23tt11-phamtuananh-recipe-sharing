@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
@@ -13,11 +14,14 @@ export const metadata: Metadata = {
 };
 
 export default async function CategoriesAdminPage() {
+  // Trang admin đọc DB mỗi request, không prerender lúc build.
+  await connection();
+
   const admin = getSupabaseServerAdminClient<RecipeSchema>();
 
   const { data, error } = await admin
     .from('categories')
-    .select('id,name,slug,description')
+    .select('id,name,slug,description,dimension')
     .order('id', { ascending: true });
 
   if (error) {

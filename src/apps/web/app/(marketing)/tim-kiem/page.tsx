@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
-import { getCategories, searchRecipes } from '~/lib/recipes/queries';
+import { getCategories, parseSearchSort, searchRecipes } from '~/lib/recipes/queries';
+import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
 
 import { RecipeCard } from '~/components/recipes/recipe-card';
 import { SearchForm } from '~/components/recipes/search-form';
@@ -14,17 +15,22 @@ export const metadata: Metadata = {
 };
 
 type SearchPageProps = {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; sort?: string }>;
 };
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const q = (params.q ?? '').trim();
   const categorySlug = params.category || undefined;
+  const sort = parseSearchSort(params.sort);
 
   const categories = await getCategories();
 
-  const results = q ? await searchRecipes({ q, categorySlug }) : [];
+  const results = q ? await searchRecipes({ q, categorySlug, sort }) : [];
+
+  const favoriteIds = await getFavoriteRecipeIds(
+    results.map((recipe) => recipe.id),
+  );
 
   const activeCategory = categories.find(
     (category) => category.slug === categorySlug,
@@ -42,6 +48,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           categories={categories}
           defaultQuery={q}
           defaultCategory={categorySlug ?? 'all'}
+          defaultSort={sort}
         />
 
         <div className={'mt-8'}>
@@ -66,7 +73,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 className={'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'}
               >
                 {results.map((recipe) => (
-                  <RecipeCard key={recipe.slug} recipe={recipe} />
+                  <RecipeCard
+                    key={recipe.slug}
+                    recipe={recipe}
+                    rating={recipe.rating}
+                    initialFavorited={favoriteIds.has(recipe.id)}
+                  />
                 ))}
               </div>
             </>

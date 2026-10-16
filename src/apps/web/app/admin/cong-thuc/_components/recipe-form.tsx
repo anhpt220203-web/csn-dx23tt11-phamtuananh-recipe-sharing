@@ -18,6 +18,11 @@ import { RECIPE_ACTION_INITIAL, saveRecipeAction } from '../actions';
 
 const DIFFICULTIES = ['Dễ', 'Trung bình', 'Khó'];
 
+const STATUSES = [
+  { value: 'draft', label: 'Nháp' },
+  { value: 'published', label: 'Xuất bản' },
+];
+
 type RecipeFormProps = {
   categories: CategoryRow[];
   initial?: RecipeDetail | null;
@@ -124,6 +129,27 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
         </div>
 
         <div className={'grid gap-1.5'}>
+          <Label htmlFor={'status'}>Trạng thái</Label>
+
+          <NativeSelect
+            id={'status'}
+            name={'status'}
+            defaultValue={initial?.status === 'published' ? 'published' : 'draft'}
+            className={'w-full'}
+          >
+            {STATUSES.map((status) => (
+              <NativeSelectOption key={status.value} value={status.value}>
+                {status.label}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+
+          <p className={'text-muted-foreground text-xs'}>
+            Bài ở trạng thái Nháp sẽ không hiển thị trên trang công khai.
+          </p>
+        </div>
+
+        <div className={'grid gap-1.5'}>
           <Label htmlFor={'difficulty'}>Độ khó</Label>
 
           <NativeSelect
@@ -167,6 +193,52 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
               defaultValue={initial?.cook_time ?? ''}
               placeholder={'VD: 20'}
             />
+          </div>
+
+          <div className={'grid gap-1.5'}>
+            <Label htmlFor={'prep_time'}>Thời gian chuẩn bị (phút)</Label>
+
+            <Input
+              id={'prep_time'}
+              name={'prep_time'}
+              type={'number'}
+              min={0}
+              inputMode={'numeric'}
+              defaultValue={initial?.prep_time ?? ''}
+              placeholder={'VD: 10'}
+            />
+          </div>
+        </div>
+
+        <div className={'grid gap-1.5 sm:col-span-2'}>
+          <Label>Giá trị dinh dưỡng (để trống nếu chưa có)</Label>
+
+          <div className={'grid grid-cols-2 gap-4 sm:grid-cols-3'}>
+            {[
+              { id: 'calories', label: 'Năng lượng (kcal)' },
+              { id: 'protein_g', label: 'Chất đạm (g)' },
+              { id: 'carbs_g', label: 'Tinh bột (g)' },
+              { id: 'sugar_g', label: 'Đường (g)' },
+              { id: 'fat_g', label: 'Chất béo (g)' },
+              { id: 'fiber_g', label: 'Chất xơ (g)' },
+            ].map((field) => (
+              <div key={field.id} className={'grid gap-1.5'}>
+                <Label htmlFor={field.id}>{field.label}</Label>
+
+                <Input
+                  id={field.id}
+                  name={field.id}
+                  type={'number'}
+                  min={0}
+                  step={'0.01'}
+                  inputMode={'decimal'}
+                  defaultValue={
+                    initial?.[field.id as keyof typeof initial] ?? ''
+                  }
+                  placeholder={'0'}
+                />
+              </div>
+            ))}
           </div>
         </div>
 

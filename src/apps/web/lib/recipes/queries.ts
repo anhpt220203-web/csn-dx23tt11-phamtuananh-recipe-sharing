@@ -6,8 +6,11 @@ import {
   type CategoryRow,
   type RatingSummary,
   type RecipeDetail,
+  type RecipeQuestionRow,
   type RecipeSchema,
+  type RecipeSearchRow,
   type RecipeWithCategory,
+  type TagRow,
 } from './database';
 
 function getClient() {
@@ -26,8 +29,15 @@ type RecipeQueryRow = {
   source_url: string | null;
   servings: number | null;
   cook_time: number | null;
+  prep_time: number | null;
   difficulty: string | null;
   created_by: string | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  sugar_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
   categories: { name: string; slug: string } | null;
 };
 
@@ -44,8 +54,15 @@ function toRecipeWithCategory(row: RecipeQueryRow): RecipeWithCategory {
     source_url,
     servings,
     cook_time,
+    prep_time,
     difficulty,
     created_by,
+    calories,
+    protein_g,
+    carbs_g,
+    sugar_g,
+    fat_g,
+    fiber_g,
   } = row;
 
   return {
@@ -60,15 +77,99 @@ function toRecipeWithCategory(row: RecipeQueryRow): RecipeWithCategory {
     source_url,
     servings,
     cook_time,
+    prep_time,
     difficulty,
     created_by,
+    // PostgREST có thể trả numeric dạng string — ép về number.
+    calories: calories === null ? null : Number(calories),
+    protein_g: protein_g === null ? null : Number(protein_g),
+    carbs_g: carbs_g === null ? null : Number(carbs_g),
+    sugar_g: sugar_g === null ? null : Number(sugar_g),
+    fat_g: fat_g === null ? null : Number(fat_g),
+    fiber_g: fiber_g === null ? null : Number(fiber_g),
     category_name: row.categories?.name ?? '',
     category_slug: row.categories?.slug ?? '',
   };
 }
 
 const RECIPE_COLUMNS =
-  'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,difficulty,created_by,categories(name,slug)';
+  'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,prep_time,difficulty,created_by,calories,protein_g,carbs_g,sugar_g,fat_g,fiber_g,created_at,categories(name,slug)';
+
+/**
+ * Cách sắp xếp kết quả tìm kiếm (FR3).
+ * - 'moi-nhat': công thức mới nhất trước.
+ * - 'danh-gia-cao': điểm đánh giá trung bình cao nhất trước.
+ */
+export type SearchSort = 'moi-nhat' | 'danh-gia-cao';
+
+/**
+ * Chuẩn hoá giá trị sort từ query param — giá trị lạ về 'moi-nhat'.
+ */
+export function parseSearchSort(value: string | undefined): SearchSort {
+  return value === 'danh-gia-cao' ? 'danh-gia-cao' : 'moi-nhat';
+}
+
+/**
+ * Kết quả tìm kiếm: công thức kèm điểm đánh giá tổng hợp (để hiển thị
+ * và sắp xếp theo 'danh-gia-cao' mà không cần query thêm).
+ */
+export type RecipeSearchResult = RecipeWithCategory & {
+  rating: RatingSummary;
+};
+
+function toRecipeSearchResult(row: RecipeSearchRow): RecipeSearchResult {
+  const {
+    id,
+    category_id,
+    title,
+    slug,
+    description,
+    image_url,
+    status,
+    source_name,
+    source_url,
+    servings,
+    cook_time,
+    prep_time,
+    difficulty,
+    created_by,
+    category_name,
+    category_slug,
+    rating_average,
+    rating_count,
+  } = row;
+
+  return {
+    id,
+    category_id,
+    title,
+    slug,
+    description,
+    image_url,
+    status,
+    source_name,
+    source_url,
+    servings,
+    cook_time,
+    prep_time,
+    difficulty,
+    created_by,
+    calories: null,
+    protein_g: null,
+    carbs_g: null,
+    sugar_g: null,
+    fat_g: null,
+    fiber_g: null,
+    category_name,
+    category_slug,
+    // PostgREST có thể trả numeric/bigint dạng string — ép về number
+    // để `rating.average.toFixed(1)` trong RecipeCard không crash.
+    rating: {
+      average: rating_average === null ? null : Number(rating_average),
+      count: Number(rating_count),
+    },
+  };
+}
 
 /**
  * Danh sách nhóm món, sắp theo thứ tự id.
@@ -78,7 +179,7 @@ export async function getCategories(): Promise<CategoryRow[]> {
 
   const { data, error } = await client
     .from('categories')
-    .select('id,name,slug,description')
+    .select('id,name,slug,description,dimension')
     .order('id', { ascending: true });
 
   if (error) {
@@ -98,7 +199,7 @@ export async function getCategoryBySlug(
 
   const { data, error } = await client
     .from('categories')
-    .select('id,name,slug,description')
+    .select('id,name,slug,description,dimension')
     .eq('slug', slug)
     .maybeSingle();
 
@@ -121,6 +222,7 @@ export async function getRecipesByCategorySlug(
     .from('recipes')
     .select(RECIPE_COLUMNS)
     .eq('categories.slug', slug)
+    .eq('status', 'published')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -133,13 +235,18 @@ export async function getRecipesByCategorySlug(
 }
 
 /**
- * Tìm kiếm công thức theo tên món hoặc mô tả (không phân biệt hoa thường).
- * Có thể giới hạn theo slug danh mục. Trả về mảng rỗng nếu từ khóa trống.
+ * Tìm kiếm công thức theo tên món, mô tả, TÊN NGUYÊN LIỆU hoặc
+ * TÊN NHÓM MÓN (không phân biệt hoa thường, không phân biệt dấu tiếng Việt
+ * nhờ RPC `public.search_recipes` dùng kit.unaccent trên DB).
+ * Có thể giới hạn theo slug danh mục và sắp xếp kết quả.
+ * Chỉ trả về công thức đã xuất bản (status='published').
+ * Trả về mảng rỗng nếu từ khóa trống.
  */
 export async function searchRecipes(params: {
   q: string;
   categorySlug?: string;
-}): Promise<RecipeWithCategory[]> {
+  sort?: SearchSort;
+}): Promise<RecipeSearchResult[]> {
   const q = params.q.trim();
 
   if (!q) {
@@ -148,30 +255,17 @@ export async function searchRecipes(params: {
 
   const client = getClient();
 
-  // Escape các ký tự đặc biệt của LIKE để từ khóa được hiểu đúng.
-  const escaped = q.replace(/[%_\\]/g, (char) => `\\${char}`);
-  const pattern = `%${escaped}%`;
-
-  let query = client
-    .from('recipes')
-    .select(RECIPE_COLUMNS)
-    .or(`title.ilike.${pattern},description.ilike.${pattern}`);
-
-  if (params.categorySlug) {
-    query = query.eq('categories.slug', params.categorySlug);
-  }
-
-  const { data, error } = await query.order('created_at', {
-    ascending: false,
+  const { data, error } = await client.rpc('search_recipes', {
+    p_query: q,
+    p_category_slug: params.categorySlug ?? null,
+    p_sort: params.sort ?? 'moi-nhat',
   });
 
   if (error) {
     throw new Error(`Tìm kiếm công thức thất bại: ${error.message}`);
   }
 
-  return ((data ?? []) as unknown as RecipeQueryRow[]).map(
-    toRecipeWithCategory,
-  );
+  return ((data ?? []) as RecipeSearchRow[]).map(toRecipeSearchResult);
 }
 
 /**
@@ -189,6 +283,7 @@ export async function getRecipeBySlug(
       `${RECIPE_COLUMNS},recipe_ingredients(name,position),recipe_steps(step,position)`,
     )
     .eq('slug', slug)
+    .eq('status', 'published')
     .order('position', {
       referencedTable: 'recipe_ingredients',
       ascending: true,
@@ -373,4 +468,148 @@ export async function getUserRating(
   }
 
   return data?.rating ?? null;
+}
+
+/** Đánh giá của một người dùng kèm tên và slug công thức — dùng cho trang hồ sơ (FR4). */
+export type MyRatingWithRecipe = {
+  recipe_id: number;
+  rating: number;
+  created_at: string;
+  title: string;
+  slug: string;
+};
+
+/**
+ * Danh sách đánh giá của một người dùng, mới nhất trước,
+ * kèm tiêu đề và slug công thức để hiển thị và liên kết.
+ */
+export async function getMyRatingsWithRecipes(
+  userId: string,
+): Promise<MyRatingWithRecipe[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from('ratings')
+    .select('recipe_id,rating,created_at,recipes(title,slug)')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Không tải được đánh giá của bạn: ${error.message}`);
+  }
+
+  return (data ?? []).flatMap((row) => {
+    const recipe = row.recipes as unknown as {
+      title: string;
+      slug: string;
+    } | null;
+
+    if (!recipe) {
+      return [];
+    }
+
+    return [
+      {
+        recipe_id: row.recipe_id,
+        rating: row.rating,
+        created_at: row.created_at,
+        title: recipe.title,
+        slug: recipe.slug,
+      },
+    ];
+  });
+}
+
+/**
+ * Nhóm danh mục theo chiều (dimension) cho trang danh sách công thức.
+ */
+export async function getCategoriesByDimension(): Promise<
+  Record<string, CategoryRow[]>
+> {
+  const categories = await getCategories();
+  const grouped: Record<string, CategoryRow[]> = {};
+
+  for (const category of categories) {
+    const dim = category.dimension || 'nhom-mon';
+
+    if (!grouped[dim]) {
+      grouped[dim] = [];
+    }
+
+    grouped[dim].push(category);
+  }
+
+  return grouped;
+}
+
+/**
+ * Danh sách tags chủ đề ("Tìm món").
+ */
+export async function getTags(): Promise<TagRow[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from('tags')
+    .select('id,name,slug,created_at')
+    .order('id', { ascending: true });
+
+  if (error) {
+    throw new Error(`Không tải được tags: ${error.message}`);
+  }
+
+  return (data ?? []) as TagRow[];
+}
+
+/**
+ * Công thức theo tag slug.
+ */
+export async function getRecipesByTagSlug(
+  tagSlug: string,
+): Promise<RecipeWithCategory[]> {
+  const client = getClient();
+
+  const { data: tag, error: tagError } = await client
+    .from('tags')
+    .select('id')
+    .eq('slug', tagSlug)
+    .maybeSingle();
+
+  if (tagError || !tag) {
+    return [];
+  }
+
+  const { data, error } = await client
+    .from('recipe_tags')
+    .select(`recipes(${RECIPE_COLUMNS})`)
+    .eq('tag_id', (tag as { id: number }).id);
+
+  if (error) {
+    throw new Error(`Không tải được công thức theo tag: ${error.message}`);
+  }
+
+  return ((data ?? []) as unknown as { recipes: RecipeQueryRow }[])
+    .map((row) => row.recipes)
+    .filter(Boolean)
+    .map(toRecipeWithCategory);
+}
+
+/**
+ * Danh sách câu hỏi của một công thức (kèm câu trả lời nếu có).
+ */
+export async function getRecipeQuestions(
+  recipeId: number,
+): Promise<RecipeQuestionRow[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from('recipe_questions')
+    .select('id,recipe_id,user_id,question,answer,answered_at,created_at')
+    .eq('recipe_id', recipeId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Không tải được câu hỏi: ${error.message}`);
+  }
+
+  return (data ?? []) as RecipeQuestionRow[];
 }

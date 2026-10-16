@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { ChefHat, Clock, Star, Users } from 'lucide-react';
+import { ChefHat, Clock, Star, Timer, Users } from 'lucide-react';
 
 import { Badge } from '@kit/ui/badge';
 import {
@@ -11,6 +11,8 @@ import {
   CardTitle,
 } from '@kit/ui/card';
 import { cn } from '@kit/ui/utils';
+
+import { RecipeCardFavoriteButton } from './recipe-card-favorite-button';
 
 import type { RatingSummary, RecipeWithCategory } from '~/lib/recipes/database';
 
@@ -32,41 +34,55 @@ function formatCookTime(minutes: number | null): string {
 type RecipeCardProps = {
   recipe: RecipeWithCategory;
   rating?: RatingSummary;
+  /** Trạng thái yêu thích ban đầu của người dùng hiện tại. */
+  initialFavorited?: boolean;
 };
 
 /**
  * Thẻ công thức dùng cho danh sách (trang chủ, danh mục, yêu thích…).
  */
-export function RecipeCard({ recipe, rating }: RecipeCardProps) {
+export function RecipeCard({
+  recipe,
+  rating,
+  initialFavorited = false,
+}: RecipeCardProps) {
   const detailHref = `/cong-thuc/${recipe.slug}`;
 
   return (
     <Card className={'flex h-full flex-col transition-shadow hover:shadow-md'}>
       <CardHeader className={'p-0'}>
-        <Link
-          href={detailHref}
-          className={'block overflow-hidden rounded-t-xl'}
-          aria-label={`Xem công thức ${recipe.title}`}
-        >
-          {recipe.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={recipe.image_url}
-              alt={recipe.title}
-              loading={'lazy'}
-              className={'aspect-[16/9] w-full object-cover'}
-            />
-          ) : (
-            <div
-              className={cn(
-                'bg-muted flex aspect-[16/9] w-full items-center justify-center',
-              )}
-              aria-hidden={true}
-            >
-              <ChefHat className={'text-muted-foreground h-12 w-12'} />
-            </div>
-          )}
-        </Link>
+        <div className={'relative'}>
+          <Link
+            href={detailHref}
+            className={'block overflow-hidden rounded-t-xl'}
+            aria-label={`Xem công thức ${recipe.title}`}
+          >
+            {recipe.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={recipe.image_url}
+                alt={recipe.title}
+                loading={'lazy'}
+                className={'aspect-[16/9] w-full object-cover'}
+              />
+            ) : (
+              <div
+                className={cn(
+                  'bg-muted flex aspect-[16/9] w-full items-center justify-center',
+                )}
+                aria-hidden={true}
+              >
+                <ChefHat className={'text-muted-foreground h-12 w-12'} />
+              </div>
+            )}
+          </Link>
+
+          <RecipeCardFavoriteButton
+            recipeId={recipe.id}
+            initialFavorited={initialFavorited}
+            className={'absolute top-2 right-2'}
+          />
+        </div>
       </CardHeader>
 
       <CardContent className={'flex flex-1 flex-col gap-2 pt-4'}>
@@ -95,11 +111,22 @@ export function RecipeCard({ recipe, rating }: RecipeCardProps) {
         ) : null}
       </CardContent>
 
-      <CardFooter className={'text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-sm'}>
+      <CardFooter
+        className={
+          'text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-sm'
+        }
+      >
         <span className={'inline-flex items-center gap-1'}>
           <Clock className={'h-4 w-4'} aria-hidden={true} />
           {formatCookTime(recipe.cook_time)}
         </span>
+
+        {recipe.prep_time ? (
+          <span className={'inline-flex items-center gap-1'}>
+            <Timer className={'h-4 w-4'} aria-hidden={true} />
+            {formatCookTime(recipe.prep_time)} chuẩn bị
+          </span>
+        ) : null}
 
         {recipe.servings ? (
           <span className={'inline-flex items-center gap-1'}>

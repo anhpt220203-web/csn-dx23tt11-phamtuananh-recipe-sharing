@@ -73,6 +73,23 @@ export function CreateCategoryForm() {
         />
       </div>
 
+      <div className={'grid gap-1.5'}>
+        <Label htmlFor={'new-dimension'}>Chiều phân loại</Label>
+
+        <select
+          id={'new-dimension'}
+          name={'dimension'}
+          defaultValue={'nhom-mon'}
+          className={'border-input bg-background rounded-md border px-3 py-2 text-sm'}
+        >
+          <option value={'nhom-mon'}>Nhóm món</option>
+          <option value={'nguyen-lieu-chinh'}>Nguyên liệu chính</option>
+          <option value={'phuong-phap-che-bien'}>Phương pháp chế biến</option>
+          <option value={'bua-an'}>Bữa ăn</option>
+          <option value={'phong-cach-am-thuc'}>Phong cách ẩm thực</option>
+        </select>
+      </div>
+
       <div className={'flex items-end'}>
         <Button type={'submit'} disabled={pending} className={'w-full'}>
           {pending ? 'Đang thêm...' : 'Thêm danh mục'}
@@ -174,6 +191,23 @@ export function CategoryRowActions({ category }: { category: CategoryRow }) {
               maxLength={200}
               defaultValue={category.description ?? ''}
             />
+          </div>
+
+          <div className={'grid gap-1.5'}>
+            <Label htmlFor={`dim-${category.id}`}>Chiều phân loại</Label>
+
+            <select
+              id={`dim-${category.id}`}
+              name={'dimension'}
+              defaultValue={category.dimension ?? 'nhom-mon'}
+              className={'border-input bg-background rounded-md border px-3 py-2 text-sm'}
+            >
+              <option value={'nhom-mon'}>Nhóm món</option>
+              <option value={'nguyen-lieu-chinh'}>Nguyên liệu chính</option>
+              <option value={'phuong-phap-che-bien'}>Phương pháp chế biến</option>
+              <option value={'bua-an'}>Bữa ăn</option>
+              <option value={'phong-cach-am-thuc'}>Phong cách ẩm thực</option>
+            </select>
           </div>
 
           <div className={'sm:col-span-3'}>
