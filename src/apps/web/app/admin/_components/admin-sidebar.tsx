@@ -22,7 +22,7 @@ import { adminNavigationConfig } from '~/config/admin-navigation.config';
 import { requireUserInServerComponent } from '~/lib/server/require-user-in-server-component';
 
 /**
- * Sidebar của khu vực quản trị, theo đúng pattern của trang /home
+ * Sidebar của khu vực quản trị
  * (SidebarProvider + Page style="sidebar" ở layout).
  *
  * Phần điều hướng không phụ thuộc user nên prerender được; chỉ dropdown
