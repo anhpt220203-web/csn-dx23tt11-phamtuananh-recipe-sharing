@@ -437,3 +437,53 @@ export async function getUserRating(
 
   return data?.rating ?? null;
 }
+
+/** Đánh giá của một người dùng kèm tên và slug công thức — dùng cho trang hồ sơ (FR4). */
+export type MyRatingWithRecipe = {
+  recipe_id: number;
+  rating: number;
+  created_at: string;
+  title: string;
+  slug: string;
+};
+
+/**
+ * Danh sách đánh giá của một người dùng, mới nhất trước,
+ * kèm tiêu đề và slug công thức để hiển thị và liên kết.
+ */
+export async function getMyRatingsWithRecipes(
+  userId: string,
+): Promise<MyRatingWithRecipe[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from('ratings')
+    .select('recipe_id,rating,created_at,recipes(title,slug)')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Không tải được đánh giá của bạn: ${error.message}`);
+  }
+
+  return (data ?? []).flatMap((row) => {
+    const recipe = row.recipes as unknown as {
+      title: string;
+      slug: string;
+    } | null;
+
+    if (!recipe) {
+      return [];
+    }
+
+    return [
+      {
+        recipe_id: row.recipe_id,
+        rating: row.rating,
+        created_at: row.created_at,
+        title: recipe.title,
+        slug: recipe.slug,
+      },
+    ];
+  });
+}
