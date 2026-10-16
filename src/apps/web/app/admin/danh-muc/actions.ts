@@ -18,10 +18,23 @@ function getAdmin() {
   return getSupabaseServerAdminClient<RecipeSchema>();
 }
 
+const VALID_DIMENSIONS = [
+  'nhom-mon',
+  'nguyen-lieu-chinh',
+  'phuong-phap-che-bien',
+  'bua-an',
+  'phong-cach-am-thuc',
+] as const;
+
 type ParsedCategory =
   | {
       ok: true;
-      data: { name: string; slug: string; description: string | null };
+      data: {
+        name: string;
+        slug: string;
+        description: string | null;
+        dimension: string;
+      };
     }
   | { ok: false; error: string };
 
@@ -29,6 +42,10 @@ function parseCategory(formData: FormData): ParsedCategory {
   const name = String(formData.get('name') ?? '').trim();
   const rawSlug = String(formData.get('slug') ?? '').trim();
   const description = String(formData.get('description') ?? '').trim();
+  const rawDimension = String(formData.get('dimension') ?? 'nhom-mon').trim();
+  const dimension = (VALID_DIMENSIONS as readonly string[]).includes(rawDimension)
+    ? rawDimension
+    : 'nhom-mon';
 
   if (name.length === 0) {
     return { ok: false, error: 'Vui lòng nhập tên danh mục.' };
@@ -46,6 +63,7 @@ function parseCategory(formData: FormData): ParsedCategory {
       name,
       slug,
       description: description.length > 0 ? description : null,
+      dimension,
     },
   };
 }

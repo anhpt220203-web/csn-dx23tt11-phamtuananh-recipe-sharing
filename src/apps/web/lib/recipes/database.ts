@@ -12,6 +12,8 @@ export type CategoryRow = {
   name: string;
   slug: string;
   description: string | null;
+  /** Chiều phân loại: nhom-mon | nguyen-lieu-chinh | phuong-phap-che-bien | bua-an | phong-cach-am-thuc */
+  dimension: string;
 };
 
 export type RecipeRow = {
@@ -69,6 +71,25 @@ export type RatingSummary = {
   count: number;
 };
 
+/** Tag chủ đề món ăn ("Tìm món"). */
+export type TagRow = {
+  id: number;
+  name: string;
+  slug: string;
+  created_at: string;
+};
+
+/** Câu hỏi của user về công thức, admin trả lời. */
+export type RecipeQuestionRow = {
+  id: number;
+  recipe_id: number;
+  user_id: string;
+  question: string;
+  answer: string | null;
+  answered_at: string | null;
+  created_at: string;
+};
+
 type TableDef<Row> = {
   Row: Row;
   Insert: Partial<Row>;
@@ -88,6 +109,9 @@ export type RecipeSchema = {
       recipe_steps: TableDef<RecipeStepRow>;
       favorites: TableDef<FavoriteRow>;
       ratings: TableDef<RatingRow>;
+      tags: TableDef<TagRow>;
+      recipe_tags: TableDef<{ recipe_id: number; tag_id: number }>;
+      recipe_questions: TableDef<RecipeQuestionRow>;
     };
     Views: {
       [_ in never]: never;
