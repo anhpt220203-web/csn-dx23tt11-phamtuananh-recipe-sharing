@@ -17,6 +17,7 @@ import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
 
 import type { RecipeSchema } from '~/lib/recipes/database';
+import { requireAdminInServerComponent } from '~/lib/server/require-admin';
 
 import {
   DeleteAccountButton,
@@ -79,6 +80,10 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
 
   const params = await searchParams;
   const query = (params.q ?? '').trim().toLowerCase();
+
+  // ID của admin đang đăng nhập (đã cache ở layout) — dùng để khóa các nút
+  // thao tác nguy hiểm trên chính dòng tài khoản của mình.
+  const { userId: currentAdminId } = await requireAdminInServerComponent();
 
   const adminClient = getSupabaseServerAdminClient<RecipeSchema>();
 
@@ -159,6 +164,8 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
           {users.map((user) => {
             const banned = isBanned(user);
             const admin = isAdmin(user);
+            // Không cho thao tác nguy hiểm lên chính tài khoản đang đăng nhập.
+            const isSelf = user.id === currentAdminId;
 
             return (
               <Card key={user.id}>
@@ -218,7 +225,13 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
 
                   <div className={'flex flex-wrap gap-2'}>
                     {admin ? (
-                      <RevokeAdminButton userId={user.id} />
+                      <RevokeAdminButton
+                        userId={user.id}
+                        disabled={isSelf}
+                        disabledTitle={
+                          'Không thể thu hồi quyền của chính mình'
+                        }
+                      />
                     ) : (
                       <GrantAdminButton userId={user.id} />
                     )}
@@ -227,10 +240,18 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                       (banned ? (
                         <UnlockAccountButton userId={user.id} />
                       ) : (
-                        <LockAccountButton userId={user.id} />
+                        <LockAccountButton
+                          userId={user.id}
+                          disabled={isSelf}
+                          disabledTitle={'Không thể khóa chính mình'}
+                        />
                       ))}
 
-                    <DeleteAccountButton userId={user.id} />
+                    <DeleteAccountButton
+                      userId={user.id}
+                      disabled={isSelf}
+                      disabledTitle={'Không thể xóa chính mình'}
+                    />
                   </div>
                 </CardContent>
               </Card>
