@@ -131,9 +131,10 @@ create index if not exists recipe_ingredients_recipe_id_idx on public.recipe_ing
 create index if not exists favorites_recipe_id_idx on public.favorites (recipe_id);
 create index if not exists ratings_recipe_id_idx on public.ratings (recipe_id);
 
--- Chỉ mục tìm kiếm nguyên liệu (trigram, hỗ trợ không dấu qua kit.unaccent)
-create index if not exists recipe_ingredients_name_trgm_idx
-    on public.recipe_ingredients using gin (kit.unaccent(name) kit.gin_trgm_ops);
+-- Chỉ mục tìm kiếm nguyên liệu (trigram, hỗ trợ không dấu)
+-- Xem migration 20261016180000_fix_unaccent_immutable.sql: tạo hàm
+-- kit.unaccent_immutable() (IMMUTABLE) rồi tạo index ở đó, vì kit.unaccent
+-- của extension là STABLE, không dùng trực tiếp trong index được.
 
 -- ─── Trigger updated_at ───
 drop trigger if exists touch_updated_at on public.categories;
