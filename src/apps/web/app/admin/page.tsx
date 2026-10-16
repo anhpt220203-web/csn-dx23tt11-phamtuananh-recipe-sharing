@@ -197,7 +197,7 @@ async function getStats() {
 
 const SHORTCUTS = [
   {
-    href: '/admin/tai-khoan',
+    href: '/admin/user',
     title: 'Quản lý tài khoản',
     description:
       'Xem danh sách người dùng, tìm kiếm theo email/tên, khóa hoặc mở khóa tài khoản.',
@@ -286,7 +286,7 @@ export default async function AdminDashboardPage() {
         <StatCard
           label={'Người dùng'}
           value={stats.userCount}
-          href={'/admin/tai-khoan'}
+          href={'/admin/user'}
           linkLabel={'Xem danh sách'}
         />
 

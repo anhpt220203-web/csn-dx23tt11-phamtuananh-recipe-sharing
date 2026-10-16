@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
-import { Button } from '@kit/ui/button';
+import { Page, PageMobileNavigation, PageNavigation } from '@kit/ui/page';
+import { SidebarProvider } from '@kit/ui/sidebar';
 
+import { AppLogo } from '~/components/app-logo';
 import { requireAdminInServerComponent } from '~/lib/server/require-admin';
 
-import { AdminNav } from './_components/admin-nav';
+import { AdminMobileNavigation } from './_components/admin-mobile-navigation';
+import { AdminSidebar } from './_components/admin-sidebar';
 
 export const metadata: Metadata = {
   title: 'Quản trị',
@@ -27,6 +29,9 @@ export const instant = false;
  * (không phải admin) không bao giờ thấy được nội dung bên trong —
  * `requireAdminInServerComponent` chuyển hướng về trang đăng nhập nếu chưa
  * đăng nhập, và trả về 404 nếu đã đăng nhập nhưng không phải admin.
+ *
+ * Giao diện dùng sidebar trái theo đúng pattern của trang /home
+ * (SidebarProvider + Page style="sidebar").
  */
 export default async function AdminLayout({
   children,
@@ -34,41 +39,32 @@ export default async function AdminLayout({
   await requireAdminInServerComponent();
 
   return (
-    <div className={'flex min-h-screen flex-col bg-muted/40'}>
-      <header className={'sticky top-0 z-10 border-b bg-background'}>
-        <div className={'container mx-auto px-4'}>
-          <div className={'flex items-center justify-between gap-2 py-3'}>
-            <div className={'flex min-w-0 items-center gap-2'}>
-              <span
-                className={
-                  'bg-primary text-primary-foreground rounded-md px-2 py-1 text-xs font-bold tracking-wide uppercase'
-                }
-              >
-                Admin
-              </span>
+    <SidebarProvider>
+      <Page style={'sidebar'}>
+        <PageNavigation>
+          <AdminSidebar />
+        </PageNavigation>
 
-              <span className={'truncate text-sm font-semibold'}>
-                Quản trị website
-              </span>
-            </div>
+        <PageMobileNavigation className={'flex items-center justify-between'}>
+          <div className={'flex items-center gap-2'}>
+            <AppLogo />
 
-            <Button
-              nativeButton={false}
-              variant={'ghost'}
-              size={'sm'}
-              render={
-                <Link href={'/'} className={'shrink-0'}>
-                  Về trang chủ
-                </Link>
+            <span
+              className={
+                'bg-primary text-primary-foreground rounded-md px-2 py-1 text-xs font-bold tracking-wide uppercase'
               }
-            />
+            >
+              Quản trị
+            </span>
           </div>
 
-          <AdminNav />
-        </div>
-      </header>
+          <AdminMobileNavigation />
+        </PageMobileNavigation>
 
-      <main className={'container mx-auto flex-1 px-4 py-6'}>{children}</main>
-    </div>
+        <div className={'mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8'}>
+          {children}
+        </div>
+      </Page>
+    </SidebarProvider>
   );
 }
