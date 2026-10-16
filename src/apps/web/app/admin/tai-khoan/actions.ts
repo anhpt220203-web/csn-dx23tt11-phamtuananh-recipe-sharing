@@ -2,6 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import type { RecipeSchema } from '~/lib/recipes/database';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
 
 export type AccountActionResult =
@@ -14,6 +17,58 @@ function getUserId(formData: FormData): string | null {
   const value = formData.get('userId');
 
   return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function isActive(user: {
+  banned_until: string | null | undefined;
+}): boolean {
+  return (
+    !user.banned_until || new Date(user.banned_until).getTime() <= Date.now()
+  );
+}
+
+/**
+ * Đếm số quản trị viên còn hoạt động (app_metadata.role === 'admin' và
+ * không bị ban/khóa). Dùng Auth Admin API phân trang vì `listUsers`
+ * giới hạn số bản ghi mỗi lần gọi.
+ */
+async function countActiveAdmins(
+  adminClient: SupabaseClient<RecipeSchema>,
+): Promise<number> {
+  const perPage = 1000;
+  let page = 1;
+  let count = 0;
+
+  for (;;) {
+    const { data, error } = await adminClient.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (error) {
+      throw new Error(
+        `Không liệt kê được danh sách tài khoản: ${error.message}`,
+      );
+    }
+
+    for (const user of data.users) {
+      if (user.app_metadata?.['role'] !== 'admin') {
+        continue;
+      }
+
+      if (isActive(user)) {
+        count += 1;
+      }
+    }
+
+    if (data.users.length < perPage) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return count;
 }
 
 /**
@@ -38,6 +93,28 @@ export async function lockAccountAction(
 
     if (userId === adminId) {
       return { ok: false, message: 'Không thể khóa chính tài khoản của bạn.' };
+    }
+
+    // SRS FR7: không cho khóa quản trị viên hoạt động cuối cùng.
+    const { data: targetData, error: targetError } =
+      await adminClient.auth.admin.getUserById(userId);
+
+    if (targetError || !targetData.user) {
+      return {
+        ok: false,
+        message: 'Không tìm thấy tài khoản cần khóa.',
+      };
+    }
+
+    if (targetData.user.app_metadata?.['role'] === 'admin') {
+      const activeAdminCount = await countActiveAdmins(adminClient);
+
+      if (activeAdminCount <= 1) {
+        return {
+          ok: false,
+          message: 'Không thể khóa quản trị viên cuối cùng.',
+        };
+      }
     }
 
     const { error: banError } = await adminClient.auth.admin.updateUserById(
