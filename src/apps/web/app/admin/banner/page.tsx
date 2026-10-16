@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
@@ -13,6 +14,10 @@ export const metadata: Metadata = {
 };
 
 export default async function BannersAdminPage() {
+  // Trang admin đọc DB mỗi request, không prerender lúc build
+  // (tránh gọi service-role key khi biến môi trường chưa có).
+  await connection();
+
   const admin = getSupabaseServerAdminClient<ContentSchema>();
 
   const { data, error } = await admin
