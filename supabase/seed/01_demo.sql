@@ -2,7 +2,7 @@
 -- SEED DEMO: 1 danh mục + 1 công thức mẫu để kiểm tra giao diện.
 -- Nội dung do nhóm tự biên soạn (demo), không sao chép từ nguồn khác.
 -- Idempotent: upsert theo slug, an toàn khi chạy lại nhiều lần.
--- Ảnh: /images/recipes/com-chien.jpg (đã có sẵn trong public/images/recipes/).
+-- Ảnh: Supabase Storage bucket recipe-images/com-chien.jpg (cần upload file lên Storage).
 -- =============================================================================
 
 begin;
@@ -31,7 +31,7 @@ select
   'com-chien-duong-chau',
   'Cơm chiên dương châu',
   'Hạt cơm chiên tơi, vàng ươm màu trứng, điểm xuyết xúc xích, đậu Hà Lan và cà rốt. Món ăn nhanh gọn, đủ chất cho bữa sáng hay những tối bận rộn.',
-  '/images/recipes/com-chien.jpg',
+  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/com-chien.jpg',
   3, 15, 20, 'Dễ', 'published',
   550, 18, 72, 3, 18, 3,
   'Demo — Công Thức Việt'

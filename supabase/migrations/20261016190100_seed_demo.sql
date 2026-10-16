@@ -30,7 +30,7 @@ select
   'com-chien-duong-chau',
   'Cơm chiên dương châu',
   'Hạt cơm chiên tơi, vàng ươm màu trứng, điểm xuyết xúc xích, đậu Hà Lan và cà rốt. Món ăn nhanh gọn, đủ chất cho bữa sáng hay những tối bận rộn.',
-  '/images/recipes/com-chien.jpg',
+  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/com-chien.jpg',
   3, 15, 20, 'Dễ', 'published',
   550, 18, 72, 3, 18, 3,
   'Demo — Công Thức Việt'
