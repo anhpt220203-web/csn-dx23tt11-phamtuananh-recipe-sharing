@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 
+import { BackToTop } from '~/components/content/back-to-top';
 import { SiteFooter } from '~/(marketing)/_components/site-footer';
 import { SiteHeader } from '~/(marketing)/_components/site-header';
 
@@ -22,6 +23,8 @@ function SiteLayout(props: React.PropsWithChildren) {
       {props.children}
 
       <SiteFooter />
+
+      <BackToTop />
     </div>
   );
 }

@@ -11,6 +11,8 @@ const NAV_ITEMS = [
   { href: '/admin/cong-thuc', label: 'Công thức' },
   { href: '/admin/danh-muc', label: 'Danh mục' },
   { href: '/admin/danh-gia', label: 'Đánh giá' },
+  { href: '/admin/banner', label: 'Banner' },
+  { href: '/admin/meo-vat', label: 'Mẹo vặt' },
 ];
 
 function isActive(pathname: string, href: string) {
