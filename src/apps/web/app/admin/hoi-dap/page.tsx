@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
@@ -21,6 +22,9 @@ type QuestionWithRecipe = {
 };
 
 export default async function QuestionsAdminPage() {
+  // Trang admin đọc DB mỗi request, không prerender lúc build.
+  await connection();
+
   const admin = getSupabaseServerAdminClient<RecipeSchema>();
 
   const { data, error } = await admin
