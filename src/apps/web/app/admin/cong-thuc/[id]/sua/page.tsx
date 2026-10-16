@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 import { notFound } from 'next/navigation';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
@@ -20,6 +21,9 @@ type EditRecipePageProps = {
 };
 
 export default async function EditRecipePage({ params }: EditRecipePageProps) {
+  // Trang admin đọc DB mỗi request, không prerender lúc build.
+  await connection();
+
   const { id: idParam } = await params;
   const id = Number(idParam);
 
