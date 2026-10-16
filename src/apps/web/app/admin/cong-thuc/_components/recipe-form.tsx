@@ -194,6 +194,52 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
               placeholder={'VD: 20'}
             />
           </div>
+
+          <div className={'grid gap-1.5'}>
+            <Label htmlFor={'prep_time'}>Thời gian chuẩn bị (phút)</Label>
+
+            <Input
+              id={'prep_time'}
+              name={'prep_time'}
+              type={'number'}
+              min={0}
+              inputMode={'numeric'}
+              defaultValue={initial?.prep_time ?? ''}
+              placeholder={'VD: 10'}
+            />
+          </div>
+        </div>
+
+        <div className={'grid gap-1.5 sm:col-span-2'}>
+          <Label>Giá trị dinh dưỡng (để trống nếu chưa có)</Label>
+
+          <div className={'grid grid-cols-2 gap-4 sm:grid-cols-3'}>
+            {[
+              { id: 'calories', label: 'Năng lượng (kcal)' },
+              { id: 'protein_g', label: 'Chất đạm (g)' },
+              { id: 'carbs_g', label: 'Tinh bột (g)' },
+              { id: 'sugar_g', label: 'Đường (g)' },
+              { id: 'fat_g', label: 'Chất béo (g)' },
+              { id: 'fiber_g', label: 'Chất xơ (g)' },
+            ].map((field) => (
+              <div key={field.id} className={'grid gap-1.5'}>
+                <Label htmlFor={field.id}>{field.label}</Label>
+
+                <Input
+                  id={field.id}
+                  name={field.id}
+                  type={'number'}
+                  min={0}
+                  step={'0.01'}
+                  inputMode={'decimal'}
+                  defaultValue={
+                    initial?.[field.id as keyof typeof initial] ?? ''
+                  }
+                  placeholder={'0'}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className={'grid gap-1.5 sm:col-span-2'}>

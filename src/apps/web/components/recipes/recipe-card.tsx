@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { ChefHat, Clock, Star, Users } from 'lucide-react';
+import { ChefHat, Clock, Star, Timer, Users } from 'lucide-react';
 
 import { Badge } from '@kit/ui/badge';
 import {
@@ -100,6 +100,13 @@ export function RecipeCard({ recipe, rating }: RecipeCardProps) {
           <Clock className={'h-4 w-4'} aria-hidden={true} />
           {formatCookTime(recipe.cook_time)}
         </span>
+
+        {recipe.prep_time ? (
+          <span className={'inline-flex items-center gap-1'}>
+            <Timer className={'h-4 w-4'} aria-hidden={true} />
+            {formatCookTime(recipe.prep_time)} chuẩn bị
+          </span>
+        ) : null}
 
         {recipe.servings ? (
           <span className={'inline-flex items-center gap-1'}>

@@ -27,8 +27,15 @@ type RecipeQueryRow = {
   source_url: string | null;
   servings: number | null;
   cook_time: number | null;
+  prep_time: number | null;
   difficulty: string | null;
   created_by: string | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  sugar_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
   categories: { name: string; slug: string } | null;
 };
 
@@ -45,8 +52,15 @@ function toRecipeWithCategory(row: RecipeQueryRow): RecipeWithCategory {
     source_url,
     servings,
     cook_time,
+    prep_time,
     difficulty,
     created_by,
+    calories,
+    protein_g,
+    carbs_g,
+    sugar_g,
+    fat_g,
+    fiber_g,
   } = row;
 
   return {
@@ -61,15 +75,23 @@ function toRecipeWithCategory(row: RecipeQueryRow): RecipeWithCategory {
     source_url,
     servings,
     cook_time,
+    prep_time,
     difficulty,
     created_by,
+    // PostgREST có thể trả numeric dạng string — ép về number.
+    calories: calories === null ? null : Number(calories),
+    protein_g: protein_g === null ? null : Number(protein_g),
+    carbs_g: carbs_g === null ? null : Number(carbs_g),
+    sugar_g: sugar_g === null ? null : Number(sugar_g),
+    fat_g: fat_g === null ? null : Number(fat_g),
+    fiber_g: fiber_g === null ? null : Number(fiber_g),
     category_name: row.categories?.name ?? '',
     category_slug: row.categories?.slug ?? '',
   };
 }
 
 const RECIPE_COLUMNS =
-  'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,difficulty,created_by,created_at,categories(name,slug)';
+  'id,category_id,title,slug,description,image_url,status,source_name,source_url,servings,cook_time,prep_time,difficulty,created_by,calories,protein_g,carbs_g,sugar_g,fat_g,fiber_g,created_at,categories(name,slug)';
 
 /**
  * Cách sắp xếp kết quả tìm kiếm (FR3).
@@ -106,6 +128,7 @@ function toRecipeSearchResult(row: RecipeSearchRow): RecipeSearchResult {
     source_url,
     servings,
     cook_time,
+    prep_time,
     difficulty,
     created_by,
     category_name,
@@ -126,8 +149,15 @@ function toRecipeSearchResult(row: RecipeSearchRow): RecipeSearchResult {
     source_url,
     servings,
     cook_time,
+    prep_time,
     difficulty,
     created_by,
+    calories: null,
+    protein_g: null,
+    carbs_g: null,
+    sugar_g: null,
+    fat_g: null,
+    fiber_g: null,
     category_name,
     category_slug,
     // PostgREST có thể trả numeric/bigint dạng string — ép về number
