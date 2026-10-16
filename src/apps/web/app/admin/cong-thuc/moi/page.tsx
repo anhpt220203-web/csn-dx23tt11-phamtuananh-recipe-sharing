@@ -16,7 +16,7 @@ export default async function NewRecipePage() {
 
   const { data, error } = await admin
     .from('categories')
-    .select('id,name,slug,description')
+    .select('id,name,slug,description,dimension')
     .order('id', { ascending: true });
 
   if (error) {

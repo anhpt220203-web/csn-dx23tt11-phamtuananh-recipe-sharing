@@ -15,12 +15,18 @@ import {
   BreadcrumbSeparator,
 } from '@kit/ui/breadcrumb';
 import { Separator } from '@kit/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kit/ui/tabs';
 import { cn } from '@kit/ui/utils';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
-import type { RatingSummary, RecipeDetail } from '~/lib/recipes/database';
+import type {
+  RatingSummary,
+  RecipeDetail,
+  RecipeQuestionRow,
+} from '~/lib/recipes/database';
 import {
   getRatingSummary,
+  getRecipeQuestions,
   getRecipeBySlug,
   getRelatedRecipes,
   getUserRating,
@@ -28,6 +34,10 @@ import {
 } from '~/lib/recipes/queries';
 
 import { FavoriteButton } from '~/components/recipes/favorite-button';
+import {
+  QuestionForm,
+  QuestionList,
+} from '~/components/recipes/question-section';
 import { RatingWidget } from '~/components/recipes/rating-widget';
 import { RecipeCard } from '~/components/recipes/recipe-card';
 
@@ -91,10 +101,11 @@ export default async function RecipePage({ params }: RecipePageProps) {
   const { data: claimsData } = await client.auth.getClaims();
   const userId = claimsData?.claims?.sub ?? null;
 
-  const [summary, favorited, userRating] = await Promise.all([
+  const [summary, favorited, userRating, questions] = await Promise.all([
     getRatingSummary(recipe.id),
     isFavorite(userId, recipe.id),
     getUserRating(userId, recipe.id),
+    getRecipeQuestions(recipe.id),
   ]);
 
   return (
@@ -111,10 +122,11 @@ export default async function RecipePage({ params }: RecipePageProps) {
         </aside>
       </div>
 
-      <RatingSection
+      <FeedbackTabs
         recipe={recipe}
         summary={summary}
         userRating={userRating}
+        questions={questions}
         isAuthenticated={userId !== null}
       />
 
@@ -303,32 +315,57 @@ function IngredientsCard({ recipe }: { recipe: RecipeDetail }) {
   );
 }
 
-function RatingSection({
+function FeedbackTabs({
   recipe,
   summary,
   userRating,
+  questions,
   isAuthenticated,
 }: {
   recipe: RecipeDetail;
   summary: RatingSummary;
   userRating: number | null;
+  questions: RecipeQuestionRow[];
   isAuthenticated: boolean;
 }) {
   return (
-    <section className={'mt-10'} aria-labelledby={'rating-heading'}>
-      <h2 id={'rating-heading'} className={'text-2xl font-medium'}>
-        Đánh giá
-      </h2>
+    <section className={'mt-10'} aria-label={'Đánh giá và hỏi đáp'}>
+      <Tabs defaultValue={'rating'}>
+        <TabsList>
+          <TabsTrigger value={'rating'}>Đánh giá</TabsTrigger>
+          <TabsTrigger value={'qa'}>
+            Hỏi đáp
+            {questions.length > 0 ? ` (${questions.length})` : ''}
+          </TabsTrigger>
+        </TabsList>
 
-      <div className={'mt-4'}>
-        <RatingWidget
-          recipeId={recipe.id}
-          slug={recipe.slug}
-          summary={summary}
-          userRating={userRating}
-          isAuthenticated={isAuthenticated}
-        />
-      </div>
+        <TabsContent value={'rating'} className={'mt-4'}>
+          <RatingWidget
+            recipeId={recipe.id}
+            slug={recipe.slug}
+            summary={summary}
+            userRating={userRating}
+            isAuthenticated={isAuthenticated}
+          />
+        </TabsContent>
+
+        <TabsContent value={'qa'} className={'mt-4'}>
+          <div className={'grid gap-8'}>
+            <div>
+              <h3 className={'mb-4 text-lg font-medium'}>Câu hỏi từ cộng đồng</h3>
+              <QuestionList questions={questions} />
+            </div>
+
+            <div>
+              <h3 className={'mb-4 text-lg font-medium'}>Đặt câu hỏi mới</h3>
+              <QuestionForm
+                recipeId={recipe.id}
+                isAuthenticated={isAuthenticated}
+              />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </section>
   );
 }
