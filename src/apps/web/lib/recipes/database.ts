@@ -55,8 +55,9 @@ export type FavoriteRow = {
   created_at: string;
 };
 
-/** Đánh giá 1–5 sao, UNIQUE(user_id, recipe_id). */
+/** Đánh giá 1–5 sao, khóa chính `id`, UNIQUE(user_id, recipe_id). */
 export type RatingRow = {
+  id: number;
   user_id: string;
   recipe_id: number;
   rating: number;
