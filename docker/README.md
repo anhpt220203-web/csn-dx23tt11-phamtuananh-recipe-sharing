@@ -35,8 +35,8 @@ docker compose -f docker/docker-compose.yml --env-file docker/.env up --build
 ```
 
 Lần đầu chạy, `db-migrate` sẽ tự động:
-- Chạy toàn bộ migrations trong `src/supabase/migrations/` (tạo bảng, RLS, RPC tìm kiếm...)
-- Nạp `src/supabase/seed.sql` → 33 công thức mẫu + 7 danh mục
+- Chạy toàn bộ migrations trong `supabase/migrations/` (tạo bảng, RLS, RPC tìm kiếm...)
+- Nạp `supabase/seed.sql` → 33 công thức mẫu + 7 danh mục
 - Tạo 5 tài khoản demo qua Supabase Auth
 
 Mở http://localhost:3000 để xem demo.
@@ -75,7 +75,7 @@ Seed đã tự chạy lần đầu. Muốn nạp lại (file idempotent, chạy 
 
 ```bash
 docker compose -f docker/docker-compose.yml run --rm \
-  -v ./src/supabase/seed.sql:/seed/seed.sql db-migrate \
+  -v ./supabase/seed.sql:/seed/seed.sql db-migrate \
   bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -h db -U postgres -d postgres -f /seed/seed.sql'
 ```
 

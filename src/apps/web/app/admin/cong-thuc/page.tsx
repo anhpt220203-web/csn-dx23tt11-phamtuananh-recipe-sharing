@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 import Link from 'next/link';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
@@ -74,6 +75,9 @@ export default async function RecipesAdminPage({
 }: {
   searchParams: Promise<{ status?: string; q?: string; category?: string }>;
 }) {
+  // Trang admin đọc DB mỗi request, không prerender lúc build.
+  await connection();
+
   const { status: statusParam, q: qParam, category: categoryParam } =
     await searchParams;
 

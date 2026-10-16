@@ -120,7 +120,7 @@ services:
 
   # ---------- Chạy migrations + seed 1 lần ----------
   # Service one-shot: đợi db/auth/storage sẵn sàng, chạy migrations trong
-  # src/supabase/migrations/, nạp seed.sql và tạo 5 tài khoản demo.
+  # supabase/migrations/, nạp seed.sql và tạo 5 tài khoản demo.
   db-migrate:
     build:
       context: ..
@@ -135,8 +135,8 @@ services:
       storage:
         condition: service_started
     volumes:
-      - ../src/supabase/migrations:/migrations:ro
-      - ../src/supabase/seed.sql:/seed/seed.sql:ro
+      - ../supabase/migrations:/migrations:ro
+      - ../supabase/seed.sql:/seed/seed.sql:ro
       - ./db-migrate.sh:/db-migrate.sh:ro
     environment:
       PGHOST: db
