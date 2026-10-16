@@ -1,0 +1,24 @@
+# Chạy demo bằng docker compose (thực hiện từ repo root):
+#
+#   1. Copy docker/.env.example thành docker/.env rồi điền key Supabase cloud:
+#        cp docker/.env.example docker/.env
+#   2. Build + chạy:
+#        docker compose -f docker/docker-compose.yml --env-file docker/.env up --build
+#   3. Mở http://localhost:3000 để xem demo.
+#
+# Dừng: docker compose -f docker/docker-compose.yml down
+
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    environment:
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    restart: unless-stopped
