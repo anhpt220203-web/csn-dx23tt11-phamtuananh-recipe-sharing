@@ -1,0 +1,14 @@
+# Build context là repo root. Chỉ giữ những gì cần để build image.
+.git
+.github
+node_modules
+**/node_modules
+**/.next
+.turbo
+src/.turbo
+*.log
+docker/README.md
+specs
+thesis
+progress-report
+soft

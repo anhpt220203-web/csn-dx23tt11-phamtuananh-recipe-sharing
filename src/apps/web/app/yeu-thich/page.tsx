@@ -73,8 +73,8 @@ export default async function FavoritesPage() {
             <EmptyTitle>Chưa có món yêu thích nào</EmptyTitle>
 
             <EmptyDescription>
-              Khám phá các công thức và bấm nút “Yêu thích” để lưu lại những
-              món bạn thích nhất.
+              Khám phá các công thức và bấm nút “Yêu thích” để lưu lại những món
+              bạn thích nhất.
             </EmptyDescription>
           </EmptyHeader>
 
@@ -85,13 +85,9 @@ export default async function FavoritesPage() {
           </EmptyContent>
         </Empty>
       ) : (
-        <div
-          className={
-            'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'
-          }
-        >
+        <div className={'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'}>
           {recipes.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
+            <RecipeCard key={recipe.id} recipe={recipe} initialFavorited />
           ))}
         </div>
       )}
