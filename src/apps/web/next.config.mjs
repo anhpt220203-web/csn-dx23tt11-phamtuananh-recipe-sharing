@@ -25,9 +25,7 @@ const config = {
    * set OUTPUT_STANDALONE=true). Vercel build mặc định, không dùng
    * standalone để tránh lỗi thiếu .nft.json.
    */
-  ...(process.env.OUTPUT_STANDALONE === 'true'
-    ? { output: 'standalone' as const }
-    : {}),
+  ...(process.env.OUTPUT_STANDALONE === 'true' ? { output: 'standalone' } : {}),
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: INTERNAL_PACKAGES,
   images: {
