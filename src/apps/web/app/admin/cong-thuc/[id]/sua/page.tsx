@@ -32,7 +32,7 @@ export default async function EditRecipePage({ params }: EditRecipePageProps) {
   const [{ data: categories }, { data: recipe }] = await Promise.all([
     admin
       .from('categories')
-      .select('id,name,slug,description')
+      .select('id,name,slug,description,dimension')
       .order('id', { ascending: true }),
     admin
       .from('recipes')

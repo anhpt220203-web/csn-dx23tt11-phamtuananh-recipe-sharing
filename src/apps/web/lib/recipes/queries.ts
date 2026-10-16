@@ -6,9 +6,11 @@ import {
   type CategoryRow,
   type RatingSummary,
   type RecipeDetail,
+  type RecipeQuestionRow,
   type RecipeSchema,
   type RecipeSearchRow,
   type RecipeWithCategory,
+  type TagRow,
 } from './database';
 
 function getClient() {
@@ -177,7 +179,7 @@ export async function getCategories(): Promise<CategoryRow[]> {
 
   const { data, error } = await client
     .from('categories')
-    .select('id,name,slug,description')
+    .select('id,name,slug,description,dimension')
     .order('id', { ascending: true });
 
   if (error) {
@@ -197,7 +199,7 @@ export async function getCategoryBySlug(
 
   const { data, error } = await client
     .from('categories')
-    .select('id,name,slug,description')
+    .select('id,name,slug,description,dimension')
     .eq('slug', slug)
     .maybeSingle();
 
@@ -516,4 +518,98 @@ export async function getMyRatingsWithRecipes(
       },
     ];
   });
+}
+
+/**
+ * Nhóm danh mục theo chiều (dimension) cho trang danh sách công thức.
+ */
+export async function getCategoriesByDimension(): Promise<
+  Record<string, CategoryRow[]>
+> {
+  const categories = await getCategories();
+  const grouped: Record<string, CategoryRow[]> = {};
+
+  for (const category of categories) {
+    const dim = category.dimension || 'nhom-mon';
+
+    if (!grouped[dim]) {
+      grouped[dim] = [];
+    }
+
+    grouped[dim].push(category);
+  }
+
+  return grouped;
+}
+
+/**
+ * Danh sách tags chủ đề ("Tìm món").
+ */
+export async function getTags(): Promise<TagRow[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from('tags')
+    .select('id,name,slug,created_at')
+    .order('id', { ascending: true });
+
+  if (error) {
+    throw new Error(`Không tải được tags: ${error.message}`);
+  }
+
+  return (data ?? []) as TagRow[];
+}
+
+/**
+ * Công thức theo tag slug.
+ */
+export async function getRecipesByTagSlug(
+  tagSlug: string,
+): Promise<RecipeWithCategory[]> {
+  const client = getClient();
+
+  const { data: tag, error: tagError } = await client
+    .from('tags')
+    .select('id')
+    .eq('slug', tagSlug)
+    .maybeSingle();
+
+  if (tagError || !tag) {
+    return [];
+  }
+
+  const { data, error } = await client
+    .from('recipe_tags')
+    .select(`recipes(${RECIPE_COLUMNS})`)
+    .eq('tag_id', (tag as { id: number }).id);
+
+  if (error) {
+    throw new Error(`Không tải được công thức theo tag: ${error.message}`);
+  }
+
+  return ((data ?? []) as unknown as { recipes: RecipeQueryRow }[])
+    .map((row) => row.recipes)
+    .filter(Boolean)
+    .map(toRecipeWithCategory);
+}
+
+/**
+ * Danh sách câu hỏi của một công thức (kèm câu trả lời nếu có).
+ */
+export async function getRecipeQuestions(
+  recipeId: number,
+): Promise<RecipeQuestionRow[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from('recipe_questions')
+    .select('id,recipe_id,user_id,question,answer,answered_at,created_at')
+    .eq('recipe_id', recipeId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Không tải được câu hỏi: ${error.message}`);
+  }
+
+  return (data ?? []) as RecipeQuestionRow[];
 }
