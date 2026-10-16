@@ -10,6 +10,8 @@ const NAV_ITEMS = [
   { href: '/admin/tai-khoan', label: 'Tài khoản' },
   { href: '/admin/cong-thuc', label: 'Công thức' },
   { href: '/admin/danh-muc', label: 'Danh mục' },
+  { href: '/admin/banner', label: 'Banner' },
+  { href: '/admin/meo-vat', label: 'Mẹo vặt' },
 ];
 
 function isActive(pathname: string, href: string) {

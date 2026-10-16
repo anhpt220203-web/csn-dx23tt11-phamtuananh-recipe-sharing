@@ -15,8 +15,10 @@ import {
 
 import { RecipeCard } from '~/components/recipes/recipe-card';
 import { SearchForm } from '~/components/recipes/search-form';
+import { BannerCarousel } from '~/components/content/banner-carousel';
 import appConfig from '~/config/app.config';
 import { getCategories, getLatestRecipes } from '~/lib/recipes/queries';
+import { getActiveBanners, getPublishedTips } from '~/lib/content/queries';
 
 export const metadata: Metadata = {
   title: 'Trang chủ',
@@ -57,13 +59,22 @@ export default async function HomePage() {
   // tương thích với `cacheComponents` của Next 16.)
   await connection();
 
-  const [categories, latestRecipes] = await Promise.all([
+  const [categories, latestRecipes, banners, tips] = await Promise.all([
     getCategories(),
     getLatestRecipes(8),
+    getActiveBanners(),
+    getPublishedTips(2),
   ]);
 
   return (
     <div className={'flex flex-col'}>
+      {/* ── Banner carousel ──────────────────────────────── */}
+      {banners.length > 0 ? (
+        <section className={'container mx-auto px-4 pt-6'}>
+          <BannerCarousel banners={banners} />
+        </section>
+      ) : null}
+
       {/* ── Hero ─────────────────────────────────────────── */}
       <section
         className={
@@ -187,6 +198,63 @@ export default async function HomePage() {
           )}
         </div>
       </section>
+
+      {/* ── Mẹo vặt ──────────────────────────────────────── */}
+      {tips.length > 0 ? (
+        <section className={'container mx-auto px-4 py-10 sm:py-14'}>
+          <div className={'mb-6 flex items-end justify-between gap-4'}>
+            <div>
+              <h2 className={'text-2xl font-bold tracking-tight sm:text-3xl'}>
+                Mẹo vặt
+              </h2>
+              <p className={'text-muted-foreground mt-1 text-sm sm:text-base'}>
+                Bí quyết nấu ăn ngon mỗi ngày.
+              </p>
+            </div>
+
+            <Button variant={'ghost'} render={<Link href={'/meo-vat'} />}>
+              Xem bí quyết
+              <ArrowRight className={'h-4 w-4'} aria-hidden={true} />
+            </Button>
+          </div>
+
+          <div className={'grid grid-cols-1 gap-4 sm:grid-cols-2'}>
+            {tips.map((tip) => (
+              <Link
+                key={tip.slug}
+                href={`/meo-vat/${tip.slug}`}
+                className={'block h-full'}
+              >
+                <Card className={'h-full transition-shadow hover:shadow-md'}>
+                  {tip.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={tip.image_url}
+                      alt={tip.title}
+                      loading={'lazy'}
+                      className={'aspect-[16/9] w-full rounded-t-xl object-cover'}
+                    />
+                  ) : null}
+
+                  <CardHeader>
+                    <CardTitle className={'text-lg leading-snug'}>
+                      {tip.title}
+                    </CardTitle>
+                  </CardHeader>
+
+                  {tip.excerpt ? (
+                    <CardContent>
+                      <CardDescription className={'line-clamp-2'}>
+                        {tip.excerpt}
+                      </CardDescription>
+                    </CardContent>
+                  ) : null}
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* ── Tính năng ────────────────────────────────────── */}
       <section className={'container mx-auto px-4 py-10 sm:py-14'}>
