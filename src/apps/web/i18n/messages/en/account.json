@@ -112,5 +112,7 @@
   "noTeamsYet": "You don't have any teams yet.",
   "createTeam": "Create a team to get started.",
   "createTeamButtonLabel": "Create a Team",
-  "profilePage": "Profile"
+  "profilePage": "Profile",
+  "loadAccountErrorTitle": "Could not load account information",
+  "loadAccountErrorDescription": "Your account has not been fully set up. Please sign out and sign back in, or contact an administrator for help."
 }

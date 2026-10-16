@@ -1,6 +1,7 @@
 'use client';
 
 import { routing } from '@kit/i18n/routing';
+import { Alert, AlertDescription, AlertTitle } from '@kit/ui/alert';
 import {
   Card,
   CardContent,
@@ -42,6 +43,22 @@ export function PersonalAccountSettingsContainer(
   }>,
 ) {
   const user = usePersonalAccountData(props.userId);
+
+  if (user.isError) {
+    return (
+      <div className={'flex w-full flex-col space-y-4 pb-32'}>
+        <Alert variant={'destructive'}>
+          <AlertTitle>
+            <Trans i18nKey={'account.loadAccountErrorTitle'} />
+          </AlertTitle>
+
+          <AlertDescription>
+            <Trans i18nKey={'account.loadAccountErrorDescription'} />
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   if (!user.data || user.isPending) {
     return <LoadingOverlay fullPage />;
