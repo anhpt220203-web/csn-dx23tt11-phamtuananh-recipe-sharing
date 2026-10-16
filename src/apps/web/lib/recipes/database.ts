@@ -28,10 +28,19 @@ export type RecipeRow = {
   servings: number | null;
   /** Thời gian nấu (phút). */
   cook_time: number | null;
+  /** Thời gian chuẩn bị (phút). */
+  prep_time: number | null;
   difficulty: string | null;
   /** Trạng thái xuất bản: 'published' | 'draft'. */
   status: string;
   created_by: string | null;
+  /** Giá trị dinh dưỡng (null khi chưa nhập). */
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  sugar_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
 };
 
 export type RecipeIngredientRow = {
@@ -161,6 +170,7 @@ export type RecipeSearchRow = {
   source_url: string | null;
   servings: number | null;
   cook_time: number | null;
+  prep_time: number | null;
   difficulty: string | null;
   created_by: string | null;
   /** Thời điểm tạo (ISO string) — có trong kết quả RPC search_recipes. */

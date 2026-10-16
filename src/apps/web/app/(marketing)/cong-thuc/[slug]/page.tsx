@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { connection } from 'next/server';
 
-import { ChefHat, Clock, Users } from 'lucide-react';
+import { ChefHat, Clock, Timer, Users } from 'lucide-react';
 
 import { Badge } from '@kit/ui/badge';
 import {
@@ -132,6 +132,8 @@ export default async function RecipePage({ params }: RecipePageProps) {
 
       <StepsSection recipe={recipe} />
 
+      <NutritionSection recipe={recipe} />
+
       <RelatedSection related={related} />
     </div>
   );
@@ -235,6 +237,13 @@ function RecipeHero({
           <Clock className={'h-4 w-4'} aria-hidden={true} />
           Thời gian nấu: <strong>{formatCookTime(recipe.cook_time)}</strong>
         </span>
+
+        {recipe.prep_time ? (
+          <span className={'inline-flex items-center gap-2'}>
+            <Timer className={'h-4 w-4'} aria-hidden={true} />
+            Chuẩn bị: <strong>{formatCookTime(recipe.prep_time)}</strong>
+          </span>
+        ) : null}
 
         {recipe.servings ? (
           <span className={'inline-flex items-center gap-2'}>
@@ -398,6 +407,55 @@ function StepsSection({ recipe }: { recipe: RecipeDetail }) {
           ))}
         </ol>
       )}
+    </section>
+  );
+}
+
+function NutritionSection({ recipe }: { recipe: RecipeDetail }) {
+  const items: { label: string; value: number | null; unit: string }[] = [
+    { label: 'Năng lượng', value: recipe.calories, unit: 'kcal' },
+    { label: 'Chất đạm', value: recipe.protein_g, unit: 'g' },
+    { label: 'Tinh bột', value: recipe.carbs_g, unit: 'g' },
+    { label: 'Đường', value: recipe.sugar_g, unit: 'g' },
+    { label: 'Chất béo', value: recipe.fat_g, unit: 'g' },
+    { label: 'Chất xơ', value: recipe.fiber_g, unit: 'g' },
+  ].filter((item) => item.value !== null);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className={'mt-10'} aria-labelledby={'nutrition-heading'}>
+      <details className={'group rounded-xl border p-6'}>
+        <summary
+          className={
+            'cursor-pointer list-none text-2xl font-medium [&::-webkit-details-marker]:hidden'
+          }
+        >
+          <span id={'nutrition-heading'}>Giá trị dinh dưỡng</span>
+          <span
+            className={'text-muted-foreground ml-2 text-sm font-normal'}
+            aria-hidden={true}
+          >
+            (nhấn để xem)
+          </span>
+        </summary>
+
+        <dl className={'mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3'}>
+          {items.map((item) => (
+            <div
+              key={item.label}
+              className={'bg-muted/40 rounded-lg p-4 text-center'}
+            >
+              <dt className={'text-muted-foreground text-sm'}>{item.label}</dt>
+              <dd className={'mt-1 text-xl font-semibold'}>
+                {item.value} {item.unit}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </details>
     </section>
   );
 }
