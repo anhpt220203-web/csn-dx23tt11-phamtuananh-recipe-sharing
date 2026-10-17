@@ -1,4 +1,10 @@
 import createNextIntlPlugin from 'next-intl/plugin';
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
+
+// Chỉ tác dụng khi chạy `next dev`: nạp Cloudflare runtime context
+// (env bindings...) vào môi trường dev local. `next build` trên
+// Vercel/Docker không bị ảnh hưởng.
+initOpenNextCloudflareForDev();
 
 // Create the next-intl plugin with the request config path
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
@@ -35,6 +41,17 @@ const config = {
      * optimizing local IPs by default. Only relax this outside production.
      */
     dangerouslyAllowLocalIP: !IS_PRODUCTION,
+    /**
+     * Cloudflare Workers không có Image Optimization API của Next.js
+     * (adapter chỉ hỗ trợ qua dịch vụ Cloudflare Images trả phí).
+     * Các script Cloudflare (`preview`/`deploy`/`upload`) set
+     * CLOUDFLARE_WORKER_BUILD=true khi build: ảnh được phục vụ nguyên bản
+     * từ Supabase Storage — vẫn giữ lazy-load và chống CLS của next/image.
+     * Vercel/Docker giữ nguyên tối ưu mặc định.
+     */
+    ...(process.env.CLOUDFLARE_WORKER_BUILD === 'true'
+      ? { unoptimized: true }
+      : {}),
   },
   logging: {
     fetches: {
