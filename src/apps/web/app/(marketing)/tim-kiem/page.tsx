@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { SearchX } from 'lucide-react';
+
 import { getCategories, parseSearchSort, searchRecipes } from '~/lib/recipes/queries';
 import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
 
@@ -7,6 +9,7 @@ import { RecipeCard } from '~/components/recipes/recipe-card';
 import { SearchForm } from '~/components/recipes/search-form';
 
 import { SitePageHeader } from '../_components/site-page-header';
+import { CategoryChipNav } from '../_components/category-chip-nav';
 
 export const metadata: Metadata = {
   title: 'Tìm kiếm công thức',
@@ -51,21 +54,42 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           defaultSort={sort}
         />
 
-        <div className={'mt-8'}>
+        {/* Lọc nhanh theo nhóm món — giữ nguyên từ khóa đang tìm */}
+        <div className={'mt-6'}>
+          <CategoryChipNav
+            categories={categories}
+            activeSlug={categorySlug}
+            basePath={'/tim-kiem'}
+            query={q || undefined}
+          />
+        </div>
+
+        <div className={'mt-2'}>
           {!q ? (
             <p className={'text-muted-foreground'}>
               Nhập từ khóa vào ô tìm kiếm để bắt đầu.
             </p>
           ) : results.length === 0 ? (
-            <p className={'text-muted-foreground'}>
-              Không tìm thấy công thức nào cho “{q}”
-              {activeCategory ? ` trong nhóm “${activeCategory.name}”` : ''}.
-              Hãy thử từ khóa khác.
-            </p>
+            <div
+              className={
+                'text-muted-foreground flex flex-col items-center gap-3 py-16 text-center'
+              }
+            >
+              <SearchX className={'h-10 w-10'} aria-hidden={true} />
+              <p>
+                Không tìm thấy công thức nào cho “{q}”
+                {activeCategory ? ` trong nhóm “${activeCategory.name}”` : ''}.
+                Hãy thử từ khóa khác hoặc bỏ bộ lọc nhóm món.
+              </p>
+            </div>
           ) : (
             <>
               <p className={'text-muted-foreground mb-6 text-sm'}>
-                Tìm thấy {results.length} kết quả cho “{q}”
+                Tìm thấy{' '}
+                <span className={'text-primary font-semibold'}>
+                  {results.length}
+                </span>{' '}
+                kết quả cho “{q}”
                 {activeCategory ? ` trong nhóm “${activeCategory.name}”` : ''}.
               </p>
 

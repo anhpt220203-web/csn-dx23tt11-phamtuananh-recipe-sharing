@@ -1,19 +1,17 @@
 import Link from 'next/link';
 
-import { ChefHat, Clock, Star, Timer, Users } from 'lucide-react';
+import { ChefHat, Clock, Star, Users } from 'lucide-react';
 
-import { Badge } from '@kit/ui/badge';
 import {
   Card,
   CardContent,
-  CardFooter,
-  CardHeader,
   CardTitle,
 } from '@kit/ui/card';
 import { cn } from '@kit/ui/utils';
 
 import { RecipeCardFavoriteButton } from './recipe-card-favorite-button';
 
+import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import type { RatingSummary, RecipeWithCategory } from '~/lib/recipes/database';
 
 function formatCookTime(minutes: number | null): string {
@@ -39,7 +37,9 @@ type RecipeCardProps = {
 };
 
 /**
- * Thẻ công thức dùng cho danh sách (trang chủ, danh mục, yêu thích…).
+ * Thẻ công thức kiểu "tạp chí ẩm thực": ảnh 4:3 nổi bật, badge nhóm món
+ * đè trên ảnh, tiêu đề và hàng thông số (khẩu phần · độ khó · thời gian ·
+ * điểm đánh giá) ở phần thân. Dùng cho trang chủ, danh mục, tìm kiếm…
  */
 export function RecipeCard({
   recipe,
@@ -47,59 +47,69 @@ export function RecipeCard({
   initialFavorited = false,
 }: RecipeCardProps) {
   const detailHref = `/cong-thuc/${recipe.slug}`;
+  const imageSrc = resolveRecipeImageSrc(recipe.image_url);
+  const hasRating =
+    rating && rating.count > 0 && rating.average !== null
+      ? { average: rating.average, count: rating.count }
+      : null;
 
   return (
-    <Card className={'flex h-full flex-col transition-shadow hover:shadow-md'}>
-      <CardHeader className={'p-0'}>
-        <div className={'relative'}>
+    <Card
+      className={
+        'group flex h-full flex-col pt-0 transition-shadow hover:shadow-lg'
+      }
+    >
+      <div className={'relative'}>
+        <Link
+          href={detailHref}
+          className={'block overflow-hidden'}
+          aria-label={`Xem công thức ${recipe.title}`}
+        >
+          {imageSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageSrc}
+              alt={recipe.title}
+              loading={'lazy'}
+              className={
+                'aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]'
+              }
+            />
+          ) : (
+            <div
+              className={cn(
+                'flex aspect-[4/3] w-full items-center justify-center',
+                'bg-gradient-to-br from-orange-100 to-amber-200',
+                'dark:from-orange-950 dark:to-amber-950',
+              )}
+              aria-hidden={true}
+            >
+              <ChefHat className={'h-12 w-12 text-orange-400'} />
+            </div>
+          )}
+        </Link>
+
+        {recipe.category_name ? (
           <Link
-            href={detailHref}
-            className={'block overflow-hidden rounded-t-xl'}
-            aria-label={`Xem công thức ${recipe.title}`}
+            href={`/danh-muc/${recipe.category_slug}`}
+            className={
+              'bg-secondary/95 text-secondary-foreground absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-accent'
+            }
           >
-            {recipe.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={recipe.image_url}
-                alt={recipe.title}
-                loading={'lazy'}
-                className={'aspect-[16/9] w-full object-cover'}
-              />
-            ) : (
-              <div
-                className={cn(
-                  'bg-muted flex aspect-[16/9] w-full items-center justify-center',
-                )}
-                aria-hidden={true}
-              >
-                <ChefHat className={'text-muted-foreground h-12 w-12'} />
-              </div>
-            )}
+            {recipe.category_name}
           </Link>
+        ) : null}
 
-          <RecipeCardFavoriteButton
-            recipeId={recipe.id}
-            initialFavorited={initialFavorited}
-            className={'absolute top-2 right-2'}
-          />
-        </div>
-      </CardHeader>
+        <RecipeCardFavoriteButton
+          recipeId={recipe.id}
+          initialFavorited={initialFavorited}
+          className={'absolute top-2.5 right-2.5'}
+        />
+      </div>
 
-      <CardContent className={'flex flex-1 flex-col gap-2 pt-4'}>
-        <div className={'flex flex-wrap items-center gap-2'}>
-          <Badge variant={'secondary'}>
-            <Link href={`/danh-muc/${recipe.category_slug}`}>
-              {recipe.category_name}
-            </Link>
-          </Badge>
-
-          {recipe.difficulty ? (
-            <Badge variant={'outline'}>{recipe.difficulty}</Badge>
-          ) : null}
-        </div>
-
-        <CardTitle className={'text-lg leading-snug'}>
-          <Link href={detailHref} className={'hover:underline'}>
+      <CardContent className={'flex flex-1 flex-col gap-2'}>
+        <CardTitle className={'line-clamp-2 text-base font-semibold'}>
+          <Link href={detailHref} className={'hover:text-primary'}>
             {recipe.title}
           </Link>
         </CardTitle>
@@ -109,42 +119,47 @@ export function RecipeCard({
             {recipe.description}
           </p>
         ) : null}
+
+        <div
+          className={
+            'text-muted-foreground mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs'
+          }
+        >
+          {recipe.servings ? (
+            <span className={'inline-flex items-center gap-1'}>
+              <Users className={'h-3.5 w-3.5'} aria-hidden={true} />
+              {recipe.servings} người
+            </span>
+          ) : null}
+
+          {recipe.difficulty ? (
+            <span className={'inline-flex items-center gap-1'}>
+              <ChefHat className={'h-3.5 w-3.5'} aria-hidden={true} />
+              {recipe.difficulty}
+            </span>
+          ) : null}
+
+          <span className={'inline-flex items-center gap-1'}>
+            <Clock className={'h-3.5 w-3.5'} aria-hidden={true} />
+            {formatCookTime(recipe.cook_time)}
+          </span>
+
+          {hasRating ? (
+            <span className={'text-primary inline-flex items-center gap-1 font-medium'}>
+              <Star
+                className={'fill-primary h-3.5 w-3.5'}
+                aria-hidden={true}
+              />
+              <span className={'tabular-nums'}>
+                {hasRating.average.toFixed(1)}
+              </span>
+              <span className={'text-muted-foreground'}>
+                ({hasRating.count})
+              </span>
+            </span>
+          ) : null}
+        </div>
       </CardContent>
-
-      <CardFooter
-        className={
-          'text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-sm'
-        }
-      >
-        <span className={'inline-flex items-center gap-1'}>
-          <Clock className={'h-4 w-4'} aria-hidden={true} />
-          {formatCookTime(recipe.cook_time)}
-        </span>
-
-        {recipe.prep_time ? (
-          <span className={'inline-flex items-center gap-1'}>
-            <Timer className={'h-4 w-4'} aria-hidden={true} />
-            {formatCookTime(recipe.prep_time)} chuẩn bị
-          </span>
-        ) : null}
-
-        {recipe.servings ? (
-          <span className={'inline-flex items-center gap-1'}>
-            <Users className={'h-4 w-4'} aria-hidden={true} />
-            {recipe.servings} khẩu phần
-          </span>
-        ) : null}
-
-        {rating && rating.count > 0 && rating.average !== null ? (
-          <span className={'inline-flex items-center gap-1'}>
-            <Star
-              className={'fill-primary text-primary h-4 w-4'}
-              aria-hidden={true}
-            />
-            {rating.average.toFixed(1)} ({rating.count})
-          </span>
-        ) : null}
-      </CardFooter>
     </Card>
   );
 }

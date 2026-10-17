@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { connection } from 'next/server';
 
+import { SearchX } from 'lucide-react';
+
 import {
+  getCategories,
   getCategoryBySlug,
   getRecipesByCategorySlug,
 } from '~/lib/recipes/queries';
@@ -11,10 +14,15 @@ import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
 import { RecipeCard } from '~/components/recipes/recipe-card';
 
 import { SitePageHeader } from '~/(marketing)/_components/site-page-header';
+import { CategoryChipNav } from '../../_components/category-chip-nav';
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+// Trang đọc dữ liệu mới mỗi request (DB Supabase) — cho phép route "blocking"
+// thay vì lỗi/diagnostic prerender với cacheComponents của Next 16.
+export const instant = false;
 
 export async function generateMetadata({
   params,
@@ -48,7 +56,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  const recipes = await getRecipesByCategorySlug(slug);
+  const [recipes, categories] = await Promise.all([
+    getRecipesByCategorySlug(slug),
+    getCategories(),
+  ]);
 
   const favoriteIds = await getFavoriteRecipeIds(
     recipes.map((recipe) => recipe.id),
@@ -65,14 +76,28 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       />
 
       <div className={'container mx-auto py-8'}>
+        <CategoryChipNav categories={categories} activeSlug={slug} />
+
         {recipes.length === 0 ? (
-          <p className={'text-muted-foreground'}>
-            Chưa có công thức nào trong nhóm này. Vui lòng quay lại sau.
-          </p>
+          <div
+            className={
+              'text-muted-foreground flex flex-col items-center gap-3 py-16 text-center'
+            }
+          >
+            <SearchX className={'h-10 w-10'} aria-hidden={true} />
+            <p>
+              Chưa có công thức nào trong nhóm này. Vui lòng quay lại sau hoặc
+              chọn nhóm khác phía trên.
+            </p>
+          </div>
         ) : (
           <>
             <p className={'text-muted-foreground mb-6 text-sm'}>
-              Có {recipes.length} công thức trong nhóm “{category.name}”.
+              Có{' '}
+              <span className={'text-primary font-semibold'}>
+                {recipes.length}
+              </span>{' '}
+              công thức trong nhóm “{category.name}”.
             </p>
 
             <div
