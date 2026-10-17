@@ -2,7 +2,7 @@
 #
 # Image phụ trợ cho service db-migrate: Postgres client (psql, pg_isready)
 # + curl để gọi GoTrue Admin API tạo tài khoản demo.
-FROM supabase/postgres:15.8.1.078
+FROM supabase/postgres:17.11.0.004
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends curl ca-certificates \
