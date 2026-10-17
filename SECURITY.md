@@ -1,21 +1,35 @@
-# Security Policy
+# Chính sách Bảo mật
 
-## Supported Versions
+## Biện pháp bảo mật đang áp dụng
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+### Xác thực (Authentication)
+- **Supabase Auth**: đăng nhập email/mật khẩu + magic link. Mật khẩu được hash
+  bằng bcrypt phía Supabase, không lưu plaintext.
+- Đăng nhập Google đã tắt; chỉ giữ email/password và magic link.
+- Session quản lý bằng cookie httpOnly, secure.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+### Phân quyền (Authorization)
+- **Row Level Security (RLS)** bật trên mọi bảng `public.*`. Policy kiểm tra
+  `auth.uid()` và hàm `kit.is_admin()` (role admin lưu trong
+  `auth.users.raw_app_meta_data`).
+- Mọi API ghi (Server Actions) kiểm tra quyền ở phía server trước khi chạm DB.
+- Service role key (`SUPABASE_SERVICE_ROLE_KEY`) chỉ dùng phía server
+  (Server Components/Actions), không bao giờ expose ra client.
 
-## Reporting a Vulnerability
+### Dữ liệu
+- Bài viết ở trạng thái `draft` không hiển thị ra trang công khai
+  (mọi query public đều lọc `status = 'published'`).
+- Không commit secret, token, API key vào git. Biến môi trường qua `.env.local`
+  (xem `src/apps/web/.env.example`).
+- GitHub PAT dùng cho CI/deploy được lưu trong credential helper, thu hồi
+  sau khi kết thúc đồ án.
 
-Use this section to tell people how to report a vulnerability.
+### Ứng dụng
+- Next.js App Router: mọi trang admin yêu cầu đăng nhập + role admin
+  (kiểm tra ở layout server-side, redirect nếu không đủ quyền).
+- CSRF protection cho Server Actions theo pattern MakerKit.
+- Không render HTML thô từ dữ liệu người dùng (tránh XSS).
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+## Phạm vi
+
+Chính sách này áp dụng cho codebase tại nhánh `main` của repo này.
