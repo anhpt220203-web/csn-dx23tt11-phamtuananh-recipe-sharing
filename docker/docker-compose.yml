@@ -186,10 +186,12 @@ services:
   web-dev:
     image: node:24-alpine
     working_dir: /app/src
+    # next dev --webpack: WATCHPACK_POLLING chỉ có tác dụng với webpack —
+    # Turbopack không hỗ trợ polling qua bind mount của Docker Desktop.
     command: >
       sh -c "corepack enable &&
              pnpm install --frozen-lockfile &&
-             pnpm --filter web dev"
+             pnpm --filter web exec dotenv -e ./.env.local -- next dev --webpack --hostname 0.0.0.0"
     depends_on:
       kong:
         condition: service_started
