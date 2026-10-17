@@ -23,7 +23,10 @@ FROM node:${NODE_VERSION}-alpine AS base
 RUN apk add --no-cache libc6-compat
 ENV PNPM_HOME=/pnpm
 ENV PATH="${PNPM_HOME}:${PATH}"
-RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
+# corepack tự cài đúng phiên bản pnpm theo `packageManager` trong package.json
+# (không pin cứng — phiên bản sai làm mất optional deps như @swc/core-linux-x64-musl).
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
 WORKDIR /app
 
 # ---------- install + build ----------
