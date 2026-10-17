@@ -32,6 +32,15 @@ const SORT_OPTIONS: { value: SearchSort; label: string }[] = [
 ];
 
 /**
+ * Map value → nhãn cho Select của Base UI: không có `items` thì trigger
+ * khi đóng hiển thị raw value ("all", "moi-nhat") thay vì nhãn tiếng Việt.
+ */
+const CATEGORY_ITEMS = (categories: CategoryRow[]) => [
+  { value: 'all', label: 'Tất cả nhóm món' },
+  ...categories.map((category) => ({ value: category.slug, label: category.name })),
+];
+
+/**
  * Form tìm kiếm: gửi query param `q`, `category` và `sort` tới route /tim-kiem.
  */
 export function SearchForm({
@@ -88,7 +97,11 @@ export function SearchForm({
         />
       </div>
 
-      <Select value={category} onValueChange={(value) => setCategory(value ?? 'all')}>
+      <Select
+        value={category}
+        onValueChange={(value) => setCategory(value ?? 'all')}
+        items={CATEGORY_ITEMS(categories)}
+      >
         <SelectTrigger
           className={'w-full sm:w-44'}
           aria-label={'Lọc theo nhóm món'}
@@ -112,6 +125,7 @@ export function SearchForm({
         onValueChange={(value) =>
           setSort(value === 'danh-gia-cao' ? 'danh-gia-cao' : 'moi-nhat')
         }
+        items={SORT_OPTIONS}
       >
         <SelectTrigger
           className={'w-full sm:w-44'}
