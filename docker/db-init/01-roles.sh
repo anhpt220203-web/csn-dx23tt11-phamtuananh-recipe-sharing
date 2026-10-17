@@ -4,8 +4,13 @@
 set -e
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+	-- Image supabase/postgres khởi tạo superuser là supabase_admin, không có
+	-- role postgres — tạo lại để GoTrue/PostgREST/db-migrate kết nối được.
 	DO \$\$
 	BEGIN
+		IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'postgres') THEN
+			CREATE ROLE postgres LOGIN SUPERUSER PASSWORD '$POSTGRES_PASSWORD';
+		END IF;
 		IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'anon') THEN
 			CREATE ROLE anon NOLOGIN;
 		END IF;

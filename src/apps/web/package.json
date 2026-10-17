@@ -27,6 +27,8 @@
     "supabase:typegen": "pnpm run supabase:typegen:packages && pnpm run supabase:typegen:app",
     "supabase:typegen:packages": "supabase gen types typescript --local > ../../packages/supabase/src/database.types.ts",
     "supabase:typegen:app": "supabase gen types typescript --local > ./lib/database.types.ts",
+    "seed:images": "bash scripts/upload-seed-images.sh",
+    "supabase:setup-cloud": "bash scripts/setup-supabase-cloud.sh",
     "supabase:db:dump:local": "supabase db dump --local --data-only"
   },
   "dependencies": {

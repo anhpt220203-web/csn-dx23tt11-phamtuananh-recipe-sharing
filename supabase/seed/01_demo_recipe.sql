@@ -33,7 +33,7 @@ select
   'ga-chien-vi-bo-toi',
   'Gà chiên vị bơ tỏi',
   'Cánh gà chiên giòn rụm với lớp bột tẩm vị bơ tỏi thơm lừng, ăn kèm salad xoài chua ngọt và xốt mayonnaise béo ngậy. Món ăn phù hợp cho bữa cơm gia đình hay tụ họp bạn bè.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/ga-chien-vi-bo-toi.png',
+  'recipe-images/ga-chien-vi-bo-toi.png',
   4, 15, 20, 'Dễ', 'published',
   450, 28, 25, 8, 28, 3,
   'Tóm tắt từ monngonmoingay.com'

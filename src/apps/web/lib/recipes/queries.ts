@@ -212,16 +212,24 @@ export async function getCategoryBySlug(
 
 /**
  * Liệt kê công thức của một danh mục (theo slug danh mục).
+ * Lưu ý: lọc qua cột của bảng nhúng (`categories.slug`) không còn lọc bảng
+ * cha trên PostgREST bản mới, nên phải tra `category_id` trước rồi lọc trực tiếp.
  */
 export async function getRecipesByCategorySlug(
   slug: string,
 ): Promise<RecipeWithCategory[]> {
   const client = getClient();
 
+  const category = await getCategoryBySlug(slug);
+
+  if (!category) {
+    return [];
+  }
+
   const { data, error } = await client
     .from('recipes')
     .select(RECIPE_COLUMNS)
-    .eq('categories.slug', slug)
+    .eq('category_id', category.id)
     .eq('status', 'published')
     .order('created_at', { ascending: false });
 
@@ -362,6 +370,76 @@ export async function getLatestRecipes(
   return ((data ?? []) as unknown as RecipeQueryRow[]).map(
     toRecipeWithCategory,
   );
+}
+
+/**
+ * Công thức được đánh giá cao nhất (điểm trung bình rồi số lượt), dùng cho
+ * trang chủ. Bảng ratings đọc công khai nên hoạt động cả với khách chưa
+ * đăng nhập. Dữ liệu đồ án nhỏ nên tổng hợp phía ứng dụng là đủ.
+ */
+export async function getTopRatedRecipes(
+  limit = 4,
+): Promise<(RecipeWithCategory & { rating: RatingSummary })[]> {
+  const client = getClient();
+
+  const { data: ratingRows, error } = await client
+    .from('ratings')
+    .select('recipe_id,rating');
+
+  if (error) {
+    throw new Error(`Không tải được đánh giá: ${error.message}`);
+  }
+
+  const totals = new Map<number, { sum: number; count: number }>();
+
+  for (const row of ratingRows ?? []) {
+    const current = totals.get(row.recipe_id) ?? { sum: 0, count: 0 };
+    current.sum += row.rating;
+    current.count += 1;
+    totals.set(row.recipe_id, current);
+  }
+
+  const topIds = [...totals.entries()]
+    .sort(
+      (a, b) =>
+        b[1].sum / b[1].count - a[1].sum / a[1].count ||
+        b[1].count - a[1].count,
+    )
+    .slice(0, limit)
+    .map(([id]) => id);
+
+  if (topIds.length === 0) {
+    return [];
+  }
+
+  const { data, error: recipesError } = await client
+    .from('recipes')
+    .select(RECIPE_COLUMNS)
+    .in('id', topIds)
+    .eq('status', 'published');
+
+  if (recipesError) {
+    throw new Error(`Không tải được công thức đánh giá cao: ${recipesError.message}`);
+  }
+
+  return ((data ?? []) as unknown as RecipeQueryRow[])
+    .map(toRecipeWithCategory)
+    .map((recipe) => {
+      const summary = totals.get(recipe.id);
+
+      return {
+        ...recipe,
+        rating: {
+          average: summary ? summary.sum / summary.count : null,
+          count: summary?.count ?? 0,
+        },
+      };
+    })
+    .sort(
+      (a, b) =>
+        (b.rating.average ?? 0) - (a.rating.average ?? 0) ||
+        b.rating.count - a.rating.count,
+    );
 }
 
 /**

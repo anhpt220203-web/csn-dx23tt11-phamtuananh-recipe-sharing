@@ -18,7 +18,7 @@ type BannerCarouselProps = {
 
 /**
  * Carousel banner trang chủ: tự động chuyển slide, có nút pause/play
- * và điều hướng trước/sau (theo mẫu Knorr).
+ * và điều hướng trước/sau.
  */
 export function BannerCarousel({ banners }: BannerCarouselProps) {
   const [index, setIndex] = useState(0);

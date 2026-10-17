@@ -1,6 +1,6 @@
 #!/bin/bash
-# One-shot: chạy migrations, nạp seed, tạo tài khoản demo cho Supabase self-hosted.
-# Chạy 1 lần khi `docker compose up` (service db-migrate).
+# One-shot: chạy migrations, nạp seed, import ảnh demo, tạo tài khoản demo
+# cho Supabase self-hosted. Chạy 1 lần khi `docker compose up` (service db-migrate).
 set -u
 
 log() { echo "[db-migrate] $*"; }
@@ -59,12 +59,24 @@ BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticator') THEN CREATE ROLE authenticator NOINHERIT LOGIN; END IF;
 END $$;
 SQL
-# Password authenticator phải khớp PGRST_DB_URI (dùng POSTGRES_PASSWORD)
+# Password authenticator phải khớp PGRST_DB_URI (dùng PGPASSWORD từ env service)
 $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -c \
-  "ALTER ROLE authenticator WITH PASSWORD '$POSTGRES_PASSWORD';" >/dev/null
+  "ALTER ROLE authenticator WITH PASSWORD '$PGPASSWORD';" >/dev/null
 $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -c \
   "GRANT anon, authenticated, service_role TO authenticator;" >/dev/null
 log "Roles đã đảm bảo."
+
+# Schema + extension nền mà migrations/seed cần (CLI Supabase thường tự cài,
+# stack docker self-hosted thì không — phải đảm bảo trước khi chạy migrations).
+$PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -q <<'SQL'
+create schema if not exists extensions;
+create schema if not exists kit;
+create extension if not exists "uuid-ossp" schema extensions;
+create extension if not exists "pgcrypto" schema extensions;
+create extension if not exists "pg_trgm" schema kit;
+create extension if not exists "unaccent" schema kit;
+SQL
+log "Schema + extension nền đã sẵn sàng."
 
 # Bảng theo dõi migrations đã chạy
 $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" <<'SQL'
@@ -100,20 +112,39 @@ for f in $(ls /migrations/*.sql | sort); do
   applied=$((applied + 1))
 done
 log "Migrations: $applied file mới được áp dụng."
+# PostgREST giữ schema cache từ lúc khởi động — báo nó reload sau khi có DDL.
+$PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -c "notify pgrst, 'reload schema';" >/dev/null
+sleep 2
 
-# Nạp seed data (idempotent)
+# ─── Nạp seed data (supabase/seed/*.sql, idempotent, theo thứ tự tên file) ───
 if [ "$SEED_DEMO_DATA" = "true" ]; then
-  seeded="$($PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -tAc \
-    "select 1 from supabase_migrations.schema_migrations where version='seed.sql'")"
-  if [ "$seeded" = "1" ]; then
-    log "Seed đã nạp trước đó, bỏ qua."
-  else
-    log "Nạp seed.sql (33 công thức mẫu)..."
-    $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -f /seed/seed.sql \
-      || die "nạp seed thất bại."
+  for f in $(ls /seed/*.sql | sort); do
+    version="$(basename "$f" .sql)"
+    done_already="$($PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -tAc \
+      "select 1 from supabase_migrations.schema_migrations where version='seed:$version'")"
+    if [ "$done_already" = "1" ]; then
+      log "Seed bỏ qua (đã nạp): $version"
+      continue
+    fi
+    log "Nạp seed: $version"
+    $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -f "$f" \
+      || die "nạp seed $version thất bại."
     $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -c \
-      "insert into supabase_migrations.schema_migrations(version) values ('seed.sql') on conflict do nothing;" >/dev/null
-    log "Nạp seed xong."
+      "insert into supabase_migrations.schema_migrations(version) values ('seed:$version') on conflict do nothing;" >/dev/null
+  done
+  log "Seed SQL xong."
+  $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -c "notify pgrst, 'reload schema';" >/dev/null
+  sleep 2
+
+  # Import ảnh demo (supabase/seed/images/) vào Storage + gắn image_url theo slug.
+  if ls /seed/images/* >/dev/null 2>&1; then
+    log "Import ảnh demo vào Storage..."
+    SUPABASE_URL="$KONG_URL" \
+    SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+    SEED_IMAGES_DIR=/seed/images \
+    bash /upload-seed-images.sh || log "CẢNH BÁO: import ảnh có lỗi — web vẫn chạy (ảnh demo sẽ thiếu)."
+  else
+    log "Không có ảnh demo trong /seed/images — bỏ qua import."
   fi
 else
   log "SEED_DEMO_DATA=false: bỏ qua seed."
@@ -136,6 +167,9 @@ create_user() { # email password role
   code="$resp"
   if [ "$code" = "200" ] || [ "$code" = "201" ]; then
     log "Đã tạo tài khoản: $email ($role)"
+  elif [ "$code" = "500" ] && grep -q "23505\|already exists" /tmp/user.json 2>/dev/null; then
+    # Seed SQL đã tạo user này trước đó (duplicate email) — coi như thành công.
+    log "Tài khoản đã tồn tại (từ seed SQL): $email"
   else
     log "CẢNH BÁO: tạo $email thất bại (HTTP $code): $(head -c 200 /tmp/user.json)"
   fi
