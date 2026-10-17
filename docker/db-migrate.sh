@@ -1,6 +1,6 @@
 #!/bin/bash
-# One-shot: chạy migrations, nạp seed, tạo tài khoản demo cho Supabase self-hosted.
-# Chạy 1 lần khi `docker compose up` (service db-migrate).
+# One-shot: chạy migrations, nạp seed, import ảnh demo, tạo tài khoản demo
+# cho Supabase self-hosted. Chạy 1 lần khi `docker compose up` (service db-migrate).
 set -u
 
 log() { echo "[db-migrate] $*"; }
@@ -66,6 +66,13 @@ $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -c \
   "GRANT anon, authenticated, service_role TO authenticator;" >/dev/null
 log "Roles đã đảm bảo."
 
+# Schema phụ trợ mà migrations/seed cần (phòng khi image db không tạo sẵn).
+$PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -q <<'SQL'
+create schema if not exists extensions;
+create schema if not exists kit;
+SQL
+log "Schema extensions/kit đã đảm bảo."
+
 # Bảng theo dõi migrations đã chạy
 $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" <<'SQL'
 CREATE SCHEMA IF NOT EXISTS supabase_migrations;
@@ -101,19 +108,33 @@ for f in $(ls /migrations/*.sql | sort); do
 done
 log "Migrations: $applied file mới được áp dụng."
 
-# Nạp seed data (idempotent)
+# ─── Nạp seed data (supabase/seed/*.sql, idempotent, theo thứ tự tên file) ───
 if [ "$SEED_DEMO_DATA" = "true" ]; then
-  seeded="$($PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -tAc \
-    "select 1 from supabase_migrations.schema_migrations where version='seed.sql'")"
-  if [ "$seeded" = "1" ]; then
-    log "Seed đã nạp trước đó, bỏ qua."
-  else
-    log "Nạp seed.sql (33 công thức mẫu)..."
-    $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -f /seed/seed.sql \
-      || die "nạp seed thất bại."
+  for f in $(ls /seed/*.sql | sort); do
+    version="$(basename "$f" .sql)"
+    done_already="$($PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -tAc \
+      "select 1 from supabase_migrations.schema_migrations where version='seed:$version'")"
+    if [ "$done_already" = "1" ]; then
+      log "Seed bỏ qua (đã nạp): $version"
+      continue
+    fi
+    log "Nạp seed: $version"
+    $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -f "$f" \
+      || die "nạp seed $version thất bại."
     $PSQL -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -c \
-      "insert into supabase_migrations.schema_migrations(version) values ('seed.sql') on conflict do nothing;" >/dev/null
-    log "Nạp seed xong."
+      "insert into supabase_migrations.schema_migrations(version) values ('seed:$version') on conflict do nothing;" >/dev/null
+  done
+  log "Seed SQL xong."
+
+  # Import ảnh demo (supabase/seed/images/) vào Storage + gắn image_url theo slug.
+  if ls /seed/images/* >/dev/null 2>&1; then
+    log "Import ảnh demo vào Storage..."
+    SUPABASE_URL="$KONG_URL" \
+    SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+    SEED_IMAGES_DIR=/seed/images \
+    bash /upload-seed-images.sh || log "CẢNH BÁO: import ảnh có lỗi — web vẫn chạy (ảnh demo sẽ thiếu)."
+  else
+    log "Không có ảnh demo trong /seed/images — bỏ qua import."
   fi
 else
   log "SEED_DEMO_DATA=false: bỏ qua seed."

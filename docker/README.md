@@ -2,15 +2,16 @@
 
 `docker compose up` dựng **toàn bộ stack local**, không cần Supabase Cloud:
 
-| Service    | Vai trò                              | Port host |
-| ---------- | ------------------------------------ | --------- |
-| `web`      | App Next.js (standalone)             | 3000      |
-| `kong`     | API gateway Supabase (`/auth`, `/rest`, `/storage`) | 8000 |
-| `db`       | Postgres 15 (Supabase)               | 54322     |
-| `auth`     | GoTrue (Supabase Auth)               | —         |
-| `rest`     | PostgREST                            | —         |
-| `storage`  | Storage API (file ảnh upload)        | —         |
-| `db-migrate` | One-shot: chạy migrations + seed + tạo tài khoản demo | — |
+| Service      | Vai trò                              | Port host |
+| ------------ | ------------------------------------ | --------- |
+| `web-dev`    | App Next.js **dev, hot reload** (mặc định) | 3000 |
+| `web`        | App Next.js prod (standalone, `--profile prod`) | 3000 |
+| `kong`       | API gateway Supabase (`/auth`, `/rest`, `/storage`) | 8000 |
+| `db`         | Postgres 15 (Supabase)               | 54322     |
+| `auth`       | GoTrue (Supabase Auth)               | —         |
+| `rest`       | PostgREST                            | —         |
+| `storage`    | Storage API (file ảnh upload)        | —         |
+| `db-migrate` | One-shot: migrations + seed + import ảnh + tài khoản demo | — |
 
 ## Chuẩn bị (làm 1 lần)
 
@@ -25,35 +26,47 @@
    ```
    - Windows: mở Notepad **quyền Admin**, sửa `C:\Windows\System32\drivers\etc\hosts`
    - macOS/Linux: `sudo nano /etc/hosts`
+4. Nếu máy đang chạy Supabase CLI local (`supabase start`) thì **stop trước** để tránh trùng cổng 54322:
+   ```bash
+   pnpm --filter web supabase:stop
+   ```
 
-## Chạy demo
+## Chạy dev (hot reload — mặc định)
 
 Từ repo root:
 
 ```bash
-docker compose -f docker/docker-compose.yml --env-file docker/.env up --build
+docker compose -f docker/docker-compose.yml --env-file docker/.env up
 ```
 
-Lần đầu chạy, `db-migrate` sẽ tự động:
-- Chạy toàn bộ migrations trong `supabase/migrations/` (tạo bảng, RLS, RPC tìm kiếm...)
-- Nạp `supabase/seed.sql` → 33 công thức mẫu + 7 danh mục
-- Tạo 5 tài khoản demo qua Supabase Auth
+- `web-dev` mount toàn bộ `src/`, chạy `next dev` — **sửa code trên máy host là trang tự cập nhật**.
+- Cổng 3000 bận? Chạy `WEB_PORT=3100 docker compose -f docker/docker-compose.yml --env-file docker/.env up`
+  rồi mở http://localhost:3100.
+- Lần đầu `db-migrate` tự động: chạy migrations trong `supabase/migrations/`, nạp
+  seed `supabase/seed/*.sql` (7 danh mục + 34 công thức + 2 tài khoản), import
+  ảnh trong `supabase/seed/images/` vào Storage rồi gắn `image_url` theo slug.
+- Dừng: `Ctrl+C` hoặc `docker compose -f docker/docker-compose.yml down`.
+- Xoá toàn bộ data demo (DB + storage + node_modules volume): `... down -v`.
 
-Mở http://localhost:3000 để xem demo.
+## Chạy prod (build standalone)
 
-**Tài khoản demo** (mật khẩu: `Demo@123456`):
+```bash
+docker compose -f docker/docker-compose.yml --env-file docker/.env --profile prod up --build
+```
+
+Web build production (Next.js standalone) chạy ở http://localhost:3000. Khi bật
+`--profile prod`, service `web-dev` không chạy.
+
+**Ảnh demo**: ném file vào `supabase/seed/images/` với tên
+`<slug-cong-thuc>.jpg|.png|.webp` (xem `supabase/seed/images/README.md`) rồi
+`down -v` + `up` lại — `db-migrate` tự upload vào Storage và gắn `image_url`.
+Trình duyệt chỉ thấy ảnh qua proxy `/api/image/...` (cùng origin), không lộ
+link storage gốc.
+
+## Tài khoản demo (mật khẩu: `Demo@123456`)
+
 - `phamtuananh@example.com` — admin (quản trị)
 - `tranbich@example.com`, `minhkhoi@example.com`, `hoangyen@example.com`, `duchuy@example.com` — user thường
-
-Dừng: `Ctrl+C`, hoặc:
-```bash
-docker compose -f docker/docker-compose.yml down
-```
-
-Xóa toàn bộ data demo (DB + storage) để chạy lại từ đầu:
-```bash
-docker compose -f docker/docker-compose.yml down -v
-```
 
 ## Kiểm tra nhanh
 
@@ -71,24 +84,27 @@ docker compose -f docker/docker-compose.yml logs db-migrate
 
 ## Nạp lại seed thủ công
 
-Seed đã tự chạy lần đầu. Muốn nạp lại (file idempotent, chạy lại an toàn):
+Seed đã tự chạy lần đầu. File seed idempotent (upsert), chạy lại an toàn:
 
 ```bash
-docker compose -f docker/docker-compose.yml run --rm \
-  -v ./supabase/seed.sql:/seed/seed.sql db-migrate \
-  bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -h db -U postgres -d postgres -f /seed/seed.sql'
+docker compose -f docker/docker-compose.yml --env-file docker/.env run --rm db-migrate
 ```
 
-Hoặc kết nối trực tiếp vào Postgres (port host `54322`, user `postgres`, password trong `docker/.env`):
-```bash
-psql -h localhost -p 54322 -U postgres -d postgres
-```
+(Không cần `down -v`: script đọc marker `seed:<tên-file>` trong
+`supabase_migrations.schema_migrations`, muốn nạp lại thì xoá marker tương ứng
+hoặc chạy `down -v`.)
 
 ## Lưu ý
 
-- `NEXT_PUBLIC_SUPABASE_URL` được cố định là `http://kong:8000` trong `docker-compose.yml` (bake vào image lúc build). Đổi giá trị phải build lại.
-- `SUPABASE_SERVICE_ROLE_KEY` là secret runtime: chỉ truyền lúc chạy container, không bake vào image, không commit lên git.
+- `NEXT_PUBLIC_SUPABASE_URL` cố định `http://kong:8000` (dev: qua env của
+  service; prod: bake lúc build) — trình duyệt và container cùng gọi qua tên
+  `kong`, cần entry `"127.0.0.1 kong"` trong file hosts của máy host.
+- Ảnh công thức được phục vụ qua **proxy** `/api/image/<bucket>/<path>` —
+  link storage thật không bao giờ xuất hiện trong HTML.
+- `SUPABASE_SERVICE_ROLE_KEY` là secret runtime: chỉ truyền lúc chạy container,
+  không bake vào image, không commit lên git.
 - Các key trong `.env.example` là **key demo cho local** — tuyệt đối không dùng ở production.
-- Dockerfile dùng Next.js `output: 'standalone'` (đã bật trong `src/apps/web/next.config.mjs`), chạy bằng user `nextjs` không phải root.
+- Dockerfile dùng Next.js `output: 'standalone'` (bật qua `OUTPUT_STANDALONE=true`
+  khi build Docker), chạy bằng user `nextjs` không phải root.
 - Không dùng Supabase Studio trong stack này để nhẹ máy (cần thì mở PR thêm service `studio`).
 - Muốn đổi tên site/màu theme lúc build, xem danh sách ARG trong `docker/Dockerfile`.
