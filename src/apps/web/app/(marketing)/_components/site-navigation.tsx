@@ -50,10 +50,6 @@ const links: Record<
     label: 'Tìm kiếm',
     path: '/tim-kiem',
   },
-  HoiDap: {
-    label: 'Hỏi đáp',
-    path: '/faq',
-  },
   /*
     FAQ: {
       label: 'marketing.faq',
