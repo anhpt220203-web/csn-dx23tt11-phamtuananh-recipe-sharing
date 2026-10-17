@@ -35,7 +35,7 @@ services:
     restart: unless-stopped
 
   auth:
-    image: supabase/gotrue:v2.177.0
+    image: supabase/gotrue:v2.197.0
     depends_on:
       db:
         condition: service_healthy
