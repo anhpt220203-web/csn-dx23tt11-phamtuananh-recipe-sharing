@@ -21,6 +21,13 @@ port = 54322
 # server_version;` on the remote database to check.
 major_version = 15
 
+# `supabase db reset` tự chạy các file seed theo thứ tự tên file
+# (01_categories → 02_demo_users → 02_recipes → 03_demo_recipe).
+# Ảnh demo KHÔNG seed bằng SQL — nạp bằng `pnpm --filter web seed:images`.
+[db.seed]
+enabled = true
+sql_paths = ['./seed/*.sql']
+
 [studio]
 # Port to use for Supabase Studio.
 port = 54323
