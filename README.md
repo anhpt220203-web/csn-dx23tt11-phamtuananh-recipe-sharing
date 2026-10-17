@@ -3,95 +3,117 @@
 Đồ án học phần **Thực tập đồ án cơ sở ngành (220265)** — Trường Đại học Trà Vinh.
 Sinh viên: Phạm Tuấn Anh (DX23TT11) | GVHD: ThS. Trầm Hoàng Nam.
 
+## Tech Stack
+
+- **Next.js 16** (App Router, Turbopack) + TypeScript — full-stack
+- **Supabase** (PostgreSQL + Auth + Storage) — Supabase-native, không dùng Prisma/Better-Auth
+- **Tailwind CSS v4** + shadcn/ui (`@kit/ui`)
+- Monorepo MakerKit: pnpm workspace + Turbo
+- pnpm v12 · Node.js 24 LTS · Deploy: Vercel (Root Directory = `src/apps/web`)
+
 ## Yêu cầu runtime
 
-- **Node.js 24 LTS** (xem `src/.nvmrc`)
-- npm (đi kèm Node)
+- **Node.js 24 LTS**
+- **pnpm 12** (`corepack enable` rồi `corepack prepare pnpm@12.14.0 --activate`)
+- **Supabase CLI** (để chạy DB local): `npm i -g supabase`
+- Docker (chỉ khi chạy Supabase local)
+
+## Cấu trúc thư mục
+
+```
+├── src/                              # Monorepo root (MakerKit: pnpm + Turbo)
+│   ├── apps/web/                     # App Next.js "Công thức món ngon"
+│   │   ├── app/
+│   │   │   ├── (marketing)/          # Trang công khai: /, /danh-muc,
+│   │   │   │                         #   /cong-thuc/[slug], /tim-kiem, /faq,
+│   │   │   │                         #   /yeu-thich, /profile
+│   │   │   ├── admin/                # /admin/* — quản trị (yêu cầu role admin)
+│   │   │   └── auth/                 # /auth/sign-in, /auth/sign-up, /auth/callback
+│   │   ├── components/recipes/       # RecipeCard, SearchForm, FavoriteButton…
+│   │   ├── lib/recipes/              # queries (đọc), actions (ghi)
+│   │   ├── config/                   # paths, navigation, app config
+│   │   ├── i18n/messages/vi/         # Bản dịch tiếng Việt
+│   │   └── public/images/            # Logo, favicon, ảnh công thức
+│   └── packages/                     # @kit/*: ui, supabase, auth… (MakerKit)
+├── supabase/                         # Supabase project (root)
+│   ├── migrations/                   # SQL migrations (tự chạy khi merge vào dev)
+│   ├── seed/                         # Dữ liệu mẫu
+│   └── config.toml
+├── docker/                           # Docker demo (optional)
+├── specs/                            # Spec Kit artifacts
+├── thesis/                           # Báo cáo, slide, video
+└── progress-report/                  # Báo cáo tiến độ hằng tuần
+```
 
 ## Cài đặt & chạy
 
 ```bash
 git clone <repo-url> recipe-sharing && cd recipe-sharing
-cd src                            # Next.js project root
+
+# 1. Cài dependencies (từ monorepo root)
+cd src
 pnpm install
-cp .env.example .env.local        # điền giá trị Supabase
-pnpm exec prisma migrate dev      # tạo cấu trúc dữ liệu
-pnpm exec prisma db seed          # nạp dữ liệu mẫu
-pnpm dev
+
+# 2. Biến môi trường cho app web
+cp apps/web/.env.example apps/web/.env.local   # điền Supabase URL + keys
+
+# 3. Database — chọn 1 trong 2 cách:
+# Cách A: Supabase local (cần Docker)
+pnpm --filter web supabase:start
+pnpm --filter web supabase:reset                # migrate + seed
+
+# Cách B: Supabase cloud
+#   Link project rồi push migrations, chạy seed trong SQL Editor
+pnpm --filter web supabase link --project-ref <ref>
+pnpm --filter web supabase db push
+
+# 4. Chạy dev
+pnpm dev                                        # hoặc: pnpm --filter web dev
 ```
 
 Mở `http://localhost:3000` — trang chủ tiếng Việt hiển thị.
 
-## Cấu trúc thư mục
-
-```
-src/                          # Next.js project root (full-stack)
-├── app/                      # App Router: pages, layouts, globals.css, api/ (routes)
-│   └── api/auth/[...all]/    # Endpoint Better-Auth
-├── components/ui/            # UI components (shadcn/ui)
-├── lib/                      # prisma.ts (singleton), auth.ts (server), auth-client.ts, utils.ts
-├── services/                 # Business logic (tầng service — NFR6, dùng từ FR1+)
-├── prisma/                   # schema.prisma + seed.ts
-├── generated/prisma/         # Prisma client auto-gen (gitignored)
-├── public/                   # Tài nguyên tĩnh
-├── package.json              # Dependencies (pnpm)
-├── prisma.config.ts          # Prisma v6 config
-└── next.config.ts / tsconfig.json / eslint.config.mjs / components.json
-```
-
-Import alias: `@/*` (ví dụ `@/lib/prisma`, `@/components/ui/button`).
+> **Lưu ý**: `specs/` và `thesis/` hiện vẫn mô tả stack cũ
+> (Prisma + Better-Auth) — cần cập nhật ở giai đoạn hoàn thiện báo cáo.
 
 ## Biến môi trường
 
-`src/.env.local` (xem `.env.example`):
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — từ dashboard Supabase > Connect
-- `DATABASE_URL` / `DIRECT_URL` — Supavisor pooler (IPv4): `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require`
-  - ⚠️ Host direct `db.<ref>.supabase.co` chỉ có **IPv6** — mạng không hỗ trợ IPv6 sẽ báo `P1001`; dùng pooler cho cả hai biến (session pooler 5432 chạy được cả migration)
-- `BETTER_AUTH_SECRET` — sinh random: `openssl rand -base64 32`
-
-Supabase client đã tích hợp qua shadcn registry (`@supabase/supabase-js` +
-`@supabase/ssr`): `src/lib/client.ts` (browser), `src/lib/server.ts` (server
-components/route handlers), `src/lib/middleware.ts` (helper `updateSession` —
-wire vào middleware khi cần refresh session Supabase).
+`src/apps/web/.env.local` (xem `src/apps/web/.env.example`):
+- `NEXT_PUBLIC_SUPABASE_URL` — URL project Supabase
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — anon key (dùng phía client)
+- `SUPABASE_SERVICE_ROLE_KEY` — service role key (chỉ dùng phía server, không expose)
 
 ## Lệnh hữu ích
 
-| Lệnh | Thư mục | Mô tả |
-|---|---|---|
-| `pnpm dev` | Dev server localhost:3000 |
-| `pnpm build` | Build production |
-| `pnpm lint` / `pnpm lint:fix` | Kiểm tra / tự sửa ESLint |
-| `pnpm exec prisma migrate dev` | Tạo/áp dụng migration |
-| `pnpm exec prisma db seed` | Nạp dữ liệu mẫu |
-| `pnpm exec prisma studio` | Quản lý data qua UI |
+Chạy từ `src/` (monorepo root):
 
-## Agent tooling (Next.js AI Agents guide)
+| Lệnh | Mô tả |
+|---|---|
+| `pnpm dev` | Dev server (localhost:3000) |
+| `pnpm build` | Build production (`pnpm --filter web build`) |
+| `pnpm lint` | Kiểm tra lint (oxlint) |
+| `pnpm typecheck` | Kiểm tra TypeScript |
 
-- `src/AGENTS.md` + `src/CLAUDE.md` — hướng dẫn coding agent, khối
-  `nextjs-agent-rules` trỏ vào docs bundled `node_modules/next/dist/docs/`
-  (tự cập nhật theo phiên bản Next.js bởi `next dev`).
-- `.mcp.json` — Next.js MCP server (`next-devtools-mcp`): agent đọc lỗi
-  build/runtime/type trực tiếp từ dev server qua `/_next/mcp`. Chạy `pnpm dev`
-  trước để MCP có dữ liệu.
-- `.zcode/skills/next-*` — 5 skills Next.js chính thức: `next-dev-loop`
-  (verify runtime sau mỗi edit), các skill adoption/optimizer cho Cache Components
-  và Partial Prefetching (dùng khi tối ưu hiệu năng ở feature FR1+).
+## Quy trình Git
 
-## Tech Stack
-
-- Next.js 16 (App Router, Turbopack) + TypeScript — full-stack trong `src/`
-- Prisma v6 + PostgreSQL (Supabase)
-- Tailwind CSS v4 + shadcn/ui
-- Better-Auth (email/password)
-- pnpm v12 · Node.js 24 LTS · Deploy: Vercel (Root Directory = `src`)
+- Nhánh `dev`: nhánh phát triển chính. Tạo nhánh mới từ `dev` để làm tính năng.
+- Đặt tên nhánh theo chuẩn: `feature/`, `fix/`, `chore/`, `refactor/`, `docs/`…
+- Tạo PR về `dev`. Không tự merge khi chưa được duyệt.
+- Nhánh `main`: production. Chỉ merge `dev` → `main` khi cần demo/deploy.
 
 ## Tài khoản demo
-
-Chạy `pnpm exec prisma db seed` trong thư mục `src`, sau đó đăng nhập tại `/dang-nhap`:
 
 | Vai trò | Email | Mật khẩu |
 |---|---|---|
 | Quản trị viên | `phamtuananh@example.com` | `Demo@123456` |
-| Người dùng | `tranbich@example.com` | `Demo@123456` |
+| Người dùng | `member@example.com` | `Demo@123456` |
 
 Đây là thông tin dùng riêng cho môi trường trình diễn; không dùng cho production.
+
+## Bảo mật
+
+Xem chi tiết tại [SECURITY.md](./SECURITY.md). Tóm tắt:
+
+- **Xác thực**: Supabase Auth (email/mật khẩu + magic link), mật khẩu hash bcrypt.
+- **Phân quyền**: RLS trên mọi bảng, kiểm tra quyền phía server cho mọi API ghi.
+- **Dữ liệu**: bài `draft` không lộ ra trang công khai; không commit secret vào git.
