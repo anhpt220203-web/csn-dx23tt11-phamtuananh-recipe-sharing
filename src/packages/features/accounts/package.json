@@ -14,7 +14,10 @@
     "./personal-account-settings": "./src/components/account-settings-container.tsx",
     "./components": "./src/components/index.ts",
     "./hooks/*": "./src/hooks/*.ts",
-    "./api": "./src/server/api.ts"
+    "./api": "./src/server/api.ts",
+    "./update-account-image": "./src/components/update-account-image-container.tsx",
+    "./update-email-form": "./src/components/email/update-email-form-container.tsx",
+    "./account-danger-zone": "./src/components/account-danger-zone.tsx"
   },
   "scripts": {
     "clean": "git clean -xdf .turbo node_modules",

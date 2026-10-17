@@ -47,7 +47,7 @@ export function ProfileNameForm({ initialName }: { initialName: string }) {
     try {
       await updateUser.mutateAsync({
         data: { name },
-        redirectTo: '/ho-so',
+        redirectTo: '/profile',
       });
 
       toast.success('Đã cập nhật họ tên.');

@@ -55,7 +55,7 @@ export function ProfilePasswordForm() {
     try {
       await updateUser.mutateAsync({
         password,
-        redirectTo: '/ho-so',
+        redirectTo: '/profile',
       });
 
       toast.success('Đổi mật khẩu thành công.');

@@ -24,8 +24,8 @@ const ModeToggle = dynamic(
 );
 
 const paths = {
-  home: pathsConfig.app.home,
-  profile: '/ho-so',
+  home: '/',
+  profile: '/profile',
 };
 
 const features = {

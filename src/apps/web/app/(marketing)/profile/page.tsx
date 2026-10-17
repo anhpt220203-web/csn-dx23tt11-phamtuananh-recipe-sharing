@@ -2,8 +2,20 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { connection } from 'next/server';
 
-import { ChevronRight, Heart, KeyRound, Star, UserRound } from 'lucide-react';
+import {
+  ChevronRight,
+  Heart,
+  ImagePlus,
+  KeyRound,
+  Mail,
+  Star,
+  TriangleAlert,
+  UserRound,
+} from 'lucide-react';
 
+import { AccountDangerZone } from '@kit/accounts/account-danger-zone';
+import { UpdateEmailFormContainer } from '@kit/accounts/update-email-form';
+import { UpdateAccountImageContainer } from '@kit/accounts/update-account-image';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { Button } from '@kit/ui/button';
 import {
@@ -15,6 +27,7 @@ import {
 } from '@kit/ui/card';
 import { cn } from '@kit/ui/utils';
 
+import pathsConfig from '~/config/paths.config';
 import { RecipeCard } from '~/components/recipes/recipe-card';
 import { requireUserInServerComponent } from '~/lib/server/require-user-in-server-component';
 import {
@@ -29,7 +42,7 @@ import { ProfilePasswordForm } from './_components/profile-password-form';
 export const metadata: Metadata = {
   title: 'Hồ sơ cá nhân',
   description:
-    'Quản lý thông tin cá nhân, đổi mật khẩu, xem món yêu thích và đánh giá của bạn.',
+    'Quản lý thông tin cá nhân, ảnh đại diện, email, mật khẩu, món yêu thích và đánh giá của bạn.',
 };
 
 // Trang riêng tư theo từng người dùng: cho phép "blocking" thay vì lỗi
@@ -82,10 +95,13 @@ export default async function ProfilePage() {
   );
   const email = user?.email ?? sessionUser.email ?? '';
 
-  const [favorites, myRatings] = await Promise.all([
+  const [favorites, myRatings, accountRow] = await Promise.all([
     getFavoriteRecipes(userId),
     getMyRatingsWithRecipes(userId),
+    client.from('accounts').select('picture_url').eq('id', userId).maybeSingle(),
   ]);
+
+  const pictureUrl = accountRow.data?.picture_url ?? null;
 
   const favoritePreview = favorites.slice(0, PREVIEW_FAVORITE_COUNT);
 
@@ -120,6 +136,25 @@ export default async function ProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle className={'flex items-center gap-2 text-lg'}>
+              <ImagePlus className={'h-5 w-5'} aria-hidden={true} />
+              Ảnh đại diện
+            </CardTitle>
+
+            <CardDescription>
+              Tải lên ảnh đại diện cho tài khoản của bạn.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <UpdateAccountImageContainer
+              user={{ pictureUrl: pictureUrl, id: userId }}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className={'flex items-center gap-2 text-lg'}>
               <UserRound className={'h-5 w-5'} aria-hidden={true} />
               Thông tin cá nhân
             </CardTitle>
@@ -130,15 +165,28 @@ export default async function ProfilePage() {
           </CardHeader>
 
           <CardContent className={'flex flex-col gap-4'}>
-            <div>
-              <p className={'text-muted-foreground mb-1 text-sm'}>
-                Địa chỉ email
-              </p>
-
-              <p className={'truncate text-sm font-medium'}>{email}</p>
-            </div>
-
             <ProfileNameForm initialName={displayName} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className={'flex items-center gap-2 text-lg'}>
+              <Mail className={'h-5 w-5'} aria-hidden={true} />
+              Đổi địa chỉ email
+            </CardTitle>
+
+            <CardDescription>
+              Địa chỉ email hiện tại: {email || '—'}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <UpdateEmailFormContainer
+              callbackPath={
+                pathsConfig.auth.callback + `?next=/profile`
+              }
+            />
           </CardContent>
         </Card>
 
@@ -266,6 +314,26 @@ export default async function ProfilePage() {
               ))}
             </ul>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className={'border-destructive mt-4'}>
+        <CardHeader>
+          <CardTitle
+            className={'flex items-center gap-2 text-lg text-destructive'}
+          >
+            <TriangleAlert className={'h-5 w-5'} aria-hidden={true} />
+            Vùng nguy hiểm
+          </CardTitle>
+
+          <CardDescription>
+            Xóa tài khoản sẽ xóa vĩnh viễn mọi dữ liệu của bạn. Hành động
+            này không thể hoàn tác.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <AccountDangerZone />
         </CardContent>
       </Card>
     </div>

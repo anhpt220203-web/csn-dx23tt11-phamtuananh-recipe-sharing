@@ -7,6 +7,7 @@ import pathsConfig from '~/config/paths.config';
 export function AuthProvider(props: React.PropsWithChildren) {
   useAuthChangeListener({
     appHomePath: pathsConfig.app.home,
+    privatePathPrefixes: ['/profile', '/update-password', '/admin'],
   });
 
   return props.children;
