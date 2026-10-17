@@ -13,6 +13,8 @@
 # Dừng:    docker compose -f docker/docker-compose.yml down
 # Xóa data: docker compose -f docker/docker-compose.yml down -v   (xóa DB demo)
 
+name: recipe-sharing
+
 services:
   # ---------- Supabase self-hosted ----------
   db:
