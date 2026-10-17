@@ -40,6 +40,7 @@ import {
   getUserRating,
   isFavorite,
 } from '~/lib/recipes/queries';
+import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 
 import { FavoriteButton } from '~/components/recipes/favorite-button';
 import {
@@ -157,10 +158,10 @@ export default async function RecipePage({ params }: RecipePageProps) {
       {/* ── Ảnh + bảng thông số ──────────────────────────── */}
       <div className={'mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3'}>
         <div className={'lg:col-span-2'}>
-          {recipe.image_url ? (
+          {resolveRecipeImageSrc(recipe.image_url) ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={recipe.image_url}
+              src={resolveRecipeImageSrc(recipe.image_url) as string}
               alt={recipe.title}
               className={
                 'aspect-[16/10] w-full rounded-2xl object-cover shadow-sm'
@@ -572,10 +573,10 @@ function RelatedSidebar({
                 'group flex items-center gap-3 rounded-xl transition-colors hover:bg-accent/50 p-1.5'
               }
             >
-              {item.image_url ? (
+              {resolveRecipeImageSrc(item.image_url) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={item.image_url}
+                  src={resolveRecipeImageSrc(item.image_url) as string}
                   alt={item.title}
                   loading={'lazy'}
                   className={

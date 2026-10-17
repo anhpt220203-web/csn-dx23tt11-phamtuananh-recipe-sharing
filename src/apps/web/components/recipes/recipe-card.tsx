@@ -11,6 +11,7 @@ import { cn } from '@kit/ui/utils';
 
 import { RecipeCardFavoriteButton } from './recipe-card-favorite-button';
 
+import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import type { RatingSummary, RecipeWithCategory } from '~/lib/recipes/database';
 
 function formatCookTime(minutes: number | null): string {
@@ -46,6 +47,7 @@ export function RecipeCard({
   initialFavorited = false,
 }: RecipeCardProps) {
   const detailHref = `/cong-thuc/${recipe.slug}`;
+  const imageSrc = resolveRecipeImageSrc(recipe.image_url);
   const hasRating =
     rating && rating.count > 0 && rating.average !== null
       ? { average: rating.average, count: rating.count }
@@ -63,10 +65,10 @@ export function RecipeCard({
           className={'block overflow-hidden'}
           aria-label={`Xem công thức ${recipe.title}`}
         >
-          {recipe.image_url ? (
+          {imageSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={recipe.image_url}
+              src={imageSrc}
               alt={recipe.title}
               loading={'lazy'}
               className={
