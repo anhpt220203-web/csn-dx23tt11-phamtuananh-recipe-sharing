@@ -37,38 +37,7 @@ export async function SiteFooter() {
           }}
         />
       }
-      sections={[
-        {
-          heading: 'Get Started',
-          links: [
-            {
-              href: '/auth/sign-in',
-              label: <Trans i18nKey="auth.signIn" />,
-            },
-            {
-              href: '/auth/sign-up',
-              label: <Trans i18nKey="auth.signUp" />,
-            },
-          ],
-        },
-        {
-          heading: <Trans i18nKey="marketing.legal" />,
-          links: [
-            {
-              href: '/terms-of-service',
-              label: <Trans i18nKey="marketing.termsOfService" />,
-            },
-            {
-              href: '/privacy-policy',
-              label: <Trans i18nKey="marketing.privacyPolicy" />,
-            },
-            {
-              href: '/cookie-policy',
-              label: <Trans i18nKey="marketing.cookiePolicy" />,
-            },
-          ],
-        },
-      ]}
+      sections={[]}
     />
   );
 }
