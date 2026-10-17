@@ -217,6 +217,8 @@ services:
       NEXT_PUBLIC_CAPTCHA_SITE_KEY: ""
       # Bắt buộc bật polling để hot reload hoạt động qua bind mount của Docker Desktop.
       WATCHPACK_POLLING: "true"
+      # .env.local trên host có thể chứa đường dẫn Windows — tắt cache SWC trong container.
+      SWC_NATIVE_BINDING_CACHE: "0"
     volumes:
       - ../src:/app/src
       - web-node-modules-root:/app/src/node_modules
