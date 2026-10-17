@@ -95,6 +95,13 @@ output bằng OpenNext rồi đẩy Worker + static assets lên Cloudflare.
 | Middleware (`proxy.ts`) | Hỗ trợ | Hỗ trợ (chạy trên Node.js runtime của adapter). **Node.js middleware** (Next 15.2+) chưa hỗ trợ — app này không dùng |
 | `export const runtime = 'edge'` | Hỗ trợ | **Không hỗ trợ** — app này không dùng edge runtime nên không cần sửa gì |
 | Giới hạn kích thước Worker | Không giới hạn tương tự | Gói Free: **3 MiB** (nén), gói Paid: 10 MiB. Sau build, `wrangler` in ra dung lượng — nếu vượt, cần giảm bundle hoặc nâng gói |
+
+> **Kết quả đo thực tế trên máy dev (18/10/2026):** `wrangler deploy --dry-run`
+> báo `Total Upload: 15271.23 KiB / gzip: 3094.05 KiB` (~3.02 MiB nén) — vượt
+> nhẹ giới hạn 3 MiB của gói Free. Khi deploy thật, khả năng cao cần **Workers
+> Paid** ($5/tháng, giới hạn 10 MiB) hoặc phải tinh gọn bundle (loại bỏ
+> dependency nặng không dùng tới). Static assets (109 files) được upload riêng,
+> không tính vào giới hạn này.
 | Env `NEXT_PUBLIC_*` | Set trên dashboard là đủ | Phải có **cả lúc build** (nội tuyến) **và** lúc runtime (vars/secrets) |
 | Build | `next build` (Turbopack) | `opennextjs-cloudflare build` → chạy `next build` rồi biến đổi output |
 
