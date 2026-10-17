@@ -298,7 +298,7 @@ catalogs:
       version: 15.0.0
     react-hook-form:
       specifier: ^7.65.0
-      version: 7.84.0
+      version: 7.90.0
     react-resizable-panels:
       specifier: 4.14.5
       version: 4.14.5
@@ -387,7 +387,7 @@ importers:
     dependencies:
       '@hookform/resolvers':
         specifier: 'catalog:'
-        version: 5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.84.0(react@19.2.8))(zod@4.6.7)
+        version: 5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.90.0(@types/react@19.2.18)(react@19.2.8))(zod@4.6.7)
       '@kit/accounts':
         specifier: workspace:*
         version: link:../../packages/features/accounts
@@ -450,7 +450,7 @@ importers:
         version: 19.2.8(react@19.2.8)
       react-hook-form:
         specifier: 'catalog:'
-        version: 7.84.0(react@19.2.8)
+        version: 7.90.0(@types/react@19.2.18)(react@19.2.8)
       recharts:
         specifier: 'catalog:'
         version: 3.10.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-is@16.13.1)(react@19.2.8)(redux@5.0.1)
@@ -524,7 +524,7 @@ importers:
     devDependencies:
       '@hookform/resolvers':
         specifier: 'catalog:'
-        version: 5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.84.0(react@19.2.8))(zod@4.6.7)
+        version: 5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.90.0(@types/react@19.2.18)(react@19.2.8))(zod@4.6.7)
       '@kit/next':
         specifier: workspace:*
         version: link:../../next
@@ -572,7 +572,7 @@ importers:
         version: 19.2.8(react@19.2.8)
       react-hook-form:
         specifier: 'catalog:'
-        version: 7.84.0(react@19.2.8)
+        version: 7.90.0(@types/react@19.2.18)(react@19.2.8)
       sonner:
         specifier: 'catalog:'
         version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -588,7 +588,7 @@ importers:
     devDependencies:
       '@hookform/resolvers':
         specifier: 'catalog:'
-        version: 5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.84.0(react@19.2.8))(zod@4.6.7)
+        version: 5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.90.0(@types/react@19.2.18)(react@19.2.8))(zod@4.6.7)
       '@kit/shared':
         specifier: workspace:*
         version: link:../../shared
@@ -624,7 +624,7 @@ importers:
         version: 16.4.2(@babel/core@7.29.7)(@playwright/test@1.62.1)(@types/node@24.19.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-hook-form:
         specifier: 'catalog:'
-        version: 7.84.0(react@19.2.8)
+        version: 7.90.0(@types/react@19.2.18)(react@19.2.8)
       sonner:
         specifier: 'catalog:'
         version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -743,7 +743,7 @@ importers:
         version: 1.9.0(@date-fns/tz@1.5.0)(@types/react@19.2.18)(date-fns@4.4.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@hookform/resolvers':
         specifier: 'catalog:'
-        version: 5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.84.0(react@19.2.8))(zod@4.6.7)
+        version: 5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.90.0(@types/react@19.2.18)(react@19.2.8))(zod@4.6.7)
       '@kit/shared':
         specifier: workspace:*
         version: link:../shared
@@ -825,7 +825,7 @@ importers:
         version: 10.0.2(@types/react@19.2.18)(react@19.2.8)
       react-hook-form:
         specifier: 'catalog:'
-        version: 7.84.0(react@19.2.8)
+        version: 7.90.0(@types/react@19.2.18)(react@19.2.8)
       shadcn:
         specifier: 'catalog:'
         version: 4.16.1(typescript@7.0.2)
@@ -4500,11 +4500,15 @@ packages:
     peerDependencies:
       react: '>= 16.8 || 18.0.0'
 
-  react-hook-form@7.84.0:
-    resolution: {integrity: sha512-+hWvQP6GLco56mDwrbU4XnHix8t1z90ltZsDIrREl+jnQFQxYLX8oAzqe/Xn8nHpmoXTY5M6oEXrAhbP1qevNQ==}
+  react-hook-form@7.90.0:
+    resolution: {integrity: sha512-+NdG0FLzCPhFOp2NNxaUYLF9fyZhNjx9FTBBSYWF71/l6BBlmIc/j6xlp3DbaHWLJbIG7Zd8oznA19xJClU97w==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
+      '@types/react': '*'
       react: ^16.8.0 || ^17 || ^18 || ^19
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -5209,7 +5213,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.29.7
       '@babel/helper-validator-option': 7.29.7
-      browserslist: 4.28.7
+      browserslist: 4.29.3
       lru-cache: 5.1.1
       semver: 6.3.1
 
@@ -5543,10 +5547,10 @@ snapshots:
     dependencies:
       hono: 4.12.33
 
-  '@hookform/resolvers@5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.84.0(react@19.2.8))(zod@4.6.7)':
+  '@hookform/resolvers@5.6.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.90.0(@types/react@19.2.18)(react@19.2.8))(zod@4.6.7)':
     dependencies:
       '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.84.0(react@19.2.8)
+      react-hook-form: 7.90.0(@types/react@19.2.18)(react@19.2.8)
     optionalDependencies:
       '@standard-schema/spec': 1.1.0
       ajv: 8.20.0
@@ -8148,9 +8152,11 @@ snapshots:
       prop-types: 15.8.1
       react: 19.2.8
 
-  react-hook-form@7.84.0(react@19.2.8):
+  react-hook-form@7.90.0(@types/react@19.2.18)(react@19.2.8):
     dependencies:
       react: 19.2.8
+    optionalDependencies:
+      '@types/react': 19.2.18
 
   react-is@16.13.1: {}
 
