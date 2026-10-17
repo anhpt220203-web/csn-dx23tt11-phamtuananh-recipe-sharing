@@ -101,7 +101,7 @@ services:
     restart: unless-stopped
 
   kong:
-    image: kong:2.8.1
+    image: kong:2.8.5
     depends_on:
       - auth
       - rest
