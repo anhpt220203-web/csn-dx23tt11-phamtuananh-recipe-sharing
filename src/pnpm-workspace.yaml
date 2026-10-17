@@ -32,7 +32,7 @@ catalog:
   embla-carousel-react: 8.6.0
   input-otp: 1.4.2
   lucide-react: ^1.28.0
-  nanoid: ^5.1.6
+  nanoid: ^6.0.0
   next: 16.3.0
   next-intl: ^4.13.4
   next-safe-action: 8.6.0
