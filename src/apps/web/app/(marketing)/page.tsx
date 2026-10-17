@@ -28,6 +28,10 @@ import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
 
 import type { CategoryRow } from '~/lib/recipes/database';
 
+// Trang chủ đọc dữ liệu mới mỗi request (DB Supabase) — cho phép route
+// "blocking" thay vì lỗi/diagnostic prerender với cacheComponents của Next 16.
+export const instant = false;
+
 export const metadata: Metadata = {
   title: 'Trang chủ',
   description:

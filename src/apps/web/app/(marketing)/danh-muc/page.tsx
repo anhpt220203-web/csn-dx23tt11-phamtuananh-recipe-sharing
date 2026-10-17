@@ -38,6 +38,10 @@ const DIMENSION_ORDER = [
   'phong-cach-am-thuc',
 ];
 
+// Trang đọc dữ liệu mới mỗi request (DB Supabase) — cho phép route "blocking"
+// thay vì lỗi/diagnostic prerender với cacheComponents của Next 16.
+export const instant = false;
+
 export default async function CategoriesPage() {
   // Trang đọc dữ liệu mới mỗi request (DB Supabase), không prerender lúc build.
   await connection();
