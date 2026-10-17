@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Tên Worker trên Cloudflare (workers.dev). Chỉ dùng chữ thường, số và gạch ngang.
+  "name": "cong-thuc-viet",
+  // Entry point do adapter @opennextjs/cloudflare sinh ra sau khi build.
+  "main": ".open-next/worker.js",
+  "upload_source_maps": true,
+  // Ngày tương thích runtime Workers. "nodejs_compat" bắt buộc để
+  // OpenNext chạy được code Node.js (supabase-js, server actions...).
+  "compatibility_date": "2026-10-18",
+  "compatibility_flags": ["nodejs_compat"],
+  // Static assets (JS/CSS/ảnh public) do build sinh ra.
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  // Biến môi trường KHÔNG nhạy cảm cho Worker (runtime).
+  // Lưu ý: NEXT_PUBLIC_* được "nội tuyến" (inline) vào JS lúc BUILD,
+  // nên vẫn phải có lúc chạy lệnh build. SUPABASE_SERVICE_ROLE_KEY
+  // KHÔNG đặt ở đây — dùng `wrangler secret put` (xem cloudflare/README.md).
+  "vars": {
+    "NEXTJS_ENV": "production",
+  },
+  "observability": {
+    "enabled": true,
+  },
+}
