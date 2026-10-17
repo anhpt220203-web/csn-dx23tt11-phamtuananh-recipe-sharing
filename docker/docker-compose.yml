@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
 
   rest:
-    image: postgrest/postgrest:v12.2.3
+    image: postgrest/postgrest:v12.2.12
     depends_on:
       db:
         condition: service_healthy
