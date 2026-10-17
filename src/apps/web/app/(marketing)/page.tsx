@@ -89,6 +89,7 @@ function SectionHeader({
 
       <Button
         variant={'ghost'}
+        nativeButton={false}
         render={<Link href={href} />}
         className={'hidden shrink-0 sm:inline-flex'}
       >
