@@ -1,9 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-
 import { Suspense } from 'react';
-import { ArrowLeft, MessageCircle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 import { Button } from '@kit/ui/button';
 import { Heading } from '@kit/ui/heading';
@@ -60,17 +58,6 @@ const ErrorPage = ({
                 <ArrowLeft className={'mr-2 h-4'} />
 
                 <Trans i18nKey={'common.goBack'} />
-              </Button>
-
-              <Button
-                nativeButton={false}
-                render={<Link href={'/contact'} />}
-                className={'w-full'}
-                variant={'outline'}
-              >
-                <MessageCircle className={'mr-2 h-4'} />
-
-                <Trans i18nKey={'common.contactUs'} />
               </Button>
             </div>
           </div>
