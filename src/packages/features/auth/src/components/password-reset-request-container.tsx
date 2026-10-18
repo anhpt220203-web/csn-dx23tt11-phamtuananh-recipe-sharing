@@ -21,7 +21,7 @@ import { If } from '@kit/ui/if';
 import { Input } from '@kit/ui/input';
 import { Trans } from '@kit/ui/trans';
 
-import { useCaptchaToken } from '../captcha/client';
+import { CaptchaTokenSetter, useCaptchaToken } from '../captcha/client';
 import { AuthErrorAlert } from './auth-error-alert';
 
 const PasswordResetSchema = z.object({
@@ -100,6 +100,8 @@ export function PasswordResetRequestContainer(params: {
                   </FormItem>
                 )}
               />
+
+              <CaptchaTokenSetter />
 
               <Button disabled={resetPasswordMutation.isPending} type="submit">
                 <Trans i18nKey={'auth.passwordResetLabel'} />
