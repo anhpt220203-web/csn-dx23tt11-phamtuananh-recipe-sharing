@@ -172,48 +172,61 @@ function toRecipeSearchResult(row: RecipeSearchRow): RecipeSearchResult {
 }
 
 /**
- * Liệt kê TOÀN BỘ công thức đã xuất bản (không cần từ khoá) — dùng cho trang
- * danh sách món ăn kiểu "/tim-kiem-mon-ngon". Lọc theo slug danh mục, sắp xếp
- * mới nhất hoặc đánh giá cao (tổng hợp ratings phía ứng dụng — quy mô demo nhỏ).
+ * Liệt kê công thức đã xuất bản CÓ PHÂN TRANG (không cần từ khoá) — dùng cho
+ * trang danh sách món ăn kiểu "/tim-kiem-mon-ngon". Lọc theo slug danh mục,
+ * sắp xếp mới nhất hoặc đánh giá cao (tổng hợp ratings phía ứng dụng — quy mô
+ * demo nhỏ; với sort đánh giá cao, tổng số vẫn lấy từ count của PostgREST).
+ * Trả về `{ recipes, total }` — total là tổng số món khớp bộ lọc (để tính
+ * số trang), recipes chỉ chứa trang hiện tại.
  */
 export async function listPublishedRecipes(params: {
   categorySlug?: string;
   sort?: SearchSort;
-  limit?: number;
-}): Promise<RecipeSearchResult[]> {
+  page?: number;
+  perPage?: number;
+}): Promise<{ recipes: RecipeSearchResult[]; total: number }> {
   const client = getClient();
+  const page = Math.max(1, params.page ?? 1);
+  const perPage = Math.min(100, Math.max(1, params.perPage ?? 12));
+  const from = (page - 1) * perPage;
 
   let query = client
     .from('recipes')
-    .select(RECIPE_COLUMNS)
+    .select(RECIPE_COLUMNS, { count: 'exact' })
     .eq('status', 'published')
-    .limit(params.limit ?? 200);
+    .range(from, from + perPage - 1);
 
   if (params.categorySlug) {
     const category = await getCategoryBySlug(params.categorySlug);
 
     if (!category) {
-      return [];
+      return { recipes: [], total: 0 };
     }
 
     query = query.eq('category_id', category.id);
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error, count } = await query.order('created_at', {
+    ascending: false,
+  });
 
   if (error) {
     throw new Error(`Không tải được danh sách công thức: ${error.message}`);
   }
 
+  const total = count ?? 0;
   const recipes = ((data ?? []) as unknown as RecipeQueryRow[]).map(
     toRecipeWithCategory,
   );
 
   if (params.sort !== 'danh-gia-cao') {
-    return recipes.map((recipe) => ({
-      ...recipe,
-      rating: { average: null, count: 0 },
-    }));
+    return {
+      total,
+      recipes: recipes.map((recipe) => ({
+        ...recipe,
+        rating: { average: null, count: 0 },
+      })),
+    };
   }
 
   const { data: ratingRows, error: ratingError } = await client
@@ -233,23 +246,26 @@ export async function listPublishedRecipes(params: {
     totals.set(row.recipe_id, current);
   }
 
-  return recipes
-    .map((recipe) => {
-      const summary = totals.get(recipe.id);
+  return {
+    total,
+    recipes: recipes
+      .map((recipe) => {
+        const summary = totals.get(recipe.id);
 
-      return {
-        ...recipe,
-        rating: {
-          average: summary ? summary.sum / summary.count : null,
-          count: summary?.count ?? 0,
-        },
-      };
-    })
-    .sort(
-      (a, b) =>
-        (b.rating.average ?? 0) - (a.rating.average ?? 0) ||
-        b.rating.count - a.rating.count,
-    );
+        return {
+          ...recipe,
+          rating: {
+            average: summary ? summary.sum / summary.count : null,
+            count: summary?.count ?? 0,
+          },
+        };
+      })
+      .sort(
+        (a, b) =>
+          (b.rating.average ?? 0) - (a.rating.average ?? 0) ||
+          b.rating.count - a.rating.count,
+      ),
+  };
 }
 
 /**

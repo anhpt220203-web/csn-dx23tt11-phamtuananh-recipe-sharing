@@ -146,6 +146,42 @@ export async function getFavoriteRecipeIds(
 }
 
 /**
+ * Lấy số lượt yêu thích của một danh sách ID công thức.
+ * Dùng service role client để đọc tổng số lượt mà không bị hạn chế bởi RLS cá nhân.
+ */
+export async function getRecipeFavoriteCounts(
+  recipeIds: number[],
+): Promise<Map<number, number>> {
+  if (recipeIds.length === 0) {
+    return new Map();
+  }
+
+  try {
+    const { getSupabaseServerAdminClient } = await import(
+      '@kit/supabase/server-admin-client'
+    );
+    const client = getSupabaseServerAdminClient();
+    const { data, error } = await client
+      .from('favorites')
+      .select('recipe_id')
+      .in('recipe_id', recipeIds);
+
+    if (error) {
+      return new Map();
+    }
+
+    const countMap = new Map<number, number>();
+    for (const row of data ?? []) {
+      countMap.set(row.recipe_id, (countMap.get(row.recipe_id) ?? 0) + 1);
+    }
+
+    return countMap;
+  } catch {
+    return new Map();
+  }
+}
+
+/**
  * Danh sách công thức yêu thích của người dùng hiện tại, mới nhất trước.
  * Trả về mảng rỗng khi chưa đăng nhập.
  */

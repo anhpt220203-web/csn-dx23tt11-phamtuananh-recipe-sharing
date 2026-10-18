@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 
 import {
@@ -36,12 +39,14 @@ type RecipeCardProps = {
   rating?: RatingSummary;
   /** Trạng thái yêu thích ban đầu của người dùng hiện tại. */
   initialFavorited?: boolean;
+  /** Số lượt yêu thích ban đầu từ database */
+  initialFavoriteCount?: number;
 };
 
 /**
  * Thẻ công thức nấu ăn hiện đại chuẩn mẫu:
  * - Ảnh bo góc mượt mà kèm nút tim tròn nền trắng nổi bật ở góc phải.
- * - Tiêu đề món + huy hiệu số lượt tim (like count).
+ * - Tiêu đề món + huy hiệu số lượt tim (like count) cập nhật tức thì.
  * - 3 thẻ thông số có icon đỏ: [Khẩu phần] [Độ khó] [Thời gian nấu].
  * - Nút "XEM CHI TIẾT >" nổi bật màu hồng cam.
  */
@@ -49,7 +54,10 @@ export function RecipeCard({
   recipe,
   rating,
   initialFavorited = false,
+  initialFavoriteCount = 0,
 }: RecipeCardProps) {
+  const [favoriteCount, setFavoriteCount] = useState(initialFavoriteCount);
+  const [favorited, setFavorited] = useState(initialFavorited);
   const detailHref = `/cong-thuc/${recipe.slug}`;
   const imageSrc = resolveRecipeImageSrc(recipe.image_url);
   const hasRating =
@@ -122,7 +130,11 @@ export function RecipeCard({
         <RecipeCardFavoriteButton
           recipeId={recipe.id}
           slug={recipe.slug}
-          initialFavorited={initialFavorited}
+          initialFavorited={favorited}
+          onFavoriteChange={(isFav) => {
+            setFavorited(isFav);
+            setFavoriteCount((prev) => (isFav ? prev + 1 : Math.max(0, prev - 1)));
+          }}
           className={'absolute top-2.5 right-2.5'}
         />
       </div>
@@ -139,9 +151,9 @@ export function RecipeCard({
           className={
             'inline-flex shrink-0 items-center gap-1 rounded-lg border border-border/60 bg-muted/20 px-2 py-0.5 text-xs font-semibold text-muted-foreground'
           }
-          title={`${rating?.count ?? 0} lượt thích / đánh giá`}
+          title={`${favoriteCount} lượt yêu thích`}
         >
-          <span>{rating?.count ?? 0}</span>
+          <span className={'tabular-nums font-semibold'}>{favoriteCount}</span>
           <Heart className={'h-3.5 w-3.5 fill-red-500 text-red-500'} aria-hidden={true} />
         </div>
       </div>

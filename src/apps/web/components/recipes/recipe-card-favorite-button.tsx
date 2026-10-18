@@ -17,6 +17,7 @@ type RecipeCardFavoriteButtonProps = {
   slug?: string;
   initialFavorited?: boolean;
   className?: string;
+  onFavoriteChange?: (favorited: boolean) => void;
 };
 
 /**
@@ -29,6 +30,7 @@ export function RecipeCardFavoriteButton({
   slug,
   initialFavorited = false,
   className,
+  onFavoriteChange,
 }: RecipeCardFavoriteButtonProps) {
   const router = useRouter();
   const { openSignInModal } = useAuthModal();
@@ -52,6 +54,7 @@ export function RecipeCardFavoriteButton({
               const retry = await toggleFavoriteAction(recipeId, slug);
               if (retry.ok) {
                 setFavorited(retry.favorited);
+                onFavoriteChange?.(retry.favorited);
                 toast.success(
                   retry.favorited
                     ? 'Đã thêm vào món yêu thích.'
@@ -68,6 +71,7 @@ export function RecipeCardFavoriteButton({
       }
 
       setFavorited(result.favorited);
+      onFavoriteChange?.(result.favorited);
 
       toast.success(
         result.favorited
