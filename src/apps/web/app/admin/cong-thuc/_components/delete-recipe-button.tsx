@@ -29,7 +29,7 @@ export function DeleteRecipeButton({
         variant={'ghost'}
         className={'text-destructive hover:text-destructive'}
         disabled={pending}
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           if (!window.confirm(`Xóa công thức “${title}”? Thao tác không thể hoàn tác.`)) {
             event.preventDefault();
           }

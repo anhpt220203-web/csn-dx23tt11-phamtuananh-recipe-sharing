@@ -53,7 +53,7 @@ export function LockAccountButton({
         variant={'destructive'}
         disabled={pending || disabled}
         title={disabled ? disabledTitle : undefined}
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           if (
             !window.confirm(
               'Khóa tài khoản này? Người dùng sẽ bị đăng xuất khỏi mọi thiết bị và không thể đăng nhập lại.',
@@ -114,7 +114,7 @@ export function GrantAdminButton({ userId }: { userId: string }) {
         size={'sm'}
         variant={'outline'}
         disabled={pending}
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           if (
             !window.confirm(
               'Cấp quyền quản trị viên cho tài khoản này? Họ sẽ có toàn quyền quản trị website.',
@@ -154,7 +154,7 @@ export function RevokeAdminButton({
         variant={'outline'}
         disabled={pending || disabled}
         title={disabled ? disabledTitle : undefined}
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           if (
             !window.confirm(
               'Thu hồi quyền quản trị viên của tài khoản này? Họ sẽ trở thành người dùng thường.',
@@ -194,7 +194,7 @@ export function DeleteAccountButton({
         variant={'destructive'}
         disabled={pending || disabled}
         title={disabled ? disabledTitle : undefined}
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           if (
             !window.confirm(
               'Xóa vĩnh viễn tài khoản này? Hành động này không thể hoàn tác.',

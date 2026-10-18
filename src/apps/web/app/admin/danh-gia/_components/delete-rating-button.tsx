@@ -42,7 +42,7 @@ export function DeleteRatingButton({
           variant={'ghost'}
           className={'text-destructive hover:text-destructive'}
           disabled={pending}
-          onClick={(event) => {
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
             if (
               !window.confirm(
                 `Xóa đánh giá của món “${recipeTitle}”? Thao tác không thể hoàn tác.`,

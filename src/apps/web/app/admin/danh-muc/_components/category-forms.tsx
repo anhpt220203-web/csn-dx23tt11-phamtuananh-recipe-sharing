@@ -133,7 +133,7 @@ export function CategoryRowActions({ category }: { category: CategoryRow }) {
             variant={'ghost'}
             className={'text-destructive hover:text-destructive'}
             disabled={deletePending}
-            onClick={(event) => {
+            onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
               if (
                 !window.confirm(
                   `Xóa danh mục “${category.name}”? Chỉ xóa được khi không còn công thức nào thuộc danh mục này.`,
