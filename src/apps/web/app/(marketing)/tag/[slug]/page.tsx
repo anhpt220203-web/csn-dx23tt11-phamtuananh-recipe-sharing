@@ -47,6 +47,10 @@ export async function generateMetadata({
   };
 }
 
+// Trang đọc dữ liệu mới mỗi request (DB Supabase) — cho phép route "blocking"
+// thay vì lỗi/diagnostic prerender với cacheComponents của Next 16.
+export const instant = false;
+
 export default async function TagPage({ params }: TagPageProps) {
   await connection();
 

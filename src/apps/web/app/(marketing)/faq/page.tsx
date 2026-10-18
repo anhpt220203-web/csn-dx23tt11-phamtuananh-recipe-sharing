@@ -1,9 +1,6 @@
-import Link from 'next/link';
-
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
-import { Button } from '@kit/ui/button';
 import { Trans } from '@kit/ui/trans';
 
 import { SitePageHeader } from '~/(marketing)/_components/site-page-header';
@@ -81,20 +78,6 @@ async function FAQPage() {
             {faqItems.map((item, index) => {
               return <FaqItem key={index} item={item} />;
             })}
-          </div>
-
-          <div>
-            <Button
-              nativeButton={false}
-              render={<Link href={'/contact'} />}
-              variant={'outline'}
-            >
-              <span>
-                <Trans i18nKey={'marketing.contactFaq'} />
-              </span>
-
-              <ArrowRight className={'ml-2 w-4'} />
-            </Button>
           </div>
         </div>
       </div>

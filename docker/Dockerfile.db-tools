@@ -1,9 +1,7 @@
 # syntax=docker/dockerfile:1
 #
 # Image phụ trợ cho service db-migrate: Postgres client (psql, pg_isready)
-# + curl để gọi GoTrue Admin API tạo tài khoản demo.
-FROM supabase/postgres:15.8.1.078
+# + curl để gọi GoTrue Admin API / Storage API tạo tài khoản + import ảnh demo.
+FROM postgres:18-alpine
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends curl ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl bash ca-certificates

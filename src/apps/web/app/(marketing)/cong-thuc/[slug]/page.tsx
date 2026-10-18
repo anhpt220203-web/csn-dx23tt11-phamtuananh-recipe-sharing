@@ -3,7 +3,15 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { connection } from 'next/server';
 
-import { ChefHat, Clock, Timer, Users } from 'lucide-react';
+import {
+  ChefHat,
+  Clock,
+  Flame,
+  Heart,
+  Star,
+  Timer,
+  Users,
+} from 'lucide-react';
 
 import { Badge } from '@kit/ui/badge';
 import {
@@ -32,6 +40,7 @@ import {
   getUserRating,
   isFavorite,
 } from '~/lib/recipes/queries';
+import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 
 import { FavoriteButton } from '~/components/recipes/favorite-button';
 import {
@@ -39,7 +48,6 @@ import {
   QuestionList,
 } from '~/components/recipes/question-section';
 import { RatingWidget } from '~/components/recipes/rating-widget';
-import { RecipeCard } from '~/components/recipes/recipe-card';
 
 type RecipePageProps = {
   params: Promise<{ slug: string }>;
@@ -95,7 +103,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
     notFound();
   }
 
-  const related = await getRelatedRecipes(recipe);
+  const related = await getRelatedRecipes(recipe, 3);
 
   const client = getSupabaseServerClient();
   const { data: claimsData } = await client.auth.getClaims();
@@ -112,29 +120,148 @@ export default async function RecipePage({ params }: RecipePageProps) {
     <div className={'container mx-auto py-6 md:py-10'}>
       <RecipeBreadcrumb recipe={recipe} />
 
-      <div className={'mt-6 grid grid-cols-1 gap-8 lg:grid-cols-5'}>
-        <div className={'lg:col-span-3'}>
-          <RecipeHero recipe={recipe} favorited={favorited} />
+      {/* ── Tiêu đề + điểm đánh giá ───────────────────────── */}
+      <header className={'mt-4'}>
+        <div className={'flex flex-wrap items-center gap-2'}>
+          <Link href={`/danh-muc/${recipe.category_slug}`}>
+            <Badge>{recipe.category_name}</Badge>
+          </Link>
+
+          {recipe.difficulty ? (
+            <Badge variant={'outline'}>{recipe.difficulty}</Badge>
+          ) : null}
+
+          {summary.count > 0 && summary.average !== null ? (
+            <span
+              className={
+                'text-primary inline-flex items-center gap-1 text-sm font-medium'
+              }
+            >
+              <Star className={'fill-primary h-4 w-4'} aria-hidden={true} />
+              {summary.average.toFixed(1)}
+              <span className={'text-muted-foreground font-normal'}>
+                ({summary.count} đánh giá)
+              </span>
+            </span>
+          ) : null}
         </div>
 
-        <aside className={'lg:col-span-2'}>
-          <IngredientsCard recipe={recipe} />
+        <h1
+          className={
+            'font-heading mt-3 text-3xl font-bold tracking-tight md:text-4xl'
+          }
+        >
+          {recipe.title}
+        </h1>
+      </header>
+
+      {/* ── Ảnh + bảng thông số ──────────────────────────── */}
+      <div className={'mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3'}>
+        <div className={'lg:col-span-2'}>
+          {resolveRecipeImageSrc(recipe.image_url) ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={resolveRecipeImageSrc(recipe.image_url) as string}
+              alt={recipe.title}
+              className={
+                'aspect-[16/10] w-full rounded-2xl object-cover shadow-sm'
+              }
+            />
+          ) : (
+            <div
+              className={cn(
+                'flex aspect-[16/10] w-full items-center justify-center rounded-2xl',
+                'bg-gradient-to-br from-amber-100 to-orange-200',
+                'dark:from-amber-950 dark:to-orange-950',
+              )}
+              aria-hidden={true}
+            >
+              <ChefHat className={'h-16 w-16 text-orange-400'} />
+            </div>
+          )}
+        </div>
+
+        <aside className={'lg:col-span-1'}>
+          <RecipeMetaCard recipe={recipe} favorited={favorited} />
         </aside>
       </div>
 
-      <FeedbackTabs
-        recipe={recipe}
-        summary={summary}
-        userRating={userRating}
-        questions={questions}
-        isAuthenticated={userId !== null}
-      />
+      {/* ── Điều hướng trong trang (kiểu anchor tab) ─────── */}
+      <RecipeAnchorNav />
 
-      <StepsSection recipe={recipe} />
+      {/* ── Nội dung chính + cột phải ────────────────────── */}
+      <div className={'mt-8 grid grid-cols-1 gap-10 lg:grid-cols-3'}>
+        <div className={'lg:col-span-2'}>
+          <section
+            id={'mo-ta'}
+            aria-labelledby={'desc-heading'}
+            className={'scroll-mt-24'}
+          >
+            <h2
+              id={'desc-heading'}
+              className={'text-2xl font-bold tracking-tight'}
+            >
+              Mô tả
+            </h2>
 
-      <NutritionSection recipe={recipe} />
+            {recipe.description ? (
+              <p
+                className={
+                  'text-muted-foreground mt-3 leading-relaxed whitespace-pre-line'
+                }
+              >
+                {recipe.description}
+              </p>
+            ) : (
+              <p className={'text-muted-foreground mt-3'}>
+                Chưa có mô tả cho công thức này.
+              </p>
+            )}
 
-      <RelatedSection related={related} />
+            {recipe.source_name || recipe.source_url ? (
+              <p className={'text-muted-foreground mt-3 text-xs'}>
+                Nguồn:{' '}
+                {recipe.source_url ? (
+                  <a
+                    href={recipe.source_url}
+                    target={'_blank'}
+                    rel={'noopener noreferrer'}
+                    className={'underline'}
+                  >
+                    {recipe.source_name || recipe.source_url}
+                  </a>
+                ) : (
+                  recipe.source_name
+                )}
+              </p>
+            ) : null}
+          </section>
+
+          <Separator className={'my-8'} />
+
+          <IngredientsSection recipe={recipe} />
+
+          <Separator className={'my-8'} />
+
+          <StepsSection recipe={recipe} />
+        </div>
+
+        <aside className={'flex flex-col gap-6 lg:col-span-1'}>
+          <NutritionSidebar recipe={recipe} />
+          <RelatedSidebar related={related} />
+        </aside>
+      </div>
+
+      {/* ── Đánh giá & hỏi đáp ───────────────────────────── */}
+      <div id={'danh-gia'} className={'scroll-mt-24'}>
+        <FeedbackTabs
+          recipe={recipe}
+          summary={summary}
+          userRating={userRating}
+          questions={questions}
+          isAuthenticated={userId !== null}
+        />
+      </div>
     </div>
   );
 }
@@ -177,121 +304,122 @@ function RecipeBreadcrumb({ recipe }: { recipe: RecipeDetail }) {
   );
 }
 
-function RecipeHero({
+/** Bảng thông số nổi bật kiểu tạp chí: khẩu phần · chuẩn bị · nấu · độ khó + nút lưu. */
+function RecipeMetaCard({
   recipe,
   favorited,
 }: {
   recipe: RecipeDetail;
   favorited: boolean;
 }) {
+  const stats = [
+    {
+      icon: Users,
+      label: 'Khẩu phần',
+      value: recipe.servings ? `${recipe.servings} người` : '—',
+    },
+    {
+      icon: Timer,
+      label: 'Chuẩn bị',
+      value: formatCookTime(recipe.prep_time),
+    },
+    {
+      icon: Clock,
+      label: 'Thời gian nấu',
+      value: formatCookTime(recipe.cook_time),
+    },
+    {
+      icon: ChefHat,
+      label: 'Độ khó',
+      value: recipe.difficulty ?? '—',
+    },
+  ];
+
   return (
-    <article>
-      {recipe.image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={recipe.image_url}
-          alt={recipe.title}
-          className={'aspect-[16/9] w-full rounded-xl object-cover'}
-        />
-      ) : (
-        <div
-          className={cn(
-            'flex aspect-[16/9] w-full items-center justify-center rounded-xl',
-            'bg-gradient-to-br from-amber-100 to-orange-200',
-            'dark:from-amber-950 dark:to-orange-950',
-          )}
-          aria-hidden={true}
-        >
-          <ChefHat className={'h-16 w-16 text-orange-400'} />
-        </div>
+    <div
+      className={cn(
+        'bg-card text-card-foreground ring-foreground/10 rounded-2xl p-5 ring-1',
+        'lg:sticky lg:top-20',
       )}
-
-      <div className={'mt-6 flex flex-wrap items-center gap-2'}>
-        <Link href={`/danh-muc/${recipe.category_slug}`}>
-          <Badge>{recipe.category_name}</Badge>
-        </Link>
-
-        {recipe.difficulty ? (
-          <Badge variant={'outline'}>Độ khó: {recipe.difficulty}</Badge>
-        ) : null}
-      </div>
-
-      <h1
-        className={
-          'font-heading mt-4 text-3xl font-medium tracking-tight md:text-4xl'
-        }
-      >
-        {recipe.title}
-      </h1>
-
-      {recipe.description ? (
-        <p className={'text-muted-foreground mt-3 text-base leading-relaxed'}>
-          {recipe.description}
-        </p>
-      ) : null}
-
-      <div
-        className={'text-muted-foreground mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm'}
-      >
-        <span className={'inline-flex items-center gap-2'}>
-          <Clock className={'h-4 w-4'} aria-hidden={true} />
-          Thời gian nấu: <strong>{formatCookTime(recipe.cook_time)}</strong>
-        </span>
-
-        {recipe.prep_time ? (
-          <span className={'inline-flex items-center gap-2'}>
-            <Timer className={'h-4 w-4'} aria-hidden={true} />
-            Chuẩn bị: <strong>{formatCookTime(recipe.prep_time)}</strong>
-          </span>
-        ) : null}
-
-        {recipe.servings ? (
-          <span className={'inline-flex items-center gap-2'}>
-            <Users className={'h-4 w-4'} aria-hidden={true} />
-            Khẩu phần: <strong>{recipe.servings} người</strong>
-          </span>
-        ) : null}
-
-        <span className={'inline-flex items-center gap-2'}>
-          <FavoriteButton
-            recipeId={recipe.id}
-            slug={recipe.slug}
-            initialFavorited={favorited}
-          />
-        </span>
-      </div>
-
-      {recipe.source_name || recipe.source_url ? (
-        <p className={'text-muted-foreground mt-3 text-xs'}>
-          Nguồn:{' '}
-          {recipe.source_url ? (
-            <a
-              href={recipe.source_url}
-              target={'_blank'}
-              rel={'noopener noreferrer'}
-              className={'underline'}
+    >
+      <dl className={'grid grid-cols-2 gap-x-4 gap-y-5'}>
+        {stats.map((stat) => (
+          <div key={stat.label}>
+            <dt
+              className={
+                'text-muted-foreground flex items-center gap-1.5 text-xs'
+              }
             >
-              {recipe.source_name || recipe.source_url}
-            </a>
-          ) : (
-            recipe.source_name
-          )}
-        </p>
-      ) : null}
+              <stat.icon className={'text-primary h-4 w-4'} aria-hidden={true} />
+              {stat.label}
+            </dt>
+            <dd className={'mt-1 text-base font-semibold'}>
+              {stat.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
 
-      <Separator className={'my-6'} />
-    </article>
+      <div className={'mt-5'}>
+        <FavoriteButton
+          recipeId={recipe.id}
+          slug={recipe.slug}
+          initialFavorited={favorited}
+          className={'w-full'}
+        />
+      </div>
+    </div>
   );
 }
 
-function IngredientsCard({ recipe }: { recipe: RecipeDetail }) {
+/** Thanh anchor điều hướng tới các mục trong trang, dính dưới header khi cuộn. */
+function RecipeAnchorNav() {
+  const anchors = [
+    { href: '#mo-ta', label: 'Mô tả' },
+    { href: '#nguyen-lieu', label: 'Nguyên liệu' },
+    { href: '#cac-buoc', label: 'Các bước' },
+    { href: '#dinh-duong', label: 'Dinh dưỡng' },
+    { href: '#danh-gia', label: 'Đánh giá' },
+  ];
+
   return (
-    <div
+    <nav
+      aria-label={'Mục trong công thức'}
       className={
-        'bg-card text-card-foreground ring-foreground/10 rounded-xl p-6 ring-1'
+        'bg-background/95 ring-foreground/10 sticky top-14 z-10 mt-8 rounded-full px-2 py-2 ring-1 backdrop-blur'
       }
     >
-      <h2 className={'text-xl font-medium'}>Nguyên liệu</h2>
+      <ul className={'flex items-center gap-1 overflow-x-auto'}>
+        {anchors.map((anchor) => (
+          <li key={anchor.href}>
+            <a
+              href={anchor.href}
+              className={
+                'hover:bg-accent hover:text-accent-foreground inline-block rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors'
+              }
+            >
+              {anchor.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function IngredientsSection({ recipe }: { recipe: RecipeDetail }) {
+  return (
+    <section
+      id={'nguyen-lieu'}
+      className={'scroll-mt-24'}
+      aria-labelledby={'ingredients-heading'}
+    >
+      <h2
+        id={'ingredients-heading'}
+        className={'text-2xl font-bold tracking-tight'}
+      >
+        Nguyên liệu
+      </h2>
 
       {recipe.servings ? (
         <p className={'text-muted-foreground mt-1 text-sm'}>
@@ -304,12 +432,19 @@ function IngredientsCard({ recipe }: { recipe: RecipeDetail }) {
           Chưa có thông tin nguyên liệu.
         </p>
       ) : (
-        <ul className={'mt-4 space-y-3'}>
+        <ul
+          className={
+            'mt-4 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2'
+          }
+        >
           {recipe.ingredients.map((ingredient, index) => (
-            <li key={index} className={'flex items-start gap-3 text-sm'}>
+            <li
+              key={index}
+              className={'flex items-start gap-3 border-b pb-3 text-sm'}
+            >
               <span
                 className={
-                  'bg-primary/10 text-primary mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium'
+                  'bg-primary/10 text-primary mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold'
                 }
                 aria-hidden={true}
               >
@@ -320,6 +455,186 @@ function IngredientsCard({ recipe }: { recipe: RecipeDetail }) {
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+function StepsSection({ recipe }: { recipe: RecipeDetail }) {
+  return (
+    <section
+      id={'cac-buoc'}
+      className={'scroll-mt-24'}
+      aria-labelledby={'steps-heading'}
+    >
+      <h2
+        id={'steps-heading'}
+        className={'text-2xl font-bold tracking-tight'}
+      >
+        Các bước thực hiện
+      </h2>
+
+      {recipe.steps.length === 0 ? (
+        <p className={'text-muted-foreground mt-4 text-sm'}>
+          Chưa có hướng dẫn các bước cho công thức này.
+        </p>
+      ) : (
+        <ol className={'mt-6 space-y-5'}>
+          {recipe.steps.map((step, index) => (
+            <li
+              key={index}
+              className={'flex items-start gap-4 rounded-xl p-3'}
+            >
+              <span
+                className={cn(
+                  'bg-primary text-primary-foreground inline-flex h-9 w-9 shrink-0 items-center justify-center',
+                  'rounded-full text-sm font-bold shadow-sm',
+                )}
+                aria-hidden={true}
+              >
+                {index + 1}
+              </span>
+              <p className={'mt-1 leading-relaxed'}>{step}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+/** Cột phải: thẻ dinh dưỡng gọn (mở sẵn) thay cho details thu gọn giữa trang. */
+function NutritionSidebar({ recipe }: { recipe: RecipeDetail }) {
+  const items: { label: string; value: number | null; unit: string }[] = [
+    { label: 'Năng lượng', value: recipe.calories, unit: 'kcal' },
+    { label: 'Chất đạm', value: recipe.protein_g, unit: 'g' },
+    { label: 'Tinh bột', value: recipe.carbs_g, unit: 'g' },
+    { label: 'Đường', value: recipe.sugar_g, unit: 'g' },
+    { label: 'Chất béo', value: recipe.fat_g, unit: 'g' },
+    { label: 'Chất xơ', value: recipe.fiber_g, unit: 'g' },
+  ].filter((item) => item.value !== null);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      id={'dinh-duong'}
+      className={
+        'bg-card text-card-foreground ring-foreground/10 scroll-mt-24 rounded-2xl p-5 ring-1'
+      }
+    >
+      <h3 className={'flex items-center gap-2 font-semibold'}>
+        <Flame className={'text-primary h-5 w-5'} aria-hidden={true} />
+        Giá trị dinh dưỡng
+      </h3>
+
+      <dl className={'mt-4 grid grid-cols-2 gap-3'}>
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className={'bg-muted/50 rounded-lg px-3 py-2.5 text-center'}
+          >
+            <dt className={'text-muted-foreground text-xs'}>{item.label}</dt>
+            <dd className={'mt-0.5 text-sm font-semibold tabular-nums'}>
+              {item.value} {item.unit}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+/** Cột phải: công thức liên quan dạng danh sách gọn. */
+function RelatedSidebar({
+  related,
+}: {
+  related: Awaited<ReturnType<typeof getRelatedRecipes>>;
+}) {
+  if (related.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className={
+        'bg-card text-card-foreground ring-foreground/10 rounded-2xl p-5 ring-1'
+      }
+    >
+      <h3 className={'font-semibold'}>Công thức cùng nhóm</h3>
+
+      <ul className={'mt-4 space-y-4'}>
+        {related.map((item) => (
+          <li key={item.slug}>
+            <Link
+              href={`/cong-thuc/${item.slug}`}
+              className={
+                'group flex items-center gap-3 rounded-xl transition-colors hover:bg-accent/50 p-1.5'
+              }
+            >
+              {resolveRecipeImageSrc(item.image_url) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={resolveRecipeImageSrc(item.image_url) as string}
+                  alt={item.title}
+                  loading={'lazy'}
+                  className={
+                    'h-14 w-14 shrink-0 rounded-lg object-cover'
+                  }
+                />
+              ) : (
+                <span
+                  className={cn(
+                    'flex h-14 w-14 shrink-0 items-center justify-center rounded-lg',
+                    'bg-gradient-to-br from-orange-100 to-amber-200',
+                    'dark:from-orange-950 dark:to-amber-950',
+                  )}
+                  aria-hidden={true}
+                >
+                  <ChefHat className={'h-6 w-6 text-orange-400'} />
+                </span>
+              )}
+
+              <span className={'min-w-0'}>
+                <span
+                  className={
+                    'line-clamp-2 text-sm font-medium group-hover:text-primary'
+                  }
+                >
+                  {item.title}
+                </span>
+
+                <span
+                  className={
+                    'text-muted-foreground mt-0.5 flex items-center gap-2 text-xs'
+                  }
+                >
+                  {item.servings ? (
+                    <span className={'inline-flex items-center gap-1'}>
+                      <Users className={'h-3 w-3'} aria-hidden={true} />
+                      {item.servings}
+                    </span>
+                  ) : null}
+                  <span className={'inline-flex items-center gap-1'}>
+                    <Clock className={'h-3 w-3'} aria-hidden={true} />
+                    {formatCookTime(item.cook_time)}
+                  </span>
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      <div
+        className={
+          'text-muted-foreground mt-4 flex items-center gap-1.5 text-xs'
+        }
+      >
+        <Heart className={'h-3.5 w-3.5'} aria-hidden={true} />
+        Thử ngay một món cùng nhóm nhé!
+      </div>
     </div>
   );
 }
@@ -338,7 +653,9 @@ function FeedbackTabs({
   isAuthenticated: boolean;
 }) {
   return (
-    <section className={'mt-10'} aria-label={'Đánh giá và hỏi đáp'}>
+    <section className={'mt-12'} aria-label={'Đánh giá và hỏi đáp'}>
+      <Separator className={'mb-8'} />
+
       <Tabs defaultValue={'rating'}>
         <TabsList>
           <TabsTrigger value={'rating'}>Đánh giá</TabsTrigger>
@@ -375,115 +692,6 @@ function FeedbackTabs({
           </div>
         </TabsContent>
       </Tabs>
-    </section>
-  );
-}
-
-function StepsSection({ recipe }: { recipe: RecipeDetail }) {
-  return (
-    <section className={'mt-10'} aria-labelledby={'steps-heading'}>
-      <h2 id={'steps-heading'} className={'text-2xl font-medium'}>
-        Các bước thực hiện
-      </h2>
-
-      {recipe.steps.length === 0 ? (
-        <p className={'text-muted-foreground mt-4 text-sm'}>
-          Chưa có hướng dẫn các bước cho công thức này.
-        </p>
-      ) : (
-        <ol className={'mt-6 space-y-6'}>
-          {recipe.steps.map((step, index) => (
-            <li key={index} className={'flex items-start gap-4'}>
-              <span
-                className={
-                  'bg-primary text-primary-foreground inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold'
-                }
-                aria-hidden={true}
-              >
-                {index + 1}
-              </span>
-              <p className={'text-base leading-relaxed'}>{step}</p>
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
-  );
-}
-
-function NutritionSection({ recipe }: { recipe: RecipeDetail }) {
-  const items: { label: string; value: number | null; unit: string }[] = [
-    { label: 'Năng lượng', value: recipe.calories, unit: 'kcal' },
-    { label: 'Chất đạm', value: recipe.protein_g, unit: 'g' },
-    { label: 'Tinh bột', value: recipe.carbs_g, unit: 'g' },
-    { label: 'Đường', value: recipe.sugar_g, unit: 'g' },
-    { label: 'Chất béo', value: recipe.fat_g, unit: 'g' },
-    { label: 'Chất xơ', value: recipe.fiber_g, unit: 'g' },
-  ].filter((item) => item.value !== null);
-
-  if (items.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className={'mt-10'} aria-labelledby={'nutrition-heading'}>
-      <details className={'group rounded-xl border p-6'}>
-        <summary
-          className={
-            'cursor-pointer list-none text-2xl font-medium [&::-webkit-details-marker]:hidden'
-          }
-        >
-          <span id={'nutrition-heading'}>Giá trị dinh dưỡng</span>
-          <span
-            className={'text-muted-foreground ml-2 text-sm font-normal'}
-            aria-hidden={true}
-          >
-            (nhấn để xem)
-          </span>
-        </summary>
-
-        <dl className={'mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3'}>
-          {items.map((item) => (
-            <div
-              key={item.label}
-              className={'bg-muted/40 rounded-lg p-4 text-center'}
-            >
-              <dt className={'text-muted-foreground text-sm'}>{item.label}</dt>
-              <dd className={'mt-1 text-xl font-semibold'}>
-                {item.value} {item.unit}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </details>
-    </section>
-  );
-}
-
-function RelatedSection({
-  related,
-}: {
-  related: Awaited<ReturnType<typeof getRelatedRecipes>>;
-}) {
-  if (related.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className={'mt-12'} aria-labelledby={'related-heading'}>
-      <Separator className={'mb-8'} />
-
-      <h2 id={'related-heading'} className={'text-2xl font-medium'}>
-        Công thức liên quan
-      </h2>
-
-      <div
-        className={'mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'}
-      >
-        {related.map((recipe) => (
-          <RecipeCard key={recipe.slug} recipe={recipe} />
-        ))}
-      </div>
     </section>
   );
 }

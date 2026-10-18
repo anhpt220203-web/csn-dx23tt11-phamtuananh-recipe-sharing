@@ -10,6 +10,12 @@ build/
 dist/
 *.tsbuildinfo
 
+# cloudflare workers (opennext adapter)
+.open-next/
+.dev.vars
+.wrangler/
+cloudflare-env.d.ts
+
 # prisma generated client
 src/generated/
 
@@ -43,3 +49,6 @@ Thumbs.db
 # tmp scratch
 /tmp
 src/.diag2.json
+/.swc-cache
+/supabase/.branches
+/supabase/.temp

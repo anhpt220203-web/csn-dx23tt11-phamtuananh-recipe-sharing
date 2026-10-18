@@ -13,6 +13,10 @@
     "start": "pnpm with-env next start",
     "start:test": "NODE_ENV=test pnpm with-env:test next start",
     "typecheck": "tsc --noEmit",
+    "preview": "CLOUDFLARE_WORKER_BUILD=true opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "CLOUDFLARE_WORKER_BUILD=true opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "CLOUDFLARE_WORKER_BUILD=true opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "with-env": "dotenv -e ./.env.local --",
     "with-env:test": "dotenv -e ./.env.test --",
     "with-env:production": "dotenv -e ./.env.production -e ./.env.local --",
@@ -27,6 +31,8 @@
     "supabase:typegen": "pnpm run supabase:typegen:packages && pnpm run supabase:typegen:app",
     "supabase:typegen:packages": "supabase gen types typescript --local > ../../packages/supabase/src/database.types.ts",
     "supabase:typegen:app": "supabase gen types typescript --local > ./lib/database.types.ts",
+    "seed:images": "bash scripts/upload-seed-images.sh",
+    "supabase:setup-cloud": "bash scripts/setup-supabase-cloud.sh",
     "supabase:db:dump:local": "supabase db dump --local --data-only"
   },
   "dependencies": {
@@ -60,6 +66,7 @@
   "devDependencies": {
     "@kit/tsconfig": "workspace:*",
     "@next/bundle-analyzer": "catalog:",
+    "@opennextjs/cloudflare": "catalog:",
     "@tailwindcss/postcss": "catalog:",
     "@types/mdx": "catalog:",
     "@types/node": "catalog:",
@@ -67,12 +74,14 @@
     "@types/react-dom": "catalog:",
     "autoprefixer": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
+    "cross-env": "catalog:",
     "dotenv-cli": "catalog:",
     "pino-pretty": "catalog:",
     "supabase": "catalog:",
     "tailwindcss": "catalog:",
     "tailwindcss-animate": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "wrangler": "catalog:"
   },
   "browserslist": [
     "last 1 versions",

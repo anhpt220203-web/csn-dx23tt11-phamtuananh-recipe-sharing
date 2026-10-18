@@ -13,10 +13,12 @@
 # Dừng:    docker compose -f docker/docker-compose.yml down
 # Xóa data: docker compose -f docker/docker-compose.yml down -v   (xóa DB demo)
 
+name: recipe-sharing
+
 services:
   # ---------- Supabase self-hosted ----------
   db:
-    image: supabase/postgres:15.8.1.078
+    image: supabase/postgres:17.11.0.004
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: postgres
@@ -35,13 +37,15 @@ services:
     restart: unless-stopped
 
   auth:
-    image: supabase/gotrue:v2.177.0
+    image: supabase/gotrue:v2.197.0
     depends_on:
       db:
         condition: service_healthy
     environment:
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: 9999
+      # Bắt buộc với GoTrue >= v2.15x: URL ngoài mà client sẽ gọi tới auth
+      API_EXTERNAL_URL: http://kong:8000
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/postgres?search_path=auth
       GOTRUE_SITE_URL: http://localhost:3000
@@ -65,7 +69,7 @@ services:
     restart: unless-stopped
 
   rest:
-    image: postgrest/postgrest:v12.2.3
+    image: postgrest/postgrest:v13.0.8
     depends_on:
       db:
         condition: service_healthy
@@ -78,7 +82,7 @@ services:
     restart: unless-stopped
 
   storage:
-    image: supabase/storage-api:v1.22.0
+    image: supabase/storage-api:v1.83.5
     depends_on:
       db:
         condition: service_healthy
@@ -101,7 +105,7 @@ services:
     restart: unless-stopped
 
   kong:
-    image: kong:2.8.1
+    image: kong:3.9.4
     depends_on:
       - auth
       - rest
@@ -136,8 +140,9 @@ services:
         condition: service_started
     volumes:
       - ../supabase/migrations:/migrations:ro
-      - ../supabase/seed.sql:/seed/seed.sql:ro
+      - ../supabase/seed:/seed:ro
       - ./db-migrate.sh:/db-migrate.sh:ro
+      - ../src/apps/web/scripts/upload-seed-images.sh:/upload-seed-images.sh:ro
     environment:
       PGHOST: db
       PGPORT: 5432
@@ -150,8 +155,9 @@ services:
     command: ["/bin/bash", "/db-migrate.sh"]
     # Không restart: chạy xong là dừng (compose up vẫn coi là thành công).
 
-  # ---------- Web app ----------
+  # ---------- Web app (prod build standalone, chọn bằng --profile prod) ----------
   web:
+    profiles: ["prod"]
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -167,11 +173,67 @@ services:
       db-migrate:
         condition: service_completed_successfully
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     environment:
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+    restart: unless-stopped
+
+  # ---------- Web app (dev, hot reload — CHẠY MẶC ĐỊNH) ----------
+  # Mount toàn bộ src/ vào container, chạy `next dev` — sửa code trên máy host
+  # là trang tự cập nhật (Fast Refresh). node_modules + .next giữ trong volume
+  # riêng để không ghi đè lên thư mục trên host.
+  #   docker compose -f docker/docker-compose.yml --env-file docker/.env up
+  web-dev:
+    image: node:24-alpine
+    working_dir: /app/src
+    # next dev --webpack: WATCHPACK_POLLING chỉ có tác dụng với webpack —
+    # Turbopack không hỗ trợ polling qua bind mount của Docker Desktop.
+    command: >
+      sh -c "corepack enable &&
+             pnpm install --frozen-lockfile &&
+             pnpm --filter web exec dotenv -e ./.env.local -- next dev --webpack --hostname 0.0.0.0"
+    depends_on:
+      kong:
+        condition: service_started
+      db-migrate:
+        condition: service_completed_successfully
+    environment:
+      # Browser và server cùng gọi Supabase qua http://kong:8000
+      # (host cần dòng "127.0.0.1 kong" trong file hosts — xem README).
+      NEXT_PUBLIC_SUPABASE_URL: http://kong:8000
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      NEXT_PUBLIC_CI: "true"
+      # Cấu hình site (bắt buộc cho config/app.config.ts)
+      NEXT_PUBLIC_PRODUCT_NAME: "Công Thức Việt"
+      NEXT_PUBLIC_SITE_TITLE: "Công Thức Việt - Chia sẻ công thức nấu ăn"
+      NEXT_PUBLIC_SITE_DESCRIPTION: "Website quản lý và chia sẻ công thức nấu ăn Việt Nam"
+      NEXT_PUBLIC_DEFAULT_LOCALE: "vi"
+      NEXT_PUBLIC_DEFAULT_THEME_MODE: "light"
+      NEXT_PUBLIC_THEME_COLOR: "#ea580c"
+      NEXT_PUBLIC_THEME_COLOR_DARK: "#f97316"
+      NEXT_PUBLIC_ENABLE_THEME_TOGGLE: "true"
+      NEXT_PUBLIC_AUTH_PASSWORD: "true"
+      NEXT_PUBLIC_AUTH_MAGIC_LINK: "false"
+      NEXT_PUBLIC_CAPTCHA_SITE_KEY: ""
+      # Bắt buộc bật polling để hot reload hoạt động qua bind mount của Docker Desktop.
+      WATCHPACK_POLLING: "true"
+      # .env.local trên host có thể chứa đường dẫn Windows — tắt cache SWC trong container.
+      SWC_NATIVE_BINDING_CACHE: "0"
+    volumes:
+      - ../src:/app/src
+      - web-node-modules-root:/app/src/node_modules
+      - web-node-modules-web:/app/src/apps/web/node_modules
+      - web-next-dev:/app/src/apps/web/.next
+    ports:
+      # Đổi cổng host nếu 3000 bận: WEB_PORT=3100 docker compose ... up
+      - "${WEB_PORT:-3000}:3000"
     restart: unless-stopped
 
 volumes:
   db-data:
   storage-data:
+  web-node-modules-root:
+  web-node-modules-web:
+  web-next-dev:

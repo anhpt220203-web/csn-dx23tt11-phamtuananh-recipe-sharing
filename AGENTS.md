@@ -12,7 +12,8 @@
 | Đường dẫn | Vai trò |
 |---|---|
 | `src/` | **Monorepo root (MakerKit, pnpm + Turbo)**: `apps/web/` (Next.js app "Công Thức Việt"), `packages/` (`@kit/*`), `tooling/` (config dùng chung) |
-| `src/apps/web/` | App chính: `app/(marketing)/` (trang công khai: `/`, `/danh-muc`, `/cong-thuc/[slug]`, `/tim-kiem`, `/faq`), `app/admin/` (quản trị), `app/auth/` (Supabase Auth), `components/recipes/`, `lib/recipes/` (queries + server actions), `supabase/migrations/` + `supabase/seed.sql`, `public/images/recipes/` (33 ảnh mẫu) |
+| `src/apps/web/` | App chính: `app/(marketing)/` (trang công khai: `/`, `/danh-muc`, `/cong-thuc/[slug]`, `/tim-kiem`, `/faq`), `app/admin/` (quản trị), `app/auth/` (Supabase Auth), `components/recipes/`, `lib/recipes/` (queries + server actions), `public/images/recipes/` (33 ảnh mẫu) |
+| `supabase/` (repo root) | **Cấu hình Supabase CLI chuẩn duy nhất** (`config.toml`, project_id `recipe-sharing`): `migrations/` (17 migrations), `seed/` (01_demo.sql + 02_demo_users.sql — nạp thủ công sau `db reset`). KHÔNG tạo lại `src/apps/web/supabase/` (bản stale đã xoá 17/10/2026 — supabase CLI tự đi lên tìm config ở repo root) |
 | `src/apps/web/AGENTS.md` | Khối `nextjs-agent-rules` cho Next.js (tạo bởi `next dev` — đọc trước khi sửa code Next.js) |
 | `specs/` | Spec Kit artifacts: spec/plan/research/data-model/quickstart/tasks |
 | `progress-report/` | Báo cáo tiến độ hằng tuần — tiêu chí chấm điểm |
@@ -31,7 +32,7 @@
 
 - Trình quản lý gói: **pnpm** (monorepo; xem `packageManager` trong `src/package.json`)
 - Tất cả lệnh chạy từ **`src/`**: `pnpm dev` (localhost:3000), `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm format`.
-- Supabase (CLI): `pnpm --filter web supabase:start` (DB local, cần Docker), `pnpm --filter web supabase:reset` (migrate + seed), `pnpm --filter web supabase:typegen` (sinh types). Trỏ cloud: `supabase link --project-ref <ref>` rồi `supabase db push`; chạy `supabase/seed.sql` một lần qua SQL Editor.
+- Supabase (CLI): `pnpm --filter web supabase:start` (DB local, cần Docker), `pnpm --filter web supabase:reset` (migrate — tự tìm `supabase/config.toml` ở repo root), `pnpm --filter web supabase:typegen` (sinh types). Sau `db reset` phải nạp seed thủ công: `docker cp supabase/seed/02_demo_users.sql supabase_db_recipe-sharing:/tmp/ && MSYS_NO_PATHCONV=1 docker exec supabase_db_recipe-sharing psql -U postgres -d postgres -f /tmp/02_demo_users.sql`. Trỏ cloud: `supabase link --project-ref <ref>` rồi `supabase db push`.
 - Env: `src/apps/web/.env.local` (copy từ `src/apps/web/.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 - Runtime: **Node.js 24 LTS**.
 - Quy trình Git: luôn tạo nhánh mới từ `dev` để cook, PR về `dev`; chỉ merge `dev` → `main` khi user yêu cầu demo.
