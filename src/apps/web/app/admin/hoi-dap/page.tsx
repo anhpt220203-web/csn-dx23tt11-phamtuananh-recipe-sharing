@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { connection } from 'next/server';
-import { MessageSquare, Search } from 'lucide-react';
+import { ExternalLink, MessageSquare, Search, Sparkles } from 'lucide-react';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
 import { Button } from '@kit/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
 
 import { PaginationNav } from '~/(marketing)/_components/pagination-nav';
@@ -137,28 +137,40 @@ export default async function QuestionsAdminPage({
 
   return (
     <div className={'flex flex-col gap-6'}>
-      <div className={'flex flex-wrap items-center justify-between gap-4'}>
-        <div>
-          <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý hỏi đáp</h1>
+      <div>
+        <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý hỏi đáp</h1>
 
-          <p className={'text-muted-foreground mt-1 text-sm'}>
-            Hỏi đáp và giải đáp thắc mắc của người dùng về các món ăn.
-            {(unansweredTotal ?? 0) > 0 ? (
-              <span className={'ml-1 text-amber-600 font-medium'}>
-                (Có {unansweredTotal} câu hỏi chưa trả lời)
-              </span>
-            ) : (
-              <span className={'ml-1 text-emerald-600'}>
-                (Tất cả câu hỏi đã được giải đáp)
-              </span>
-            )}
-          </p>
-        </div>
+        <p className={'text-muted-foreground mt-1 text-sm'}>
+          Giải đáp thắc mắc và hỗ trợ người dùng về các công thức nấu ăn.
+          {(unansweredTotal ?? 0) > 0 ? (
+            <span className={'ml-1 text-amber-600 font-medium'}>
+              (Hiện có {unansweredTotal} câu hỏi cần giải đáp)
+            </span>
+          ) : (
+            <span className={'ml-1 text-emerald-600'}>
+              (Tất cả câu hỏi đã được giải đáp)
+            </span>
+          )}
+        </p>
       </div>
 
-      {/* Tabs lọc trạng thái + ô tìm kiếm */}
-      <Card>
-        <CardContent className={'p-4'}>
+      {/* Cụm thống nhất: Gộp bộ lọc, tìm kiếm và danh sách câu hỏi dạng lưới trong 1 Card */}
+      <Card className={'shadow-xs'}>
+        <CardHeader className={'space-y-4 border-b border-border/50 pb-5'}>
+          <div className={'flex flex-wrap items-center justify-between gap-2'}>
+            <CardTitle className={'text-base font-semibold flex items-center gap-2'}>
+              <MessageSquare className={'h-4 w-4 text-primary'} />
+              <span>Danh sách câu hỏi ({total})</span>
+            </CardTitle>
+
+            {total > 0 && (
+              <span className={'text-xs text-muted-foreground'}>
+                Trang {page} / {Math.max(1, totalPages)}
+              </span>
+            )}
+          </div>
+
+          {/* Thanh công cụ: Tabs lọc trạng thái + Form tìm kiếm */}
           <div className={'flex flex-col gap-3 md:flex-row md:items-center md:justify-between'}>
             <div className={'flex flex-wrap items-center gap-1.5'}>
               {STATUS_FILTERS.map((f) => {
@@ -169,6 +181,7 @@ export default async function QuestionsAdminPage({
                     nativeButton={false}
                     variant={active ? 'default' : 'outline'}
                     size={'sm'}
+                    className={'h-8 text-xs'}
                     render={
                       <Link
                         href={buildQuestionsHref({
@@ -195,16 +208,16 @@ export default async function QuestionsAdminPage({
               )}
 
               <div className={'relative min-w-56'}>
-                <Search className={'text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2'} />
+                <Search className={'text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2'} />
                 <Input
                   name={'q'}
                   defaultValue={q}
-                  placeholder={'Tìm trong câu hỏi hoặc trả lời...'}
-                  className={'pl-9 text-sm'}
+                  placeholder={'Tìm câu hỏi, câu trả lời...'}
+                  className={'h-8 pl-8 text-xs'}
                 />
               </div>
 
-              <Button type={'submit'} variant={'secondary'} size={'sm'}>
+              <Button type={'submit'} variant={'secondary'} size={'sm'} className={'h-8 text-xs'}>
                 Tìm
               </Button>
 
@@ -213,7 +226,7 @@ export default async function QuestionsAdminPage({
                   nativeButton={false}
                   variant={'ghost'}
                   size={'sm'}
-                  className={'text-xs text-muted-foreground'}
+                  className={'h-8 text-xs text-muted-foreground'}
                   render={
                     <Link
                       href={buildQuestionsHref({
@@ -222,83 +235,67 @@ export default async function QuestionsAdminPage({
                         page: 1,
                       })}
                     >
-                      Xóa tìm
+                      Xóa
                     </Link>
                   }
                 />
               )}
             </form>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className={'pb-3'}>
-          <CardTitle className={'text-base flex items-center justify-between'}>
-            <span>Danh sách câu hỏi ({total})</span>
-            {total > 0 && (
-              <span className={'text-xs font-normal text-muted-foreground'}>
-                Trang {page} / {Math.max(1, totalPages)}
-              </span>
-            )}
-          </CardTitle>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className={'pt-5'}>
           {questions.length === 0 ? (
-            <div className={'py-10 text-center'}>
-              <MessageSquare className={'mx-auto h-8 w-8 text-muted-foreground/40 mb-2'} />
-              <p className={'text-muted-foreground text-sm'}>
+            <div className={'py-12 text-center'}>
+              <MessageSquare className={'mx-auto h-10 w-10 text-muted-foreground/30 mb-2'} />
+              <p className={'text-muted-foreground text-sm font-medium'}>
                 {q || status !== 'all'
                   ? 'Không tìm thấy câu hỏi nào phù hợp với bộ lọc.'
                   : 'Chưa có câu hỏi nào từ người dùng.'}
               </p>
             </div>
           ) : (
-            <ul className={'flex flex-col gap-3'}>
+            /* Danh sách câu hỏi dạng lưới (Grid 2 cột trên desktop) */
+            <div className={'grid grid-cols-1 md:grid-cols-2 gap-4'}>
               {questions.map((item) => (
-                <li
+                <div
                   key={item.id}
-                  className={'rounded-lg border p-4 transition-colors hover:bg-muted/30'}
+                  className={
+                    'flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 transition-shadow hover:shadow-sm'
+                  }
                 >
-                  <div className={'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'}>
-                    <div className={'min-w-0 flex-1 space-y-2'}>
-                      <div className={'flex flex-wrap items-center gap-2'}>
+                  <div className={'space-y-3'}>
+                    {/* Header item: Badge trạng thái + Món ăn liên quan + Nút thao tác */}
+                    <div className={'flex items-start justify-between gap-2'}>
+                      <div className={'flex flex-wrap items-center gap-2 min-w-0'}>
                         {item.answer ? (
-                          <Badge variant={'default'} className={'bg-emerald-600'}>
+                          <Badge variant={'default'} className={'bg-emerald-600 text-[11px] h-5 px-2'}>
                             Đã trả lời
                           </Badge>
                         ) : (
-                          <Badge variant={'destructive'}>Chưa trả lời</Badge>
+                          <Badge variant={'destructive'} className={'text-[11px] h-5 px-2'}>
+                            Chưa trả lời
+                          </Badge>
                         )}
 
-                        <span className={'text-muted-foreground text-xs'}>
-                          Món: <strong>{item.recipes?.title ?? 'Công thức'}</strong> ·{' '}
-                          {new Date(item.created_at).toLocaleDateString('vi-VN', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                        <span className={'truncate text-xs font-medium text-foreground'}>
+                          {item.recipes?.title ? (
+                            <Link
+                              href={`/cong-thuc/${item.recipes.slug}`}
+                              target={'_blank'}
+                              rel={'noreferrer'}
+                              className={'hover:underline text-primary inline-flex items-center gap-1'}
+                              title={`Xem món: ${item.recipes.title}`}
+                            >
+                              <span>{item.recipes.title}</span>
+                              <ExternalLink className={'h-3 w-3 shrink-0'} />
+                            </Link>
+                          ) : (
+                            'Công thức'
+                          )}
                         </span>
                       </div>
 
-                      <p className={'font-medium text-base text-foreground leading-snug'}>
-                        {item.question}
-                      </p>
-
-                      {item.answer ? (
-                        <div className={'rounded-lg bg-muted/60 p-3 text-sm border'}>
-                          <p className={'font-medium text-xs text-muted-foreground mb-1'}>
-                            Câu trả lời của ban quản trị:
-                          </p>
-                          <p className={'leading-relaxed whitespace-pre-line'}>{item.answer}</p>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className={'shrink-0'}>
                       <QuestionRowActions
                         id={item.id}
                         question={item.question}
@@ -306,29 +303,63 @@ export default async function QuestionsAdminPage({
                         currentAnswer={item.answer}
                       />
                     </div>
+
+                    {/* Nội dung câu hỏi */}
+                    <div>
+                      <p className={'font-medium text-sm leading-snug text-foreground'}>
+                        {item.question}
+                      </p>
+                      <p className={'text-[11px] text-muted-foreground mt-1'}>
+                        Hỏi lúc{' '}
+                        {new Date(item.created_at).toLocaleString('vi-VN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+
+                    {/* Khung câu trả lời */}
+                    {item.answer ? (
+                      <div className={'rounded-lg bg-muted/50 p-3 text-xs border border-border/50 space-y-1'}>
+                        <div className={'flex items-center gap-1 font-semibold text-primary text-[11px]'}>
+                          <Sparkles className={'h-3 w-3'} />
+                          <span>Câu trả lời của bạn:</span>
+                        </div>
+                        <p className={'leading-relaxed text-muted-foreground whitespace-pre-line'}>
+                          {item.answer}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className={'rounded-lg border border-dashed border-border/60 bg-muted/20 p-2.5 text-center text-xs text-muted-foreground'}>
+                        Chưa có câu trả lời. Bấm &quot;Trả lời&quot; ở trên để giải đáp.
+                      </div>
+                    )}
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </CardContent>
-      </Card>
 
-      {totalPages > 1 && (
-        <div className={'flex justify-center pt-2'}>
-          <PaginationNav
-            currentPage={page}
-            totalPages={totalPages}
-            buildHref={(p: number) =>
-              buildQuestionsHref({
-                status,
-                q,
-                page: p,
-              })
-            }
-          />
-        </div>
-      )}
+        {totalPages > 1 && (
+          <CardFooter className={'border-t border-border/40 pt-4 flex justify-center'}>
+            <PaginationNav
+              currentPage={page}
+              totalPages={totalPages}
+              buildHref={(p: number) =>
+                buildQuestionsHref({
+                  status,
+                  q,
+                  page: p,
+                })
+              }
+            />
+          </CardFooter>
+        )}
+      </Card>
     </div>
   );
 }
