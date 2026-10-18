@@ -10,6 +10,12 @@ build/
 dist/
 *.tsbuildinfo
 
+# cloudflare workers (opennext adapter)
+.open-next/
+.dev.vars
+.wrangler/
+cloudflare-env.d.ts
+
 # prisma generated client
 src/generated/
 

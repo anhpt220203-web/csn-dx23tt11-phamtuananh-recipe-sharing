@@ -29,6 +29,8 @@ catalog:
   cross-env: ^10.1.0
   date-fns: ^4.1.0
   dotenv-cli: ^11.0.0
+  '@opennextjs/cloudflare': 1.20.12
+  wrangler: 4.151.1
   embla-carousel-react: 8.6.0
   input-otp: 1.5.0
   lucide-react: ^1.28.0
@@ -51,14 +53,14 @@ catalog:
   react-resizable-panels: 4.14.5
   react-top-loading-bar: 3.0.2
   recharts: 3.10.1
-  shadcn: 4.16.1
+  shadcn: 4.22.0
   server-only: ^0.0.1
   sonner: ^2.0.7
   supabase: ^2.48.3
   tailwind-merge: ^3.3.1
   tailwindcss: 4.3.3
   tailwindcss-animate: ^1.0.7
-  turbo: 2.10.8
+  turbo: 2.11.9
   typescript: 7.0.2
   vaul: 1.1.2
   vitest: 5.0.5
@@ -70,6 +72,7 @@ allowBuilds:
   '@swc/core': true
   'esbuild': true
   'sharp': true
+  workerd: true
 minimumReleaseAgeExclude:
   - '@pnpm/exe.android-arm64@12.14.0'
   - '@pnpm/exe.android-x64@12.14.0'

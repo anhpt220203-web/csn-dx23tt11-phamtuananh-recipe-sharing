@@ -2,6 +2,6 @@
 #
 # Image phụ trợ cho service db-migrate: Postgres client (psql, pg_isready)
 # + curl để gọi GoTrue Admin API / Storage API tạo tài khoản + import ảnh demo.
-FROM postgres:17-alpine
+FROM postgres:18-alpine
 
 RUN apk add --no-cache curl bash ca-certificates
