@@ -18,6 +18,7 @@ import { Label } from '@kit/ui/label';
 
 import { MarkdownEditor } from '~/components/markdown/markdown-editor';
 import { AdminImagePicker } from '../../_components/admin-image-picker';
+import { MediaUploadDialog } from '../../media/_components/media-upload-dialog';
 
 import type { TipRow } from '~/lib/content/database';
 
@@ -81,7 +82,16 @@ export function CreateTipForm() {
       </div>
 
       <div className={'grid gap-1.5 sm:col-span-2'}>
-        <Label htmlFor={'tip-content'}>Nội dung *</Label>
+        <div className={'flex items-center justify-between'}>
+          <Label htmlFor={'tip-content'}>Nội dung *</Label>
+          <MediaUploadDialog
+            defaultFolder={'tips'}
+            buttonLabel={'Tải ảnh & Lấy mã Markdown'}
+            buttonVariant={'ghost'}
+            size={'sm'}
+            className={'h-6 text-xs px-2 text-primary hover:text-primary'}
+          />
+        </div>
         <MarkdownEditor
           name={'content'}
           label={'Nội dung (hỗ trợ Markdown đầy đủ: tiêu đề, bảng, danh sách, ảnh...)'}
@@ -250,7 +260,16 @@ export function EditTipModal({
           </div>
 
           <div className={'grid gap-1.5 sm:col-span-2'}>
-            <Label htmlFor={`edit-content-${tip.id}`}>Nội dung *</Label>
+            <div className={'flex items-center justify-between'}>
+              <Label htmlFor={`edit-content-${tip.id}`}>Nội dung *</Label>
+              <MediaUploadDialog
+                defaultFolder={'tips'}
+                buttonLabel={'Tải ảnh & Lấy mã Markdown'}
+                buttonVariant={'ghost'}
+                size={'sm'}
+                className={'h-6 text-xs px-2 text-primary hover:text-primary'}
+              />
+            </div>
             <MarkdownEditor
               name={'content'}
               label={'Nội dung (Markdown)'}

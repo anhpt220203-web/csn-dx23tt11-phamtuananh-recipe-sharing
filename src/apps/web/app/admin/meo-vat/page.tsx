@@ -6,6 +6,7 @@ import { Badge } from '@kit/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 
 import type { ContentSchema } from '~/lib/content/database';
+import { MediaUploadDialog } from '../media/_components/media-upload-dialog';
 
 import { TipRowActions, CreateTipForm } from './_components/tip-forms';
 
@@ -35,12 +36,20 @@ export default async function TipsAdminPage() {
 
   return (
     <div className={'flex flex-col gap-6'}>
-      <div>
-        <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý mẹo vặt</h1>
+      <div className={'flex flex-wrap items-center justify-between gap-4'}>
+        <div>
+          <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý mẹo vặt</h1>
 
-        <p className={'text-muted-foreground mt-1 text-sm'}>
-          Bài viết bí quyết nấu ăn hiển thị ở trang chủ và trang Mẹo vặt.
-        </p>
+          <p className={'text-muted-foreground mt-1 text-sm'}>
+            Bài viết bí quyết nấu ăn hiển thị ở trang chủ và trang Mẹo vặt.
+          </p>
+        </div>
+
+        <MediaUploadDialog
+          defaultFolder={'tips'}
+          buttonLabel={'Tải ảnh vào thư viện'}
+          buttonVariant={'outline'}
+        />
       </div>
 
       <Card>
