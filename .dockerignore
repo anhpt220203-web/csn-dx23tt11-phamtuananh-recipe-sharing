@@ -7,6 +7,10 @@ node_modules
 .turbo
 src/.turbo
 *.log
+# Env local/secret KHÔNG được bake vào image (build dùng build-args/env compose).
+**/.env.local
+**/.env
+docker/.env
 docker/README.md
 specs
 thesis
