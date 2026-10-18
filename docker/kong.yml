@@ -28,11 +28,14 @@ services:
         strip_path: true
 
 plugins:
-  # Cho phép web app (http://localhost:3000) gọi API từ trình duyệt.
+  # Cho phép web app gọi API từ trình duyệt (3000 = prod compose mặc định,
+  # 3005 = web-dev compose khi host bận 3000, 3006 = prod compose WEB_PORT).
   - name: cors
     config:
       origins:
         - http://localhost:3000
+        - http://localhost:3005
+        - http://localhost:3006
       methods:
         - GET
         - POST
