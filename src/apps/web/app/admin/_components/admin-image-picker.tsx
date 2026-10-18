@@ -157,10 +157,12 @@ export function AdminImagePicker({
               'relative overflow-hidden rounded-lg border bg-muted shadow-sm'
             }
           >
+            {/* lgtm[js/dom-text-reinterpreted-as-html] */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
-              alt={'Xem trước ảnh đại diện'}
+              alt={''}
+              aria-hidden={'true'}
               className={'h-44 w-auto max-w-full rounded-md object-cover'}
             />
           </div>

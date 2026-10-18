@@ -214,16 +214,16 @@ export async function saveRecipeAction(
     const ingredients = splitLines(formData.get('ingredients'));
     const steps = splitLines(formData.get('steps'));
 
-    // Ảnh: file mới (nếu có) -> upload; không thì dùng link dán trực tiếp;
-    // còn lại giữ ảnh cũ.
-    const imageFile = formData.get('image');
+    const rawImage = formData.get('image') ?? formData.get('image_file');
+    const imageFile =
+      rawImage instanceof File && rawImage.size > 0 ? rawImage : null;
     const existingImageUrl = String(formData.get('existing_image_url') ?? '');
     const imageUrlText = String(formData.get('image_url') ?? '').trim();
 
     let imageUrl: string | null =
       existingImageUrl.length > 0 ? existingImageUrl : null;
 
-    if (imageFile instanceof File && imageFile.size > 0) {
+    if (imageFile) {
       imageUrl = await uploadRecipeImage(admin, imageFile);
 
       // Sửa công thức + đổi ảnh: xóa ảnh cũ cho gọn kho lưu trữ.

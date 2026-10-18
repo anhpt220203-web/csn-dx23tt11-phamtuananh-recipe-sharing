@@ -1,8 +1,6 @@
 'use client';
 
-import { useActionState, useRef, useState } from 'react';
-
-import { toast } from 'sonner';
+import { useActionState, useState } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Input } from '@kit/ui/input';
@@ -10,51 +8,18 @@ import { Label } from '@kit/ui/label';
 import { NativeSelect, NativeSelectOption } from '@kit/ui/native-select';
 import { Textarea } from '@kit/ui/textarea';
 
-import { MediaUploadDialog } from '~/admin/media/_components/media-upload-dialog';
 import { MarkdownEditor } from '~/components/markdown/markdown-editor';
+import { AdminImagePicker } from '../../_components/admin-image-picker';
 
 import type {
   CategoryRow,
   RecipeDetail,
 } from '~/lib/recipes/database';
-import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import { slugify } from '~/lib/recipes/slugify';
 
 import { QuickCreateCategoryModal } from './quick-create-category-modal';
 import { saveRecipeAction } from '../actions';
 import { RECIPE_ACTION_INITIAL } from '../cong-thuc-constants';
-
-function sanitizePreviewUrl(url: string | null | undefined): string | null {
-  if (!url) {
-    return null;
-  }
-
-  const trimmed = url.trim();
-
-  if (trimmed.startsWith('blob:')) {
-    return trimmed;
-  }
-
-  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-    return trimmed;
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-
-    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
-      return encodeURI(parsed.href);
-    }
-
-    return null;
-  } catch {
-    if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-      return encodeURI(trimmed);
-    }
-
-    return null;
-  }
-}
 
 const DIFFICULTIES = ['Dễ', 'Trung bình', 'Khó'];
 
@@ -77,18 +42,6 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [slug, setSlug] = useState(initial?.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(Boolean(initial?.slug));
-  const [existingImageUrl, setExistingImageUrl] = useState(
-    initial?.image_url ?? '',
-  );
-  const [imageUrlText, setImageUrlText] = useState(
-    initial?.image_url?.startsWith('http') ? initial.image_url : '',
-  );
-  const [preview, setPreview] = useState<string | null>(
-    resolveRecipeImageSrc(initial?.image_url) ?? null,
-  );
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const urlInputRef = useRef<HTMLInputElement>(null);
 
   const [categoriesList, setCategoriesList] = useState<CategoryRow[]>(categories);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | number>(
@@ -108,55 +61,9 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
     }
   };
 
-  const handleFileChange = (file: File | undefined) => {
-    if (!file) {
-      const fallback =
-        imageUrlText.trim() ||
-        resolveRecipeImageSrc(existingImageUrl) ||
-        null;
-
-      setPreview(fallback);
-      return;
-    }
-
-    setPreview(URL.createObjectURL(file));
-  };
-
-  const handleUrlChange = (value: string) => {
-    setImageUrlText(value);
-
-    const trimmed = value.trim();
-
-    if (trimmed.length > 0) {
-      setPreview(trimmed);
-    } else if (!fileInputRef.current?.files?.length) {
-      setPreview(resolveRecipeImageSrc(existingImageUrl) ?? null);
-    }
-  };
-
-  const handleClearImage = () => {
-    setPreview(null);
-    setExistingImageUrl('');
-    setImageUrlText('');
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-
-    if (urlInputRef.current) {
-      urlInputRef.current.value = '';
-    }
-  };
-
   return (
     <form action={formAction} className={'flex flex-col gap-5'}>
       {initial && <input type={'hidden'} name={'id'} value={initial.id} />}
-
-      <input
-        type={'hidden'}
-        name={'existing_image_url'}
-        value={existingImageUrl}
-      />
 
       <div className={'grid grid-cols-1 gap-4 sm:grid-cols-2'}>
         <div className={'grid gap-1.5'}>
@@ -347,88 +254,16 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
         </div>
 
         <div className={'grid gap-1.5 sm:col-span-2'}>
-          <div className={'flex items-center justify-between'}>
-            <Label htmlFor={'image_url'}>Ảnh đại diện</Label>
-            <MediaUploadDialog
-              defaultFolder={'recipes'}
-              buttonLabel={'Tải ảnh vào kho'}
-              buttonVariant={'outline'}
-              size={'sm'}
-              className={'h-6 text-xs px-2 text-primary hover:text-primary'}
-              onUploaded={(items) => {
-                if (items && items.length > 0) {
-                  const first = items[0]!;
-                  setImageUrlText(first.proxyUrl);
-                  setPreview(first.proxyUrl);
-                  toast.success(`Đã tự động chọn ảnh "${first.name}" làm ảnh đại diện!`);
-                }
-              }}
-            />
-          </div>
-
-          <Input
-            id={'image_url'}
-            name={'image_url'}
-            ref={urlInputRef}
-            type={'url'}
-            maxLength={500}
-            value={imageUrlText}
-            onChange={(event) => handleUrlChange(event.target.value)}
-            placeholder={'https://... — dán link ảnh trực tiếp hoặc tải từ kho'}
+          <AdminImagePicker
+            urlName={'image_url'}
+            fileName={'image'}
+            existingName={'existing_image_url'}
+            defaultUrl={initial?.image_url}
+            label={'Ảnh đại diện'}
+            hint={'JPG/PNG/WEBP/GIF, tối đa 5MB. Tên file được sinh ngẫu nhiên để không trùng. File tải lên sẽ ưu tiên hơn link đã dán.'}
+            mediaFolder={'recipes'}
+            idPrefix={'recipe-image'}
           />
-
-          <div className={'flex items-center gap-2'}>
-            <span className={'flex-1 border-t'} />
-
-            <span className={'text-muted-foreground text-xs'}>
-              hoặc tải file lên
-            </span>
-
-            <span className={'flex-1 border-t'} />
-          </div>
-
-          <Input
-            id={'image'}
-            name={'image'}
-            ref={fileInputRef}
-            type={'file'}
-            accept={'image/jpeg,image/png,image/webp,image/gif'}
-            onChange={(event) =>
-              handleFileChange(event.target.files?.[0])
-            }
-          />
-
-          <p className={'text-muted-foreground text-xs'}>
-            JPG/PNG/WEBP/GIF, tối đa 5MB. Tên file được sinh ngẫu nhiên để
-            không trùng. File tải lên sẽ ưu tiên hơn link đã dán.
-          </p>
-
-          {(() => {
-            const safePreview = sanitizePreviewUrl(preview);
-            if (!safePreview) return null;
-            return (
-              <div className={'mt-2 flex flex-col items-start gap-2'}>
-                <div className={'relative overflow-hidden rounded-lg border bg-muted shadow-sm'}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={safePreview}
-                    alt={'Xem trước ảnh đại diện'}
-                    className={'h-44 w-auto max-w-full rounded-md object-cover'}
-                  />
-                </div>
-
-                <Button
-                  type={'button'}
-                  variant={'outline'}
-                  size={'sm'}
-                  onClick={handleClearImage}
-                  className={'text-xs text-destructive hover:text-destructive'}
-                >
-                  Xóa ảnh đại diện
-                </Button>
-              </div>
-            );
-          })()}
         </div>
 
         <div className={'grid gap-1.5 sm:col-span-2'}>
