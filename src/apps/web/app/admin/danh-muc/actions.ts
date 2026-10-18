@@ -142,9 +142,11 @@ export async function createCategoryAction(
       '',
     );
 
-    const { error } = await getAdmin()
+    const { data: inserted, error } = await getAdmin()
       .from('categories')
-      .insert({ ...parsed.data, image_url: imageUrl });
+      .insert({ ...parsed.data, image_url: imageUrl })
+      .select('id,name,slug,description,dimension,image_url')
+      .single();
 
     if (error) {
       // Upload ảnh xong mà insert lỗi -> dọn ảnh vừa upload.
@@ -158,8 +160,9 @@ export async function createCategoryAction(
     }
 
     revalidatePath('/admin/danh-muc');
+    revalidatePath('/admin/cong-thuc');
 
-    return { ok: true };
+    return { ok: true, category: inserted };
   } catch (error) {
     return {
       ok: false,
