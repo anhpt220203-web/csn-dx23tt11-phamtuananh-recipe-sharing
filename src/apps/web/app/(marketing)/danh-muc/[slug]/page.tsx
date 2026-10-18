@@ -9,7 +9,10 @@ import {
   getCategoryBySlug,
   getRecipesByCategorySlug,
 } from '~/lib/recipes/queries';
-import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
+import {
+  getFavoriteRecipeIds,
+  getRecipeFavoriteCounts,
+} from '~/lib/recipes/favorites';
 
 import { RecipeCard } from '~/components/recipes/recipe-card';
 
@@ -61,9 +64,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     getCategories(),
   ]);
 
-  const favoriteIds = await getFavoriteRecipeIds(
-    recipes.map((recipe) => recipe.id),
-  );
+  const recipeIds = recipes.map((recipe) => recipe.id);
+  const [favoriteIds, favoriteCounts] = await Promise.all([
+    getFavoriteRecipeIds(recipeIds),
+    getRecipeFavoriteCounts(recipeIds),
+  ]);
 
   return (
     <div>
@@ -108,6 +113,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                   key={recipe.slug}
                   recipe={recipe}
                   initialFavorited={favoriteIds.has(recipe.id)}
+                  initialFavoriteCount={favoriteCounts.get(recipe.id) ?? 0}
                 />
               ))}
             </div>

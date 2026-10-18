@@ -27,7 +27,10 @@ import { RecipeCard } from '~/components/recipes/recipe-card';
 import { SearchForm } from '~/components/recipes/search-form';
 import appConfig from '~/config/app.config';
 import { getActiveBanners, getPublishedTips } from '~/lib/content/queries';
-import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
+import {
+  getFavoriteRecipeIds,
+  getRecipeFavoriteCounts,
+} from '~/lib/recipes/favorites';
 import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import {
   getCategories,
@@ -148,9 +151,14 @@ export default async function HomePage() {
       getPublishedTips(3),
     ]);
 
-  const favoriteIds = await getFavoriteRecipeIds(
-    [...latestRecipes, ...topRated].map((recipe) => recipe.id),
+  const allRecipeIds = [...latestRecipes, ...topRated].map(
+    (recipe) => recipe.id,
   );
+
+  const [favoriteIds, favoriteCounts] = await Promise.all([
+    getFavoriteRecipeIds(allRecipeIds),
+    getRecipeFavoriteCounts(allRecipeIds),
+  ]);
 
   // Chọn món nổi bật để làm Spotlight trong Hero: ưu tiên top rated, fallback sang latest
   const featuredRecipe = topRated[0] ?? latestRecipes[0];
@@ -516,6 +524,7 @@ export default async function HomePage() {
                   key={recipe.id}
                   recipe={recipe}
                   initialFavorited={favoriteIds.has(recipe.id)}
+                  initialFavoriteCount={favoriteCounts.get(recipe.id) ?? 0}
                 />
               ))}
             </div>
@@ -671,6 +680,7 @@ export default async function HomePage() {
                   recipe={recipe}
                   rating={recipe.rating}
                   initialFavorited={favoriteIds.has(recipe.id)}
+                  initialFavoriteCount={favoriteCounts.get(recipe.id) ?? 0}
                 />
               ))}
             </div>
