@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
-import { ExternalLink, Trash2 } from 'lucide-react';
+import { Copy, ExternalLink, FileCode, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -22,6 +22,7 @@ import { NativeSelect, NativeSelectOption } from '@kit/ui/native-select';
 
 import { deleteMediaFileAction } from '../actions';
 import { MEDIA_ACTION_INITIAL } from '../media-constants';
+import { MediaRenameDialog } from './media-rename-dialog';
 import { MediaUploadDialog } from './media-upload-dialog';
 
 export type MediaItem = {
@@ -89,6 +90,7 @@ function thumbnailSrc(item: MediaItem): string {
 export function MediaBrowser({ items }: { items: MediaItem[] }) {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [confirmPath, setConfirmPath] = useState<string | null>(null);
+  const [itemToRename, setItemToRename] = useState<MediaItem | null>(null);
 
   const [deleteState, deleteAction, deletePending] = useActionState(
     deleteMediaFileAction,
@@ -102,6 +104,42 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
       setConfirmPath(null);
     }
   }, [deleteState, deletePending, confirmPath]);
+
+  const handleCopyLink = (item: MediaItem) => {
+    const src = thumbnailSrc(item);
+    const fullUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}${src}`
+        : src;
+
+    navigator.clipboard
+      .writeText(fullUrl)
+      .then(() => {
+        toast.success(`Đã sao chép link ảnh "${item.name}"!`);
+      })
+      .catch(() => {
+        toast.error('Không thể sao chép vào bộ nhớ tạm.');
+      });
+  };
+
+  const handleCopyMarkdown = (item: MediaItem) => {
+    const src = thumbnailSrc(item);
+    const fullUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}${src}`
+        : src;
+    const cleanName = item.name.replace(/\.[^/.]+$/, '');
+    const markdown = `![${cleanName}](${fullUrl})`;
+
+    navigator.clipboard
+      .writeText(markdown)
+      .then(() => {
+        toast.success(`Đã sao chép mã Markdown chèn ảnh "${item.name}"!`);
+      })
+      .catch(() => {
+        toast.error('Không thể sao chép vào bộ nhớ tạm.');
+      });
+  };
 
   const filtered =
     sourceFilter === 'all'
@@ -195,23 +233,61 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
                     </span>
                   </div>
 
-                  <div className={'flex items-center gap-2 pt-1'}>
+                  <div className={'flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/50'}>
                     <Button
-                      nativeButton={false}
+                      type={'button'}
                       variant={'outline'}
                       size={'sm'}
-                      className={'gap-1'}
-                      render={
-                        <a
-                          href={thumbnailSrc(item)}
-                          target={'_blank'}
-                          rel={'noreferrer'}
-                        />
-                      }
+                      className={'h-8 gap-1 px-2.5 text-xs'}
+                      onClick={() => handleCopyLink(item)}
+                      title={'Sao chép đường dẫn ảnh trực tiếp'}
                     >
-                      <ExternalLink className={'h-3.5 w-3.5'} />
-                      <span>Xem</span>
+                      <Copy className={'h-3.5 w-3.5 text-muted-foreground'} />
+                      <span>Copy link</span>
                     </Button>
+
+                    <Button
+                      type={'button'}
+                      variant={'outline'}
+                      size={'sm'}
+                      className={'h-8 gap-1 px-2.5 text-xs'}
+                      onClick={() => handleCopyMarkdown(item)}
+                      title={'Sao chép mã chèn ảnh dạng Markdown: ![tên](url)'}
+                    >
+                      <FileCode className={'h-3.5 w-3.5 text-muted-foreground'} />
+                      <span>Copy Markdown</span>
+                    </Button>
+
+                    <Button
+                      type={'button'}
+                      variant={'outline'}
+                      size={'sm'}
+                      className={'h-8 gap-1 px-2.5 text-xs'}
+                      onClick={() => setItemToRename(item)}
+                      title={'Đổi tên file ảnh'}
+                    >
+                      <Pencil className={'h-3.5 w-3.5 text-muted-foreground'} />
+                      <span>Đổi tên</span>
+                    </Button>
+
+                    <div className={'ml-auto flex items-center gap-1.5'}>
+                      <Button
+                        nativeButton={false}
+                        variant={'ghost'}
+                        size={'sm'}
+                        className={'h-8 gap-1 px-2 text-xs'}
+                        render={
+                          <a
+                            href={thumbnailSrc(item)}
+                            target={'_blank'}
+                            rel={'noreferrer'}
+                          />
+                        }
+                        title={'Xem ảnh gốc'}
+                      >
+                        <ExternalLink className={'h-3.5 w-3.5'} />
+                        <span>Xem</span>
+                      </Button>
 
                     <AlertDialog
                       open={confirmPath === item.path}
@@ -277,12 +353,23 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
-                </CardContent>
+                </div>
+              </CardContent>
               </Card>
             </li>
           ))}
         </ul>
       )}
+
+      <MediaRenameDialog
+        item={itemToRename}
+        open={Boolean(itemToRename)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setItemToRename(null);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -125,19 +125,22 @@ export default async function MediaAdminPage() {
     Promise.all(MEDIA_FOLDERS.map((f) => listFolder(MEDIA_BUCKET, f))),
     listFolder(MEDIA_BUCKET, ''),
     listFolder('account_image', ''),
-    admin
+    (admin as any)
       .from('recipes')
       .select('image_url, title')
-      .not('image_url', 'is', null),
-    admin.from('tips').select('image_url, title').not('image_url', 'is', null),
-    admin
+      .not('image_url', 'is', null) as Promise<{ data: Array<{ image_url: string; title: string }> | null }>,
+    (admin as any)
+      .from('tips')
+      .select('image_url, title')
+      .not('image_url', 'is', null) as Promise<{ data: Array<{ image_url: string; title: string }> | null }>,
+    (admin as any)
       .from('categories')
       .select('image_url, name')
-      .not('image_url', 'is', null),
-    admin
+      .not('image_url', 'is', null) as Promise<{ data: Array<{ image_url: string; name: string }> | null }>,
+    (admin as any)
       .from('banners')
       .select('image_url, title')
-      .not('image_url', 'is', null),
+      .not('image_url', 'is', null) as Promise<{ data: Array<{ image_url: string; title: string }> | null }>,
     admin
       .from('accounts')
       .select('id, name, email, picture_url'),
