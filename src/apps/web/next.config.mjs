@@ -4,7 +4,13 @@ import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
 // Chỉ tác dụng khi chạy `next dev`: nạp Cloudflare runtime context
 // (env bindings...) vào môi trường dev local. `next build` trên
 // Vercel/Docker không bị ảnh hưởng.
-initOpenNextCloudflareForDev();
+//
+// Bỏ qua khi đặt NEXT_DISABLE_OPENNEXT_DEV=1 — cần cho `next dev` trong
+// Docker (alpine/musl không chạy được binary workerd glibc mà nó spawn,
+// container crash ngay request đầu tiên; app local không dùng CF bindings).
+if (process.env.NEXT_DISABLE_OPENNEXT_DEV !== '1') {
+  initOpenNextCloudflareForDev();
+}
 
 // Create the next-intl plugin with the request config path
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');

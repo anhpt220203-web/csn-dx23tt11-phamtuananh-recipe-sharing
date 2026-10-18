@@ -219,6 +219,8 @@ services:
       NEXT_PUBLIC_CAPTCHA_SITE_KEY: ""
       # Bắt buộc bật polling để hot reload hoạt động qua bind mount của Docker Desktop.
       WATCHPACK_POLLING: "true"
+      # OpenNext spawn workerd (glibc) — alpine không chạy được, app local không dùng CF bindings.
+      NEXT_DISABLE_OPENNEXT_DEV: "1"
       # .env.local trên host có thể chứa đường dẫn Windows — tắt cache SWC trong container.
       SWC_NATIVE_BINDING_CACHE: "0"
     volumes:
