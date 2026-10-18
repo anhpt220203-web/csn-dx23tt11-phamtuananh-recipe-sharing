@@ -16,8 +16,8 @@ export function resolveRecipeImageSrc(
     return null;
   }
 
-  // Đường dẫn nội bộ trong /public — dùng thẳng.
-  if (imageUrl.startsWith('/')) {
+  // Đường dẫn nội bộ trong /public hoặc blob/data URL — dùng thẳng.
+  if (imageUrl.startsWith('/') || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
     return imageUrl;
   }
 
