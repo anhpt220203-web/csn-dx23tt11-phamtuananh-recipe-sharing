@@ -89,7 +89,7 @@ export function QuickCreateCategoryModal({
           onCategoryCreated(res.category);
           handleOpenChange(false);
         } else {
-          const msg = res.message ?? 'Có lỗi xảy ra khi tạo danh mục.';
+          const msg = !res.ok && res.message ? res.message : 'Có lỗi xảy ra khi tạo danh mục.';
           setErrorMsg(msg);
           toast.error(msg);
         }

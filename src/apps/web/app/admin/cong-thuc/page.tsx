@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
-import { connection } from 'next/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { connection } from 'next/server';
+import { ExternalLink, Plus } from 'lucide-react';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
@@ -14,17 +16,21 @@ import {
 } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
 
+import { PaginationNav } from '~/(marketing)/_components/pagination-nav';
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import { getCategories } from '~/lib/recipes/queries';
 
 import { DeleteRecipeButton } from './_components/delete-recipe-button';
+import { PreviewRecipeButton } from './_components/preview-recipe-modal';
 
 export const metadata: Metadata = {
   title: 'Quản lý công thức',
 };
 
 export const instant = false;
+
+const PER_PAGE = 8;
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Tất cả' },
@@ -38,12 +44,18 @@ type AdminRecipeParams = {
   status: StatusFilter;
   q: string;
   category: string | null;
+  page?: number;
 };
 
 /**
- * Dựng URL trang quản lý công thức, giữ lại các bộ lọc đang dùng.
+ * Dựng URL trang quản lý công thức, giữ lại các bộ lọc đang dùng và số trang.
  */
-function buildRecipesHref({ status, q, category }: AdminRecipeParams): string {
+function buildRecipesHref({
+  status,
+  q,
+  category,
+  page = 1,
+}: AdminRecipeParams): string {
   const params = new URLSearchParams();
 
   if (status !== 'all') {
@@ -60,9 +72,18 @@ function buildRecipesHref({ status, q, category }: AdminRecipeParams): string {
     params.set('category', category);
   }
 
+  if (page > 1) {
+    params.set('page', String(page));
+  }
+
   const queryString = params.toString();
 
   return queryString ? `/admin/cong-thuc?${queryString}` : '/admin/cong-thuc';
+}
+
+function parsePage(value: string | undefined): number {
+  const page = Number.parseInt(value ?? '1', 10);
+  return Number.isFinite(page) && page > 0 ? page : 1;
 }
 
 /**
@@ -76,13 +97,22 @@ function escapeLike(value: string): string {
 export default async function RecipesAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string; category?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    q?: string;
+    category?: string;
+    page?: string;
+  }>;
 }) {
   // Trang admin đọc DB mỗi request, không prerender lúc build.
   await connection();
 
-  const { status: statusParam, q: qParam, category: categoryParam } =
-    await searchParams;
+  const {
+    status: statusParam,
+    q: qParam,
+    category: categoryParam,
+    page: pageParam,
+  } = await searchParams;
 
   const statusFilter: StatusFilter =
     statusParam === 'published' || statusParam === 'draft'
@@ -90,6 +120,7 @@ export default async function RecipesAdminPage({
       : 'all';
 
   const searchTerm = (qParam ?? '').trim();
+  const page = parsePage(pageParam);
 
   const categories = await getCategories();
 
@@ -98,38 +129,58 @@ export default async function RecipesAdminPage({
 
   const admin = getSupabaseServerAdminClient<RecipeSchema>();
 
-  const baseQuery = admin
+  let baseQuery = admin
     .from('recipes')
     .select(
       'id,title,slug,image_url,difficulty,cook_time,status,categories(name)',
+      { count: 'exact' },
     )
-    .order('id', { ascending: false })
-    .limit(200);
+    .order('id', { ascending: false });
 
-  const statusQuery =
-    statusFilter === 'all' ? baseQuery : baseQuery.eq('status', statusFilter);
+  if (statusFilter !== 'all') {
+    baseQuery = baseQuery.eq('status', statusFilter);
+  }
 
-  const searchQuery = searchTerm
-    ? statusQuery.ilike('title', `%${escapeLike(searchTerm)}%`)
-    : statusQuery;
+  if (searchTerm) {
+    baseQuery = baseQuery.ilike('title', `%${escapeLike(searchTerm)}%`);
+  }
 
-  const filteredQuery =
-    activeCategory !== null
-      ? searchQuery.eq('category_id', activeCategory.id)
-      : searchQuery;
+  if (activeCategory !== null) {
+    baseQuery = baseQuery.eq('category_id', activeCategory.id);
+  }
 
-  const { data, error } = await filteredQuery;
+  const from = (page - 1) * PER_PAGE;
+  const to = from + PER_PAGE - 1;
+
+  const { data, count, error } = await baseQuery.range(from, to);
 
   if (error) {
     throw new Error(`Không tải được công thức: ${error.message}`);
   }
 
   const recipes = data ?? [];
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
 
-  const hasActiveFilter = searchTerm !== '' || activeCategory !== null;
+  // Nếu page trên URL vượt quá tổng số trang do người dùng xóa hoặc lọc
+  if (page > totalPages && total > 0) {
+    redirect(
+      buildRecipesHref({
+        status: statusFilter,
+        q: searchTerm,
+        category: activeCategory?.slug ?? null,
+        page: totalPages,
+      }),
+    );
+  }
+
+  const hasActiveFilter =
+    searchTerm !== '' || activeCategory !== null || statusFilter !== 'all';
 
   return (
     <div className={'flex flex-col gap-6'}>
+      {/* Header trang & nút Thêm công thức */}
       <div className={'flex flex-wrap items-start justify-between gap-3'}>
         <div>
           <h1 className={'text-2xl font-bold tracking-tight'}>
@@ -137,13 +188,22 @@ export default async function RecipesAdminPage({
           </h1>
 
           <p className={'text-muted-foreground mt-1 text-sm'}>
-            {recipes.length} công thức (hiển thị tối đa 200).
+            Tổng cộng {total} công thức trong hệ thống.
           </p>
         </div>
 
-        <Button nativeButton={false} render={<Link href={'/admin/cong-thuc/moi'}>Thêm công thức</Link>} />
+        <Button
+          nativeButton={false}
+          render={
+            <Link href={'/admin/cong-thuc/moi'} className={'gap-1.5'}>
+              <Plus className={'h-4 w-4'} />
+              <span>Thêm công thức</span>
+            </Link>
+          }
+        />
       </div>
 
+      {/* Tabs lọc theo trạng thái */}
       <div className={'flex flex-wrap gap-2'}>
         {STATUS_FILTERS.map((filter) => {
           const active = statusFilter === filter.value;
@@ -155,6 +215,7 @@ export default async function RecipesAdminPage({
                 status: filter.value,
                 q: searchTerm,
                 category: activeCategory?.slug ?? null,
+                page: 1,
               })}
               aria-current={active ? 'page' : undefined}
               className={
@@ -169,6 +230,7 @@ export default async function RecipesAdminPage({
         })}
       </div>
 
+      {/* Bộ lọc theo từ khóa và danh mục */}
       <form
         action={'/admin/cong-thuc'}
         method={'GET'}
@@ -234,9 +296,10 @@ export default async function RecipesAdminPage({
               render={
                 <Link
                   href={buildRecipesHref({
-                    status: statusFilter,
+                    status: 'all',
                     q: '',
                     category: null,
+                    page: 1,
                   })}
                 >
                   Xoá lọc
@@ -247,6 +310,7 @@ export default async function RecipesAdminPage({
         </div>
       </form>
 
+      {/* Danh sách công thức */}
       {recipes.length === 0 ? (
         <Card>
           <CardContent className={'py-10 text-center'}>
@@ -258,86 +322,143 @@ export default async function RecipesAdminPage({
           </CardContent>
         </Card>
       ) : (
-        <div className={'grid grid-cols-1 gap-3 lg:grid-cols-2'}>
-          {recipes.map((recipe) => {
-            const categoryName =
-              (recipe.categories as { name?: string } | null)?.name ?? '—';
+        <div className={'flex flex-col gap-4'}>
+          {total > 0 && (
+            <div className={'flex items-center justify-between text-xs text-muted-foreground'}>
+              <span>
+                Hiển thị {from + 1}–{Math.min(to + 1, total)} trên tổng số {total} công thức
+              </span>
+            </div>
+          )}
 
-            return (
-              <Card key={recipe.id}>
-                <CardHeader className={'pb-3'}>
-                  <div className={'flex gap-3'}>
-                    {recipe.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={resolveRecipeImageSrc(recipe.image_url) ?? recipe.image_url}
-                        alt={recipe.title}
-                        className={'h-16 w-16 shrink-0 rounded-md object-cover'}
-                        loading={'lazy'}
-                      />
-                    ) : (
-                      <div
-                        className={
-                          'bg-muted flex h-16 w-16 shrink-0 items-center justify-center rounded-md text-xs text-muted-foreground'
-                        }
-                      >
-                        Không ảnh
-                      </div>
-                    )}
+          <div className={'grid grid-cols-1 gap-3 lg:grid-cols-2'}>
+            {recipes.map((recipe) => {
+              const categoryName =
+                (recipe.categories as { name?: string } | null)?.name ?? '—';
 
-                    <div className={'min-w-0 flex-1'}>
-                      <CardTitle className={'truncate text-base'}>
-                        {recipe.title}
-                      </CardTitle>
-
-                      <CardDescription className={'truncate font-mono text-xs'}>
-                        {recipe.slug}
-                      </CardDescription>
-
-                      <div className={'mt-1.5 flex flex-wrap gap-1'}>
-                        <Badge
-                          variant={
-                            recipe.status === 'draft'
-                              ? 'secondary'
-                              : 'default'
+              return (
+                <Card key={recipe.id} className={'hover:shadow-xs transition-shadow'}>
+                  <CardHeader className={'pb-3'}>
+                    <div className={'flex gap-3'}>
+                      {recipe.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={
+                            resolveRecipeImageSrc(recipe.image_url) ??
+                            recipe.image_url
+                          }
+                          alt={recipe.title}
+                          className={'h-16 w-16 shrink-0 rounded-md object-cover border'}
+                          loading={'lazy'}
+                        />
+                      ) : (
+                        <div
+                          className={
+                            'bg-muted flex h-16 w-16 shrink-0 items-center justify-center rounded-md text-xs text-muted-foreground border'
                           }
                         >
-                          {recipe.status === 'draft' ? 'Nháp' : 'Đã xuất bản'}
-                        </Badge>
+                          Không ảnh
+                        </div>
+                      )}
 
-                        <Badge variant={'secondary'}>{categoryName}</Badge>
+                      <div className={'min-w-0 flex-1'}>
+                        <CardTitle className={'truncate text-base'}>
+                          {recipe.title}
+                        </CardTitle>
 
-                        {recipe.difficulty && (
-                          <Badge variant={'outline'}>{recipe.difficulty}</Badge>
-                        )}
+                        <div className={'flex items-center gap-2 mt-0.5'}>
+                          <CardDescription className={'truncate font-mono text-xs'}>
+                            {recipe.slug}
+                          </CardDescription>
 
-                        {recipe.cook_time !== null && (
-                          <Badge variant={'outline'}>
-                            {recipe.cook_time} phút
+                          <Link
+                            href={`/cong-thuc/${recipe.slug}`}
+                            target={'_blank'}
+                            rel={'noopener noreferrer'}
+                            className={
+                              'inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium shrink-0'
+                            }
+                            title={`Xem trang công thức "${recipe.title}"`}
+                          >
+                            <span>Xem công thức</span>
+                            <ExternalLink className={'h-3 w-3'} />
+                          </Link>
+                        </div>
+
+                        <div className={'mt-1.5 flex flex-wrap gap-1'}>
+                          <Badge
+                            variant={
+                              recipe.status === 'draft'
+                                ? 'secondary'
+                                : 'default'
+                            }
+                          >
+                            {recipe.status === 'draft' ? 'Nháp' : 'Đã xuất bản'}
                           </Badge>
-                        )}
+
+                          <Badge variant={'secondary'}>{categoryName}</Badge>
+
+                          {recipe.difficulty && (
+                            <Badge variant={'outline'}>{recipe.difficulty}</Badge>
+                          )}
+
+                          {recipe.cook_time !== null && (
+                            <Badge variant={'outline'}>
+                              {recipe.cook_time} phút
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
 
-                <CardContent className={'flex gap-2 pt-0'}>
-                  <Button
-                    nativeButton={false}
-                    size={'sm'}
-                    variant={'outline'}
-                    render={
-                      <Link href={`/admin/cong-thuc/${recipe.id}/sua`}>
-                        Sửa
-                      </Link>
-                    }
-                  />
+                  <CardContent className={'flex items-center gap-2 pt-0'}>
+                    <PreviewRecipeButton
+                      recipe={{
+                        id: recipe.id,
+                        title: recipe.title,
+                        slug: recipe.slug,
+                        image_url: recipe.image_url,
+                        difficulty: recipe.difficulty,
+                        cook_time: recipe.cook_time,
+                        status: recipe.status,
+                        categoryName,
+                      }}
+                    />
 
-                  <DeleteRecipeButton id={recipe.id} title={recipe.title} />
-                </CardContent>
-              </Card>
-            );
-          })}
+                    <Button
+                      nativeButton={false}
+                      size={'sm'}
+                      variant={'outline'}
+                      render={
+                        <Link href={`/admin/cong-thuc/${recipe.id}/sua`}>
+                          Sửa
+                        </Link>
+                      }
+                    />
+
+                    <DeleteRecipeButton id={recipe.id} title={recipe.title} />
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Phân trang */}
+          <div className={'pt-2'}>
+            <PaginationNav
+              currentPage={safePage}
+              totalPages={totalPages}
+              buildHref={(targetPage: number) =>
+                buildRecipesHref({
+                  status: statusFilter,
+                  q: searchTerm,
+                  category: activeCategory?.slug ?? null,
+                  page: targetPage,
+                })
+              }
+            />
+          </div>
         </div>
       )}
     </div>
