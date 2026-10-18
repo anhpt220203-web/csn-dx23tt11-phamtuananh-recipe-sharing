@@ -11,6 +11,7 @@ import {
 } from '@kit/ui/card';
 
 import { getPublishedTips } from '~/lib/content/queries';
+import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 
 import { SitePageHeader } from '../_components/site-page-header';
 
@@ -49,7 +50,7 @@ export default async function TipsPage() {
                   {tip.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={tip.image_url}
+                      src={resolveRecipeImageSrc(tip.image_url) ?? tip.image_url}
                       alt={tip.title}
                       loading={'lazy'}
                       className={'aspect-[16/9] w-full rounded-t-xl object-cover'}
