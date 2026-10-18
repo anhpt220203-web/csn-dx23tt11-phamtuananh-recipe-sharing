@@ -12,6 +12,8 @@ export type CategoryRow = {
   name: string;
   slug: string;
   description: string | null;
+  /** URL ảnh đại diện danh mục (migration 20261018203000). */
+  image_url: string | null;
   /** Chiều phân loại: nhom-mon | nguyen-lieu-chinh | phuong-phap-che-bien | bua-an | phong-cach-am-thuc */
   dimension: string;
 };

@@ -7,6 +7,8 @@ import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
 import { Textarea } from '@kit/ui/textarea';
 
+import { AdminImagePicker } from '../../_components/admin-image-picker';
+
 import type { CategoryRow } from '~/lib/recipes/database';
 
 import {
@@ -88,6 +90,15 @@ export function CreateCategoryForm() {
           <option value={'bua-an'}>Bữa ăn</option>
           <option value={'phong-cach-am-thuc'}>Phong cách ẩm thực</option>
         </select>
+      </div>
+
+      <div className={'grid gap-1.5 sm:col-span-2 lg:col-span-2'}>
+        <AdminImagePicker
+          urlName={'image_url'}
+          fileName={'image_file'}
+          existingName={'existing_image_url'}
+          idPrefix={'new-category'}
+        />
       </div>
 
       <div className={'flex items-end'}>
@@ -208,6 +219,16 @@ export function CategoryRowActions({ category }: { category: CategoryRow }) {
               <option value={'bua-an'}>Bữa ăn</option>
               <option value={'phong-cach-am-thuc'}>Phong cách ẩm thực</option>
             </select>
+          </div>
+
+          <div className={'sm:col-span-3'}>
+            <AdminImagePicker
+              urlName={'image_url'}
+              fileName={'image_file'}
+              existingName={'existing_image_url'}
+              defaultUrl={category.image_url}
+              idPrefix={`category-${category.id}`}
+            />
           </div>
 
           <div className={'sm:col-span-3'}>

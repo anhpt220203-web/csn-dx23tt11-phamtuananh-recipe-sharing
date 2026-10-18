@@ -44,11 +44,15 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
   const [existingImageUrl, setExistingImageUrl] = useState(
     initial?.image_url ?? '',
   );
+  const [imageUrlText, setImageUrlText] = useState(
+    initial?.image_url?.startsWith('http') ? initial.image_url : '',
+  );
   const [preview, setPreview] = useState<string | null>(
     resolveRecipeImageSrc(initial?.image_url) ?? null,
   );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const urlInputRef = useRef<HTMLInputElement>(null);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -60,11 +64,42 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
 
   const handleFileChange = (file: File | undefined) => {
     if (!file) {
-      setPreview(resolveRecipeImageSrc(existingImageUrl) ?? null);
+      const fallback =
+        imageUrlText.trim() ||
+        resolveRecipeImageSrc(existingImageUrl) ||
+        null;
+
+      setPreview(fallback);
       return;
     }
 
     setPreview(URL.createObjectURL(file));
+  };
+
+  const handleUrlChange = (value: string) => {
+    setImageUrlText(value);
+
+    const trimmed = value.trim();
+
+    if (trimmed.length > 0) {
+      setPreview(trimmed);
+    } else if (!fileInputRef.current?.files?.length) {
+      setPreview(resolveRecipeImageSrc(existingImageUrl) ?? null);
+    }
+  };
+
+  const handleClearImage = () => {
+    setPreview(null);
+    setExistingImageUrl('');
+    setImageUrlText('');
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+
+    if (urlInputRef.current) {
+      urlInputRef.current.value = '';
+    }
   };
 
   return (
@@ -265,6 +300,27 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
           <Label htmlFor={'image'}>Ảnh đại diện</Label>
 
           <Input
+            id={'image_url'}
+            name={'image_url'}
+            ref={urlInputRef}
+            type={'url'}
+            maxLength={500}
+            value={imageUrlText}
+            onChange={(event) => handleUrlChange(event.target.value)}
+            placeholder={'https://... — dán link ảnh trực tiếp'}
+          />
+
+          <div className={'flex items-center gap-2'}>
+            <span className={'flex-1 border-t'} />
+
+            <span className={'text-muted-foreground text-xs'}>
+              hoặc tải file lên
+            </span>
+
+            <span className={'flex-1 border-t'} />
+          </div>
+
+          <Input
             id={'image'}
             name={'image'}
             ref={fileInputRef}
@@ -277,7 +333,7 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
 
           <p className={'text-muted-foreground text-xs'}>
             JPG/PNG/WEBP/GIF, tối đa 5MB. Tên file được sinh ngẫu nhiên để
-            không trùng.
+            không trùng. File tải lên sẽ ưu tiên hơn link đã dán.
           </p>
 
           {preview && (
@@ -295,13 +351,7 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
                 type={'button'}
                 variant={'outline'}
                 size={'sm'}
-                onClick={() => {
-                  setPreview(null);
-                  setExistingImageUrl('');
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                  }
-                }}
+                onClick={handleClearImage}
                 className={'text-xs text-destructive hover:text-destructive'}
               >
                 Xóa ảnh đại diện
