@@ -16,6 +16,7 @@ import {
 import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
 
+import { PaginationNav } from '~/(marketing)/_components/pagination-nav';
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { requireAdminInServerComponent } from '~/lib/server/require-admin';
 
@@ -33,7 +34,25 @@ export const metadata: Metadata = {
 
 export const instant = false;
 
-const PAGE_SIZE = 100;
+const PER_PAGE = 8;
+const MAX_USERS_FETCH = 200;
+
+function parsePage(value: string | undefined): number {
+  const page = Number.parseInt(value ?? '1', 10);
+  return Number.isFinite(page) && page > 0 ? page : 1;
+}
+
+function buildAccountsHref({ q, page = 1 }: { q?: string; page?: number }): string {
+  const params = new URLSearchParams();
+  if (q && q.trim()) {
+    params.set('q', q.trim());
+  }
+  if (page > 1) {
+    params.set('page', String(page));
+  }
+  const queryString = params.toString();
+  return queryString ? `/admin/user?${queryString}` : '/admin/user';
+}
 
 function getDisplayName(user: User): string {
   const meta = user.user_metadata ?? {};
@@ -73,7 +92,7 @@ function formatDateTime(value: string | undefined): string {
 }
 
 type AccountsPageProps = {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 };
 
 export default async function AccountsPage({ searchParams }: AccountsPageProps) {
@@ -81,6 +100,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
   await connection();
 
   const params = await searchParams;
+  const page = parsePage(params.page);
   const query = (params.q ?? '').trim().toLowerCase();
 
   // ID của admin đang đăng nhập (đã cache ở layout) — dùng để khóa các nút
@@ -91,14 +111,14 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
 
   const { data, error } = await adminClient.auth.admin.listUsers({
     page: 1,
-    perPage: PAGE_SIZE,
+    perPage: MAX_USERS_FETCH,
   });
 
   if (error) {
     throw new Error(`Không tải được danh sách tài khoản: ${error.message}`);
   }
 
-  const users = (data?.users ?? []).filter((user) => {
+  const allFilteredUsers = (data?.users ?? []).filter((user) => {
     if (!query) {
       return true;
     }
@@ -108,6 +128,14 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
 
     return email.includes(query) || name.includes(query);
   });
+
+  const total = allFilteredUsers.length;
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const users = allFilteredUsers.slice(
+    (safePage - 1) * PER_PAGE,
+    safePage * PER_PAGE,
+  );
 
   return (
     <div className={'flex flex-col gap-6'}>
@@ -262,8 +290,19 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
         </div>
       )}
 
-      <p className={'text-muted-foreground text-xs'}>
-        Hiển thị tối đa {PAGE_SIZE} tài khoản đầu tiên.
+      {totalPages > 1 && (
+        <div className={'flex justify-center pt-2'}>
+          <PaginationNav
+            currentPage={safePage}
+            totalPages={totalPages}
+            getPageHref={(p) => buildAccountsHref({ q: params.q, page: p })}
+          />
+        </div>
+      )}
+
+      <p className={'text-muted-foreground text-xs text-center'}>
+        Hiển thị {total > 0 ? (safePage - 1) * PER_PAGE + 1 : 0} -{' '}
+        {Math.min(safePage * PER_PAGE, total)} trên tổng số {total} tài khoản.
       </p>
     </div>
   );

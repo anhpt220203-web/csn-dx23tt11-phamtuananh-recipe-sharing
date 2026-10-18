@@ -1,7 +1,8 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { Eye, Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Eye, Pencil, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@kit/ui/badge';
@@ -18,7 +19,6 @@ import { Label } from '@kit/ui/label';
 
 import { MarkdownEditor } from '~/components/markdown/markdown-editor';
 import { AdminImagePicker } from '../../_components/admin-image-picker';
-import { MediaUploadDialog } from '../../media/_components/media-upload-dialog';
 
 import type { TipRow } from '~/lib/content/database';
 
@@ -42,7 +42,40 @@ function FormError({ message }: { message?: string }) {
   );
 }
 
-export function CreateTipForm() {
+export function CreateTipDialog() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)} className={'gap-1.5'}>
+        <Plus className={'h-4 w-4'} />
+        <span>Thêm bài viết mới</span>
+      </Button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className={'max-h-[90vh] overflow-y-auto sm:max-w-3xl'}>
+          <DialogHeader>
+            <DialogTitle>Thêm bài viết mẹo vặt mới</DialogTitle>
+            <DialogDescription>
+              Chia sẻ các bí quyết, mẹo vặt nấu ăn và kinh nghiệm làm bếp cho cộng đồng.
+            </DialogDescription>
+          </DialogHeader>
+
+          <CreateTipForm onSuccess={() => setOpen(false)} />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+export function CreateTipForm({
+  onSuccess,
+  redirectTo,
+}: {
+  onSuccess?: () => void;
+  redirectTo?: string;
+}) {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     createTipAction,
@@ -53,8 +86,12 @@ export function CreateTipForm() {
     if (state.ok && !state.initial) {
       toast.success('Đã thêm bài viết mới thành công!');
       formRef.current?.reset();
+      onSuccess?.();
+      if (redirectTo) {
+        router.push(redirectTo);
+      }
     }
-  }, [state]);
+  }, [state, onSuccess, redirectTo, router]);
 
   return (
     <form ref={formRef} action={formAction} className={'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
@@ -82,20 +119,11 @@ export function CreateTipForm() {
       </div>
 
       <div className={'grid gap-1.5 sm:col-span-2'}>
-        <div className={'flex items-center justify-between'}>
-          <Label htmlFor={'tip-content'}>Nội dung *</Label>
-          <MediaUploadDialog
-            defaultFolder={'tips'}
-            buttonLabel={'Tải ảnh & Lấy mã Markdown'}
-            buttonVariant={'ghost'}
-            size={'sm'}
-            className={'h-6 text-xs px-2 text-primary hover:text-primary'}
-          />
-        </div>
         <MarkdownEditor
           name={'content'}
-          label={'Nội dung (hỗ trợ Markdown đầy đủ: tiêu đề, bảng, danh sách, ảnh...)'}
-          rows={10}
+          label={'Nội dung * (hỗ trợ Markdown đầy đủ: tiêu đề, bảng, danh sách, ảnh...)'}
+          rows={16}
+          uploadFolder={'tips'}
           required
           placeholder={'Nhập chi tiết nội dung mẹo vặt... (Hỗ trợ định dạng Markdown: tiêu đề ##, bảng, danh sách, in đậm...)'}
           helpText={'Nội dung hiển thị dạng Markdown ở trang mẹo vặt: tiêu đề, bảng, danh sách, in đậm, liên kết, ảnh.'}
@@ -260,21 +288,12 @@ export function EditTipModal({
           </div>
 
           <div className={'grid gap-1.5 sm:col-span-2'}>
-            <div className={'flex items-center justify-between'}>
-              <Label htmlFor={`edit-content-${tip.id}`}>Nội dung *</Label>
-              <MediaUploadDialog
-                defaultFolder={'tips'}
-                buttonLabel={'Tải ảnh & Lấy mã Markdown'}
-                buttonVariant={'ghost'}
-                size={'sm'}
-                className={'h-6 text-xs px-2 text-primary hover:text-primary'}
-              />
-            </div>
             <MarkdownEditor
               name={'content'}
-              label={'Nội dung (Markdown)'}
+              label={'Nội dung * (Markdown)'}
               defaultValue={tip.content}
-              rows={10}
+              rows={16}
+              uploadFolder={'tips'}
               required
             />
           </div>
