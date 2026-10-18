@@ -394,3 +394,96 @@ export async function deleteRecipeAction(
   }
 }
 
+export type RecipePreviewDetail = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  category_id: number;
+  category_name?: string;
+  source_name: string | null;
+  source_url: string | null;
+  servings: number | null;
+  cook_time: number | null;
+  prep_time: number | null;
+  difficulty: string | null;
+  status: string;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  sugar_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
+  ingredients: { id: number; name: string; position: number }[];
+  steps: { id: number; step: string; position: number }[];
+};
+
+/**
+ * Lấy toàn bộ thông tin chi tiết một công thức (nguyên liệu, bước làm, dinh dưỡng)
+ * phục vụ modal xem trước chi tiết trong admin.
+ */
+export async function getRecipePreviewDetailAction(
+  recipeId: number,
+): Promise<{ ok: boolean; data?: RecipePreviewDetail; message?: string }> {
+  try {
+    const { adminClient: admin } = await requireAdminUser();
+
+    if (!Number.isInteger(recipeId) || recipeId <= 0) {
+      return { ok: false, message: 'Mã công thức không hợp lệ.' };
+    }
+
+    const { data: recipe, error: recipeError } = await admin
+      .from('recipes')
+      .select('*')
+      .eq('id', recipeId)
+      .maybeSingle();
+
+    if (recipeError || !recipe) {
+      return {
+        ok: false,
+        message: recipeError?.message ?? 'Không tìm thấy công thức.',
+      };
+    }
+
+    let categoryName = '';
+    if (recipe.category_id) {
+      const { data: category } = await admin
+        .from('categories')
+        .select('name')
+        .eq('id', recipe.category_id)
+        .maybeSingle();
+
+      categoryName = category?.name ?? '';
+    }
+
+    const { data: ingredients } = await admin
+      .from('recipe_ingredients')
+      .select('id, name, position')
+      .eq('recipe_id', recipeId)
+      .order('position', { ascending: true });
+
+    const { data: steps } = await admin
+      .from('recipe_steps')
+      .select('id, step, position')
+      .eq('recipe_id', recipeId)
+      .order('position', { ascending: true });
+
+    return {
+      ok: true,
+      data: {
+        ...recipe,
+        category_name: categoryName,
+        ingredients: ingredients ?? [],
+        steps: steps ?? [],
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra.',
+    };
+  }
+}
+
+

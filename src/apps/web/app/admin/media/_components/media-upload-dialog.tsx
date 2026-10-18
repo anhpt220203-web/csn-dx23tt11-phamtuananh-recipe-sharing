@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import {
   Copy,
   FileCode,
@@ -51,6 +51,7 @@ export function MediaUploadDialog({
   buttonVariant = 'default',
   size = 'default',
   className,
+  trigger,
   onUploaded,
 }: {
   defaultFolder?: 'uploads' | 'recipes' | 'tips' | 'categories' | 'banners';
@@ -58,6 +59,7 @@ export function MediaUploadDialog({
   buttonVariant?: 'default' | 'outline' | 'secondary' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
+  trigger?: React.ReactNode;
   onUploaded?: (items: UploadedMediaItem[]) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -68,36 +70,59 @@ export function MediaUploadDialog({
   const [isDragOver, setIsDragOver] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const onUploadedRef = useRef(onUploaded);
+  useEffect(() => {
+    onUploadedRef.current = onUploaded;
+  });
 
-  const [state, formAction, isPending] = useActionState(
-    uploadMediaFileAction,
-    MEDIA_ACTION_INITIAL,
-  );
+  const [isPending, startTransition] = useTransition();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Dọn dẹp object preview URL khi unmount hoặc khi files thay đổi
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (files.length === 0 || isPending) return;
+
+    const formData = new FormData();
+    formData.append('folder', folder);
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    setErrorMessage(null);
+
+    startTransition(async () => {
+      try {
+        const result = await uploadMediaFileAction(MEDIA_ACTION_INITIAL, formData);
+        if (result.ok) {
+          toast.success(result.message ?? 'Đã tải ảnh lên kho lưu trữ thành công!');
+          if (result.uploadedItems && result.uploadedItems.length > 0) {
+            setUploadedList(result.uploadedItems);
+            onUploadedRef.current?.(result.uploadedItems);
+          } else {
+            setOpen(false);
+          }
+          setFiles([]);
+          previews.forEach((url) => URL.revokeObjectURL(url));
+          setPreviews([]);
+        } else {
+          const msg = result.message ?? 'Có lỗi xảy ra khi tải ảnh lên.';
+          setErrorMessage(msg);
+          toast.error(msg);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải ảnh lên.';
+        setErrorMessage(msg);
+        toast.error(msg);
+      }
+    });
+  };
+
+  // Dọn dẹp object preview URL khi unmount
   useEffect(() => {
     return () => {
       previews.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [previews]);
-
-  // Xử lý khi upload thành công
-  useEffect(() => {
-    if (!isPending && state.ok && !state.initial) {
-      toast.success(state.message ?? 'Đã tải ảnh lên kho lưu trữ thành công!');
-      if (state.uploadedItems && state.uploadedItems.length > 0) {
-        setUploadedList(state.uploadedItems);
-        if (onUploaded) {
-          onUploaded(state.uploadedItems);
-        }
-      } else {
-        setOpen(false);
-      }
-      setFiles([]);
-      previews.forEach((url) => URL.revokeObjectURL(url));
-      setPreviews([]);
-    }
-  }, [state, isPending, previews, onUploaded]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -106,6 +131,7 @@ export function MediaUploadDialog({
       setFiles([]);
       previews.forEach((url) => URL.revokeObjectURL(url));
       setPreviews([]);
+      setErrorMessage(null);
     }
   };
 
@@ -185,19 +211,40 @@ export function MediaUploadDialog({
 
   return (
     <>
-      <Button
-        type={'button'}
-        variant={buttonVariant}
-        size={size}
-        onClick={() => {
-          setUploadedList([]);
-          setOpen(true);
-        }}
-        className={`gap-1.5 shadow-xs ${className ?? ''}`}
-      >
-        <UploadCloud className={'h-4 w-4'} />
-        <span>{buttonLabel}</span>
-      </Button>
+      {trigger ? (
+        <span
+          role={'button'}
+          tabIndex={0}
+          onClick={() => {
+            setUploadedList([]);
+            setOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setUploadedList([]);
+              setOpen(true);
+            }
+          }}
+          className={'inline-flex items-center cursor-pointer'}
+        >
+          {trigger}
+        </span>
+      ) : (
+        <Button
+          type={'button'}
+          variant={buttonVariant}
+          size={size}
+          onClick={() => {
+            setUploadedList([]);
+            setOpen(true);
+          }}
+          className={`gap-1.5 shadow-xs ${className ?? ''}`}
+        >
+          <UploadCloud className={'h-4 w-4'} />
+          <span>{buttonLabel}</span>
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className={'max-w-md sm:max-w-lg'}>
@@ -280,7 +327,10 @@ export function MediaUploadDialog({
                   type={'button'}
                   variant={'outline'}
                   className={'gap-1.5'}
-                  onClick={() => setUploadedList([])}
+                  onClick={() => {
+                    setUploadedList([]);
+                    setErrorMessage(null);
+                  }}
                 >
                   <RotateCcw className={'h-3.5 w-3.5'} />
                   <span>Tải thêm ảnh khác</span>
@@ -295,7 +345,7 @@ export function MediaUploadDialog({
               </DialogFooter>
             </div>
           ) : (
-            <form action={formAction} className={'flex flex-col gap-4 py-2'}>
+            <form onSubmit={handleSubmit} className={'flex flex-col gap-4 py-2'}>
               {/* Chọn thư mục lưu trữ */}
               <div className={'flex flex-col gap-1.5'}>
                 <label
@@ -425,9 +475,9 @@ export function MediaUploadDialog({
               )}
 
               {/* Lỗi nếu có */}
-              {!state.ok && !state.initial && state.message && (
+              {errorMessage && (
                 <p role={'alert'} className={'text-xs font-medium text-destructive'}>
-                  {state.message}
+                  {errorMessage}
                 </p>
               )}
 
