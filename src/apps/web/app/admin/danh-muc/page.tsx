@@ -250,7 +250,7 @@ export default async function CategoriesAdminPage({
           <PaginationNav
             currentPage={page}
             totalPages={totalPages}
-            getPageHref={(p) =>
+            buildHref={(p: number) =>
               buildCategoriesHref({
                 q,
                 dimension,

@@ -194,7 +194,7 @@ export default async function RatingsAdminPage({
           <PaginationNav
             currentPage={page}
             totalPages={totalPages}
-            getPageHref={(p) => `/admin/danh-gia?page=${p}`}
+            buildHref={(p: number) => `/admin/danh-gia?page=${p}`}
           />
         </div>
       )}

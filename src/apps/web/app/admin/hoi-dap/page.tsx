@@ -319,7 +319,7 @@ export default async function QuestionsAdminPage({
           <PaginationNav
             currentPage={page}
             totalPages={totalPages}
-            getPageHref={(p) =>
+            buildHref={(p: number) =>
               buildQuestionsHref({
                 status,
                 q,

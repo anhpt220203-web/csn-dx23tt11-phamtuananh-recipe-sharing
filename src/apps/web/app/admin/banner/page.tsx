@@ -302,7 +302,7 @@ export default async function BannersAdminPage({
           <PaginationNav
             currentPage={page}
             totalPages={totalPages}
-            getPageHref={(p) =>
+            buildHref={(p: number) =>
               buildBannersHref({
                 status,
                 q,
