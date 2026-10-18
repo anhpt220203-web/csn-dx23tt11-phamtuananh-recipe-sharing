@@ -2,12 +2,15 @@
 
 import { useActionState, useRef, useState } from 'react';
 
+import { toast } from 'sonner';
+
 import { Button } from '@kit/ui/button';
 import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
 import { NativeSelect, NativeSelectOption } from '@kit/ui/native-select';
 import { Textarea } from '@kit/ui/textarea';
 
+import { MediaUploadDialog } from '~/admin/media/_components/media-upload-dialog';
 import { MarkdownEditor } from '~/components/markdown/markdown-editor';
 
 import type {
@@ -17,6 +20,7 @@ import type {
 import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import { slugify } from '~/lib/recipes/slugify';
 
+import { QuickCreateCategoryModal } from './quick-create-category-modal';
 import { saveRecipeAction } from '../actions';
 import { RECIPE_ACTION_INITIAL } from '../cong-thuc-constants';
 
@@ -85,6 +89,16 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
+
+  const [categoriesList, setCategoriesList] = useState<CategoryRow[]>(categories);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | number>(
+    initial?.category_id ?? '',
+  );
+
+  const handleCategoryCreated = (newCat: CategoryRow) => {
+    setCategoriesList((prev) => [newCat, ...prev.filter((c) => c.id !== newCat.id)]);
+    setSelectedCategoryId(newCat.id);
+  };
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -181,20 +195,24 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
         </div>
 
         <div className={'grid gap-1.5'}>
-          <Label htmlFor={'category_id'}>Danh mục *</Label>
+          <div className={'flex items-center justify-between'}>
+            <Label htmlFor={'category_id'}>Danh mục *</Label>
+            <QuickCreateCategoryModal onCategoryCreated={handleCategoryCreated} />
+          </div>
 
           <NativeSelect
             id={'category_id'}
             name={'category_id'}
             required
-            defaultValue={initial?.category_id ?? ''}
+            value={selectedCategoryId}
+            onChange={(e) => setSelectedCategoryId(e.target.value)}
             className={'w-full'}
           >
             <NativeSelectOption value={''} disabled>
               — Chọn danh mục —
             </NativeSelectOption>
 
-            {categories.map((category) => (
+            {categoriesList.map((category) => (
               <NativeSelectOption key={category.id} value={category.id}>
                 {category.name}
               </NativeSelectOption>
@@ -329,7 +347,24 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
         </div>
 
         <div className={'grid gap-1.5 sm:col-span-2'}>
-          <Label htmlFor={'image'}>Ảnh đại diện</Label>
+          <div className={'flex items-center justify-between'}>
+            <Label htmlFor={'image_url'}>Ảnh đại diện</Label>
+            <MediaUploadDialog
+              defaultFolder={'recipes'}
+              buttonLabel={'Tải ảnh vào kho'}
+              buttonVariant={'outline'}
+              size={'sm'}
+              className={'h-6 text-xs px-2 text-primary hover:text-primary'}
+              onUploaded={(items) => {
+                if (items && items.length > 0) {
+                  const first = items[0]!;
+                  setImageUrlText(first.proxyUrl);
+                  setPreview(first.proxyUrl);
+                  toast.success(`Đã tự động chọn ảnh "${first.name}" làm ảnh đại diện!`);
+                }
+              }}
+            />
+          </div>
 
           <Input
             id={'image_url'}
@@ -339,7 +374,7 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
             maxLength={500}
             value={imageUrlText}
             onChange={(event) => handleUrlChange(event.target.value)}
-            placeholder={'https://... — dán link ảnh trực tiếp'}
+            placeholder={'https://... — dán link ảnh trực tiếp hoặc tải từ kho'}
           />
 
           <div className={'flex items-center gap-2'}>
