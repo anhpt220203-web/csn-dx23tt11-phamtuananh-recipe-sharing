@@ -11,13 +11,20 @@ const CAPTCHA_SECRET_TOKEN = process.env.CAPTCHA_SECRET_TOKEN;
  * @param token - The CAPTCHA token to verify
  */
 export async function verifyCaptchaToken(token: string) {
-  if (!CAPTCHA_SECRET_TOKEN) {
-    throw new Error('CAPTCHA_SECRET_TOKEN is not set');
+  const secretKey =
+    process.env.CAPTCHA_SECRET_TOKEN ?? process.env.TURNSTILE_SECRET;
+
+  if (!secretKey) {
+    throw new Error('CAPTCHA_SECRET_TOKEN (or TURNSTILE_SECRET) is not set');
+  }
+
+  if (typeof token !== 'string' || token.length === 0 || token.length > 2048) {
+    throw new Error('Invalid CAPTCHA token format');
   }
 
   const formData = new FormData();
 
-  formData.append('secret', CAPTCHA_SECRET_TOKEN);
+  formData.append('secret', secretKey);
   formData.append('response', token);
 
   const res = await fetch(verifyEndpoint, {

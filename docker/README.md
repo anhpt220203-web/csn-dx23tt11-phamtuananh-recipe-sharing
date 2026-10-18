@@ -66,7 +66,7 @@ link storage gốc.
 ## Tài khoản demo (mật khẩu: `Demo@123456`)
 
 - `phamtuananh@example.com` — admin (quản trị)
-- `tranbich@example.com`, `minhkhoi@example.com`, `hoangyen@example.com`, `duchuy@example.com` — user thường
+- `member@example.com` — user thường
 
 ## Kiểm tra nhanh
 
