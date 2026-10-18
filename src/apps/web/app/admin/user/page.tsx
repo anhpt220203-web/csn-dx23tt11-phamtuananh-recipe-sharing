@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
-import { connection } from 'next/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import type { User } from '@supabase/supabase-js';
+import { ShieldCheck, User as UserIcon } from 'lucide-react';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
@@ -14,7 +16,6 @@ import {
   CardTitle,
 } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
-import { Label } from '@kit/ui/label';
 
 import { PaginationNav } from '~/(marketing)/_components/pagination-nav';
 import type { RecipeSchema } from '~/lib/recipes/database';
@@ -37,19 +38,44 @@ export const instant = false;
 const PER_PAGE = 8;
 const MAX_USERS_FETCH = 200;
 
+const ROLE_FILTERS = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'admin', label: 'Quản trị viên' },
+  { value: 'user', label: 'Người dùng' },
+  { value: 'banned', label: 'Đang bị khóa' },
+] as const;
+
+type RoleFilter = (typeof ROLE_FILTERS)[number]['value'];
+
 function parsePage(value: string | undefined): number {
   const page = Number.parseInt(value ?? '1', 10);
   return Number.isFinite(page) && page > 0 ? page : 1;
 }
 
-function buildAccountsHref({ q, page = 1 }: { q?: string; page?: number }): string {
+function buildAccountsHref({
+  role = 'all',
+  q = '',
+  page = 1,
+}: {
+  role?: RoleFilter;
+  q?: string;
+  page?: number;
+}): string {
   const params = new URLSearchParams();
-  if (q && q.trim()) {
-    params.set('q', q.trim());
+
+  if (role !== 'all') {
+    params.set('role', role);
   }
+
+  const trimmed = q.trim();
+  if (trimmed) {
+    params.set('q', trimmed);
+  }
+
   if (page > 1) {
     params.set('page', String(page));
   }
+
   const queryString = params.toString();
   return queryString ? `/admin/user?${queryString}` : '/admin/user';
 }
@@ -92,7 +118,7 @@ function formatDateTime(value: string | undefined): string {
 }
 
 type AccountsPageProps = {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ role?: string; q?: string; page?: string }>;
 };
 
 export default async function AccountsPage({ searchParams }: AccountsPageProps) {
@@ -101,7 +127,12 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
 
   const params = await searchParams;
   const page = parsePage(params.page);
-  const query = (params.q ?? '').trim().toLowerCase();
+  const q = (params.q ?? '').trim();
+  const query = q.toLowerCase();
+  const roleFilter: RoleFilter =
+    params.role === 'admin' || params.role === 'user' || params.role === 'banned'
+      ? params.role
+      : 'all';
 
   // ID của admin đang đăng nhập (đã cache ở layout) — dùng để khóa các nút
   // thao tác nguy hiểm trên chính dòng tài khoản của mình.
@@ -119,6 +150,13 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
   }
 
   const allFilteredUsers = (data?.users ?? []).filter((user) => {
+    const admin = isAdmin(user);
+    const banned = isBanned(user);
+
+    if (roleFilter === 'admin' && !admin) return false;
+    if (roleFilter === 'user' && admin) return false;
+    if (roleFilter === 'banned' && !banned) return false;
+
     if (!query) {
       return true;
     }
@@ -132,135 +170,203 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
   const total = allFilteredUsers.length;
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
   const safePage = Math.min(page, totalPages);
-  const users = allFilteredUsers.slice(
-    (safePage - 1) * PER_PAGE,
-    safePage * PER_PAGE,
-  );
+
+  if (page > totalPages && total > 0) {
+    redirect(
+      buildAccountsHref({
+        role: roleFilter,
+        q,
+        page: totalPages,
+      }),
+    );
+  }
+
+  const from = (safePage - 1) * PER_PAGE;
+  const to = safePage * PER_PAGE;
+  const users = allFilteredUsers.slice(from, to);
+
+  const hasActiveFilter = q !== '' || roleFilter !== 'all';
 
   return (
     <div className={'flex flex-col gap-6'}>
-      <div>
-        <h1 className={'text-2xl font-bold tracking-tight'}>
-          Quản lý tài khoản
-        </h1>
+      {/* Header trang */}
+      <div className={'flex flex-wrap items-start justify-between gap-3'}>
+        <div>
+          <h1 className={'text-2xl font-bold tracking-tight'}>
+            Quản lý tài khoản
+          </h1>
 
-        <p className={'text-muted-foreground mt-1 text-sm'}>
-          Tìm kiếm theo email hoặc tên. Khóa tài khoản sẽ đăng xuất người dùng
-          khỏi mọi thiết bị ngay lập tức.
-        </p>
+          <p className={'text-muted-foreground mt-1 text-sm'}>
+            Tổng cộng {total} tài khoản trong hệ thống. Khóa tài khoản sẽ đăng xuất người dùng khỏi mọi thiết bị ngay lập tức.
+          </p>
+        </div>
       </div>
 
+      {/* Tabs lọc theo vai trò / trạng thái */}
+      <div className={'flex flex-wrap gap-2'}>
+        {ROLE_FILTERS.map((filter) => {
+          const active = roleFilter === filter.value;
+
+          return (
+            <Link
+              key={filter.value}
+              href={buildAccountsHref({
+                role: filter.value,
+                q,
+                page: 1,
+              })}
+              aria-current={active ? 'page' : undefined}
+              className={
+                active
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-1.5 text-sm font-medium'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-3 py-1.5 text-sm font-medium'
+              }
+            >
+              {filter.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Bộ lọc theo từ khóa */}
       <form
-        method={'get'}
+        action={'/admin/user'}
+        method={'GET'}
+        role={'search'}
         className={'flex flex-col gap-2 sm:flex-row sm:items-end'}
       >
-        <div className={'grid flex-1 gap-1.5'}>
-          <Label htmlFor={'q'}>Tìm kiếm</Label>
+        {roleFilter !== 'all' && (
+          <input type={'hidden'} name={'role'} value={roleFilter} />
+        )}
+
+        <div className={'flex-1'}>
+          <label
+            htmlFor={'admin-user-search'}
+            className={'mb-1 block text-xs font-medium'}
+          >
+            Tìm kiếm theo email hoặc tên
+          </label>
 
           <Input
-            id={'q'}
+            id={'admin-user-search'}
             name={'q'}
             type={'search'}
-            placeholder={'Nhập email hoặc tên...'}
-            defaultValue={params.q ?? ''}
+            defaultValue={q}
+            placeholder={'Nhập email hoặc tên người dùng…'}
+            className={'max-w-md'}
           />
         </div>
 
         <div className={'flex gap-2'}>
-          <Button type={'submit'}>Tìm</Button>
+          <Button type={'submit'} size={'sm'}>
+            Lọc
+          </Button>
 
-          {query && (
+          {hasActiveFilter && (
             <Button
               nativeButton={false}
+              size={'sm'}
               variant={'outline'}
-              render={<Link href={'/admin/user'}>Xóa lọc</Link>}
+              render={
+                <Link
+                  href={buildAccountsHref({
+                    role: 'all',
+                    q: '',
+                    page: 1,
+                  })}
+                >
+                  Xoá lọc
+                </Link>
+              }
             />
           )}
         </div>
       </form>
 
+      {/* Danh sách tài khoản */}
       {users.length === 0 ? (
         <Card>
           <CardContent className={'py-10 text-center'}>
             <p className={'text-muted-foreground text-sm'}>
-              {query
-                ? `Không tìm thấy tài khoản nào khớp với “${params.q}”.`
-                : 'Chưa có tài khoản nào.'}
+              {hasActiveFilter
+                ? 'Không tìm thấy tài khoản nào phù hợp với bộ lọc hiện tại.'
+                : 'Chưa có tài khoản nào trong hệ thống.'}
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className={'grid grid-cols-1 gap-3 lg:grid-cols-2'}>
-          {users.map((user) => {
-            const banned = isBanned(user);
-            const admin = isAdmin(user);
-            // Không cho thao tác nguy hiểm lên chính tài khoản đang đăng nhập.
-            const isSelf = user.id === currentAdminId;
+        <div className={'flex flex-col gap-4'}>
+          {total > 0 && (
+            <div className={'flex items-center justify-between text-xs text-muted-foreground'}>
+              <span>
+                Hiển thị {from + 1}–{Math.min(to, total)} trên tổng số {total} tài khoản
+              </span>
+            </div>
+          )}
 
-            return (
-              <Card key={user.id}>
-                <CardHeader className={'pb-3'}>
-                  <div className={'flex items-start justify-between gap-2'}>
-                    <div className={'min-w-0'}>
-                      <CardTitle
-                        className={'truncate text-base'}
-                        title={user.email ?? ''}
+          <div className={'grid grid-cols-1 gap-3 lg:grid-cols-2'}>
+            {users.map((user) => {
+              const banned = isBanned(user);
+              const admin = isAdmin(user);
+              // Không cho thao tác nguy hiểm lên chính tài khoản đang đăng nhập.
+              const isSelf = user.id === currentAdminId;
+              const displayName = getDisplayName(user);
+              const initialLetter = (displayName || user.email || 'U').charAt(0).toUpperCase();
+
+              return (
+                <Card key={user.id} className={'hover:shadow-xs transition-shadow'}>
+                  <CardHeader className={'pb-3'}>
+                    <div className={'flex gap-3'}>
+                      <div
+                        className={
+                          'bg-primary/10 text-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-base font-bold border'
+                        }
                       >
-                        {user.email ?? '(không có email)'}
-                      </CardTitle>
+                        {initialLetter}
+                      </div>
 
-                      <CardDescription className={'truncate'}>
-                        {getDisplayName(user)}
-                      </CardDescription>
+                      <div className={'min-w-0 flex-1'}>
+                        <div className={'flex items-center gap-2'}>
+                          <CardTitle className={'truncate text-base'} title={displayName}>
+                            {displayName}
+                          </CardTitle>
+
+                          {admin ? (
+                            <Badge variant={'default'} className={'gap-1 shrink-0'}>
+                              <ShieldCheck className={'h-3 w-3'} />
+                              <span>Admin</span>
+                            </Badge>
+                          ) : (
+                            <Badge variant={'secondary'} className={'shrink-0'}>
+                              Người dùng
+                            </Badge>
+                          )}
+
+                          {banned && (
+                            <Badge variant={'destructive'} className={'shrink-0'}>
+                              Đã khóa
+                            </Badge>
+                          )}
+                        </div>
+
+                        <CardDescription className={'truncate font-mono text-xs mt-0.5'} title={user.email ?? ''}>
+                          {user.email ?? '(không có email)'}
+                        </CardDescription>
+
+                        <div className={'mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground'}>
+                          <span>Tạo lúc: {formatDateTime(user.created_at)}</span>
+                          <span>Đăng nhập gần nhất: {formatDateTime(user.last_sign_in_at)}</span>
+                        </div>
+                      </div>
                     </div>
+                  </CardHeader>
 
-                    <div className={'flex shrink-0 gap-1'}>
-                      {admin && <Badge variant={'default'}>Admin</Badge>}
-
-                      {banned ? (
-                        <Badge variant={'destructive'}>Đã khóa</Badge>
-                      ) : (
-                        <Badge variant={'secondary'}>Hoạt động</Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent
-                  className={
-                    'flex flex-wrap items-center justify-between gap-3 pt-0'
-                  }
-                >
-                  <dl className={'text-muted-foreground space-y-1 text-xs'}>
-                    <div className={'flex gap-1'}>
-                      <dt>Vai trò:</dt>
-                      <dd>{admin ? 'Quản trị viên' : 'Người dùng'}</dd>
-                    </div>
-
-                    <div className={'flex gap-1'}>
-                      <dt>Trạng thái:</dt>
-                      <dd>{banned ? 'Đã khóa' : 'Hoạt động'}</dd>
-                    </div>
-
-                    <div className={'flex gap-1'}>
-                      <dt>Tạo lúc:</dt>
-                      <dd>{formatDateTime(user.created_at)}</dd>
-                    </div>
-
-                    <div className={'flex gap-1'}>
-                      <dt>Đăng nhập gần nhất:</dt>
-                      <dd>{formatDateTime(user.last_sign_in_at)}</dd>
-                    </div>
-                  </dl>
-
-                  <div className={'flex flex-wrap gap-2'}>
+                  <CardContent className={'flex flex-wrap items-center gap-2 pt-0'}>
                     {admin ? (
                       <RevokeAdminButton
                         userId={user.id}
                         disabled={isSelf}
-                        disabledTitle={
-                          'Không thể thu hồi quyền của chính mình'
-                        }
+                        disabledTitle={'Không thể thu hồi quyền của chính mình'}
                       />
                     ) : (
                       <GrantAdminButton userId={user.id} />
@@ -282,28 +388,28 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
                       disabled={isSelf}
                       disabledTitle={'Không thể xóa chính mình'}
                     />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Phân trang */}
+          <div className={'pt-2'}>
+            <PaginationNav
+              currentPage={safePage}
+              totalPages={totalPages}
+              buildHref={(p: number) =>
+                buildAccountsHref({
+                  role: roleFilter,
+                  q,
+                  page: p,
+                })
+              }
+            />
+          </div>
         </div>
       )}
-
-      {totalPages > 1 && (
-        <div className={'flex justify-center pt-2'}>
-          <PaginationNav
-            currentPage={safePage}
-            totalPages={totalPages}
-            buildHref={(p: number) => buildAccountsHref({ q: params.q, page: p })}
-          />
-        </div>
-      )}
-
-      <p className={'text-muted-foreground text-xs text-center'}>
-        Hiển thị {total > 0 ? (safePage - 1) * PER_PAGE + 1 : 0} -{' '}
-        {Math.min(safePage * PER_PAGE, total)} trên tổng số {total} tài khoản.
-      </p>
     </div>
   );
 }

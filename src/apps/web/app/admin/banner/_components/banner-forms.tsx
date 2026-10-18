@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { Eye, Pencil } from 'lucide-react';
+import { Eye, Pencil, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@kit/ui/badge';
@@ -35,6 +35,136 @@ function FormError({ message }: { message?: string }) {
     <p role={'alert'} className={'text-destructive text-xs'}>
       {message}
     </p>
+  );
+}
+
+export function CreateBannerModal() {
+  const [open, setOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [state, formAction, pending] = useActionState(
+    createBannerAction,
+    BANNER_ACTION_INITIAL,
+  );
+
+  useEffect(() => {
+    if (state.ok && !state.initial) {
+      toast.success('Đã thêm banner mới thành công!');
+      formRef.current?.reset();
+      setOpen(false);
+    }
+  }, [state]);
+
+  return (
+    <>
+      <Button
+        type={'button'}
+        onClick={() => setOpen(true)}
+        className={'gap-1.5'}
+      >
+        <Plus className={'h-4 w-4'} />
+        <span>Thêm banner</span>
+      </Button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className={'max-h-[90vh] overflow-y-auto sm:max-w-xl'}>
+          <DialogHeader>
+            <DialogTitle>Thêm banner mới</DialogTitle>
+            <DialogDescription>
+              Tạo banner mới hiển thị trên carousel trang chủ.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form ref={formRef} action={formAction} className={'grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2'}>
+            <div className={'grid gap-1.5 sm:col-span-2'}>
+              <Label htmlFor={'modal-new-title'}>Tiêu đề *</Label>
+              <Input id={'modal-new-title'} name={'title'} required maxLength={200} placeholder={'Hương vị ẩm thực Việt Nam'} />
+            </div>
+
+            <div className={'grid gap-1.5 sm:col-span-2'}>
+              <Label htmlFor={'modal-new-subtitle'}>Phụ đề</Label>
+              <Input id={'modal-new-subtitle'} name={'subtitle'} maxLength={300} placeholder={'Khám phá hàng ngàn công thức nấu ăn ngon...'} />
+            </div>
+
+            <div className={'grid gap-1.5 sm:col-span-2'}>
+              <div className={'flex items-center justify-between'}>
+                <Label htmlFor={'modal-new-image'}>URL ảnh</Label>
+                <MediaUploadDialog
+                  defaultFolder={'banners'}
+                  buttonLabel={'Tải ảnh & Điền link'}
+                  buttonVariant={'ghost'}
+                  size={'sm'}
+                  className={'h-6 text-xs px-2 text-primary hover:text-primary'}
+                  onUploaded={(items) => {
+                    if (items[0]) {
+                      const input = document.getElementById('modal-new-image') as HTMLInputElement | null;
+                      if (input) {
+                        input.value = items[0].proxyUrl;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                      }
+                    }
+                  }}
+                />
+              </div>
+              <Input
+                id={'modal-new-image'}
+                name={'image_url'}
+                maxLength={500}
+                placeholder={'/api/image/recipe-images/banners/... hoặc https://...'}
+              />
+            </div>
+
+            <div className={'grid gap-1.5'}>
+              <Label htmlFor={'modal-new-link'}>Liên kết (khi nhấn vào)</Label>
+              <Input
+                id={'modal-new-link'}
+                name={'link_url'}
+                maxLength={500}
+                placeholder={'/tim-kiem?category=mon-canh'}
+              />
+            </div>
+
+            <div className={'grid gap-1.5'}>
+              <Label htmlFor={'modal-new-order'}>Thứ tự hiển thị</Label>
+              <Input
+                id={'modal-new-order'}
+                name={'sort_order'}
+                type={'number'}
+                defaultValue={0}
+              />
+            </div>
+
+            <div className={'flex items-center gap-2 sm:col-span-2'}>
+              <input
+                id={'modal-new-active'}
+                name={'is_active'}
+                type={'checkbox'}
+                defaultChecked
+                className={'h-4 w-4'}
+              />
+              <Label htmlFor={'modal-new-active'}>Đang hoạt động</Label>
+            </div>
+
+            <div className={'sm:col-span-2'}>
+              <FormError message={state.ok ? undefined : state.message} />
+            </div>
+
+            <div className={'flex justify-end gap-2 sm:col-span-2'}>
+              <Button
+                type={'button'}
+                variant={'outline'}
+                onClick={() => setOpen(false)}
+                disabled={pending}
+              >
+                Hủy
+              </Button>
+              <Button type={'submit'} disabled={pending}>
+                {pending ? 'Đang thêm...' : 'Thêm banner'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
