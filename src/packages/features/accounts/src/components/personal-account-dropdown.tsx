@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 import type { JwtPayload } from '@supabase/supabase-js';
 
-import { ChevronsUpDown, Heart, Home, LogOut, UserRound } from 'lucide-react';
+import { ChevronsUpDown, Heart, Home, LogOut, Shield, UserRound } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -49,6 +49,7 @@ export function PersonalAccountDropdown({
      * Khi không truyền, mục "Hồ sơ cá nhân" sẽ không hiện trong menu.
      */
     profile?: string;
+    admin?: string;
   };
 
   features: {
@@ -60,6 +61,17 @@ export function PersonalAccountDropdown({
   className?: string;
 }) {
   const personalAccountData = usePersonalAccountData(user.id, account);
+
+  const isAdmin = useMemo(() => {
+    const u = user as Record<string, unknown> | null | undefined;
+    const appMeta = u?.app_metadata as Record<string, unknown> | undefined;
+    const userMeta = u?.user_metadata as Record<string, unknown> | undefined;
+    return (
+      appMeta?.role === 'admin' ||
+      userMeta?.role === 'admin' ||
+      u?.role === 'admin'
+    );
+  }, [user]);
 
   const signedInAsLabel = useMemo(() => {
     const email = user?.email ?? undefined;
@@ -182,6 +194,21 @@ export function PersonalAccountDropdown({
 
           <span>Món yêu thích</span>
         </DropdownMenuItem>
+
+        <If condition={isAdmin}>
+          <DropdownMenuItem
+            render={
+              <Link
+                className={'s-full flex cursor-pointer items-center space-x-2 font-medium text-primary'}
+                href={paths.admin ?? '/admin'}
+              />
+            }
+          >
+            <Shield className={'h-5 text-primary'} />
+
+            <span>Trang quản trị</span>
+          </DropdownMenuItem>
+        </If>
 
         <DropdownMenuSeparator />
 
