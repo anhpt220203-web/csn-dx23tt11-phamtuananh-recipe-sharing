@@ -34,7 +34,7 @@ select
   'sup-tom-gyoza',
   'Súp Tôm Gyoza',
   'Nước súp ngọt thanh nấu từ tôm, ăn kèm bánh gyoza mềm thơm và cải thìa xanh mướt. Món súp nhẹ nhàng, ấm bụng, thích hợp cho bữa ăn thanh đạm.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/sup-tom-gyoza.png',
+  'recipe-images/sup-tom-gyoza.png',
   4, 5, 5, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -83,7 +83,7 @@ select
   'thit-bo-ap-chao-mu-tat',
   'Thịt Bò Áp Chảo Mù Tạt',
   'Thịt bò xiên cùng bắp và đậu bắp, áp chảo xém thơm, chấm xốt mayonnaise mù tạt béo cay. Món nướng chảo hấp dẫn, thịt mềm ngọt, thích hợp cho bữa tiệc nhỏ.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/thit-bo-ap-chao-mu-tat.png',
+  'recipe-images/thit-bo-ap-chao-mu-tat.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -138,7 +138,7 @@ select
   'tom-xao-hanh-nhan-chay',
   'Tôm Xào Hạnh Nhân Chay',
   'Tôm chay và chả lụa chay xào cùng nấm rơm, bí ngòi và cà rốt, rắc hạnh nhân rang giòn bùi. Món chay thanh đạm mà đầy đủ sắc vị, thích hợp cho bữa cơm chay.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/tom-xao-hanh-nhan-chay.png',
+  'recipe-images/tom-xao-hanh-nhan-chay.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -193,7 +193,7 @@ select
   'ca-hoi-xot-dau-tay',
   'Cá Hồi Xốt Dâu Tây',
   'Phi lê cá hồi nướng chín vàng, béo ngậy, rưới xốt dâu tây chua ngọt thơm mùi húng quế. Món Âu sang trọng mà dễ làm, giàu omega-3, thích hợp đãi khách.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/ca-hoi-xot-dau-tay.png',
+  'recipe-images/ca-hoi-xot-dau-tay.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -241,7 +241,7 @@ select
   'canh-ngheu-nau-nam',
   'Canh Nghêu Nấu Nấm',
   'Nước canh ngọt tự nhiên từ nghêu tươi, nấu cùng nấm kim châm, đậu hũ và rau tần ô. Món canh thanh mát, bổ dưỡng, rất hợp cho bữa cơm gia đình.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/canh-ngheu-nau-nam.png',
+  'recipe-images/canh-ngheu-nau-nam.png',
   4, 10, 10, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -293,7 +293,7 @@ select
   'salad-dau-rong-thit-be',
   'Salad Đậu Rồng Thịt Bê',
   'Thịt bê áp chảo mềm ngọt cắt lát mỏng, trộn cùng đậu rồng giòn mát và rau củ nhiều màu, rưới xốt phô mai cay béo thơm. Món salad sang trọng, hài hòa vị béo cay.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/salad-dau-rong-thit-be.png',
+  'recipe-images/salad-dau-rong-thit-be.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'salad-goi'
@@ -348,7 +348,7 @@ select
   'rau-cu-xao-nam-loc-nhung',
   'Rau Củ Xào Nấm Lộc Nhung',
   'Nấm lộc nhung giòn sần sật xào cùng đậu hũ chiên và rau củ, thấm xốt chay đậm đà pha từ nước tương, dầu hào và nước dừa tươi. Món chay ngon miệng, giàu dinh dưỡng.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/rau-cu-xao-nam-loc-nhung.png',
+  'recipe-images/rau-cu-xao-nam-loc-nhung.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -406,7 +406,7 @@ select
   'canh-du-du-chay',
   'Canh Đu Đủ Chay',
   'Đu đủ hườm bùi mềm nấu cùng nấm rơm, củ cải và đậu hũ trong nước dùng thanh ngọt, thơm mùi lá lốt và boaro phi. Món canh chay nhẹ nhàng, tốt cho tiêu hóa.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/canh-du-du-chay.png',
+  'recipe-images/canh-du-du-chay.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -457,7 +457,7 @@ select
   'cha-nam-ap-chao',
   'Chả Nấm Áp Chảo',
   'Chả chay từ nhiều loại nấm và đậu hũ, áp chảo vàng giòn bên ngoài, nhân nhiều màu sắc bên trong, chấm nước tương tắc tỏi ớt chua cay mặn ngọt. Món chay hấp dẫn, giàu đạm thực vật.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/cha-nam-ap-chao.png',
+  'recipe-images/cha-nam-ap-chao.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -514,7 +514,7 @@ select
   'cha-gio-ngu-vi',
   'Chả Giò Ngũ Vị',
   'Chả giò nhân thịt bò xay và giò sống thơm mùi ngũ vị hương, thêm lòng đỏ trứng muối béo bùi, chiên vàng giòn, chấm xốt mayonnaise tương ớt. Món chiên thơm phức, thích hợp đãi tiệc.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/cha-gio-ngu-vi.png',
+  'recipe-images/cha-gio-ngu-vi.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -573,7 +573,7 @@ select
   'bun-nuoc-tuong-dau-hu',
   'Bún Nước Tương Đậu Hũ',
   'Bún tươi trộn cùng đậu hũ áp chảo vàng giòn, rau sống tươi mát và nước tương pha chua ngọt. Món chay đơn giản, thanh đạm mà đủ chất cho bữa ăn nhẹ.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/bun-nuoc-tuong-dau-hu.png',
+  'recipe-images/bun-nuoc-tuong-dau-hu.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -625,7 +625,7 @@ select
   'salad-dua-leo-thit-ga',
   'Salad Dưa Leo Thịt Gà',
   'Thịt má đùi gà áp chảo thơm lừng cắt miếng, trộn cùng dưa leo, bắp cải tím và rau mầm giòn mát, rưới xốt mayonnaise giấm chua béo. Món salad tươi ngon, giàu đạm.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/salad-dua-leo-thit-ga.png',
+  'recipe-images/salad-dua-leo-thit-ga.png',
   4, 5, 5, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'salad-goi'
@@ -678,7 +678,7 @@ select
   'canh-ga-cu-sen',
   'Canh Gà Củ Sen',
   'Gà ta hầm cùng củ sen, hạt sen, táo đỏ và kỷ tử cho nước canh ngọt thanh, bổ dưỡng. Món canh tẩm bổ, thích hợp cho người cần bồi bổ sức khỏe.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/canh-ga-cu-sen.png',
+  'recipe-images/canh-ga-cu-sen.png',
   4, 6, 7, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -731,7 +731,7 @@ select
   'cai-thia-xao-hai-sam',
   'Cải Thìa Xào Hải Sâm',
   'Hải sâm giòn sần sật xào nhanh cùng tôm, nấm đông cô và cải thìa trên lửa lớn, xốt sánh đậm đà. Món xào cao cấp, bổ dưỡng, thích hợp đãi tiệc.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/cai-thia-xao-hai-sam.png',
+  'recipe-images/cai-thia-xao-hai-sam.png',
   4, 2, 3, 'Trung bình', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -784,7 +784,7 @@ select
   'salad-tonkatsu',
   'Salad Tonkatsu',
   'Thịt heo chiên xù kiểu Nhật giòn rụm cắt lát, ăn kèm salad rau củ tươi và xốt dầu giấm chanh thơm mát, chấm thêm xốt mayonnaise tương ớt. Món salad kiểu Nhật lạ miệng, hấp dẫn.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/salad-tonkatsu.png',
+  'recipe-images/salad-tonkatsu.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'salad-goi'
@@ -841,7 +841,7 @@ select
   'salad-bacon-xot-me-rang',
   'Salad Bacon Xốt Mè Rang',
   'Bacon áp chảo thơm béo ăn kèm xà lách, cà chua, dưa leo và bắp hạt, rưới xốt mè rang đậm đà. Món salad kiểu Tây nhanh gọn, giàu năng lượng cho bữa sáng hay ăn nhẹ.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/salad-bacon-xot-me-rang.png',
+  'recipe-images/salad-bacon-xot-me-rang.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'salad-goi'
@@ -890,7 +890,7 @@ select
   'sup-ga-chua-cay',
   'Súp Gà Chua Cay',
   'Súp gà chua cay với thịt gà xé sợi, măng, nấm đông cô và đậu hũ non trong nước dùng sánh nhẹ, thơm mùi sa tế và giấm. Món súp khai vị ấm nóng, kích thích vị giác.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/sup-ga-chua-cay.png',
+  'recipe-images/sup-ga-chua-cay.png',
   4, 5, 5, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -944,7 +944,7 @@ select
   'com-gao-lut-chien-ngheu',
   'Cơm Gạo Lứt Chiên Nghêu',
   'Cơm gạo lứt chiên săn hạt cùng thịt nghêu ngọt thơm, rau củ và lòng đỏ trứng muối béo bùi. Món cơm chiên giàu chất xơ, tốt cho sức khỏe, vị đậm đà.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/com-gao-lut-chien-ngheu.png',
+  'recipe-images/com-gao-lut-chien-ngheu.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -997,7 +997,7 @@ select
   'canh-suon-gyoza',
   'Canh Sườn Gyoza',
   'Sườn non hầm mềm cùng củ cải, cà rốt và tôm khô cho nước dùng ngọt thanh, thêm bánh gyoza mềm thấm vị. Món canh đầy đặn, bổ dưỡng cho bữa cơm gia đình.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/canh-suon-gyoza.png',
+  'recipe-images/canh-suon-gyoza.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -1049,7 +1049,7 @@ select
   'ga-nuong-chanh-sa-mayo',
   'Gà Nướng Chanh Sả Mayo',
   'Má đùi gà ướp sả, lá chúc và xốt mayonnaise, nướng bằng nồi chiên không dầu đến vàng xém thơm lừng, chấm xốt mayo tương ớt béo cay. Món nướng thơm phức, thịt mềm mọng.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/ga-nuong-chanh-sa-mayo.png',
+  'recipe-images/ga-nuong-chanh-sa-mayo.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -1101,7 +1101,7 @@ select
   'salad-rong-nho-dau-hu',
   'Salad Rong Nho Đậu Hũ',
   'Rong nho giòn mát kết hợp đậu hũ non mềm béo và rau xà lách tươi, rưới xốt mè rang thơm bùi. Món salad thanh mát, giàu khoáng chất từ rong biển.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/salad-rong-nho-dau-hu.png',
+  'recipe-images/salad-rong-nho-dau-hu.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'salad-goi'
@@ -1149,7 +1149,7 @@ select
   'cha-gio-tom-mayo',
   'Chả Giò Tôm Mayo',
   'Chả giò nhân tôm trộn xốt mayonnaise béo ngậy, chiên vàng giòn rụm, chấm thêm mayo tương ớt. Món chiên giòn tan, nhân béo thơm, ăn kèm xà lách thanh mát.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/cha-gio-tom-mayo.png',
+  'recipe-images/cha-gio-tom-mayo.png',
   4, 10, 10, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -1203,7 +1203,7 @@ select
   'rau-cu-va-muc-chien',
   'Rau Củ Và Mực Chiên',
   'Mực lá và rau củ tẩm bột chiên giòn vàng ươm, ăn kèm lá húng lủi chiên giòn, chấm xốt mayonnaise tương xí muội béo thơm. Món chiên giòn rụm, hải sản tươi ngọt.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/rau-cu-va-muc-chien.png',
+  'recipe-images/rau-cu-va-muc-chien.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -1255,7 +1255,7 @@ select
   'mi-xao-thit-heo-rau-cu',
   'Mì Xào Thịt Heo Rau Củ',
   'Mì trứng áp chảo xém thơm, phủ lên trên là thịt heo và rau củ xào xốt sánh đậm đà. Món mì đầy đặn, sợi mì dai thơm, xốt thấm vị, thích hợp cho bữa chính.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/mi-xao-thit-heo-rau-cu.png',
+  'recipe-images/mi-xao-thit-heo-rau-cu.png',
   4, 7, 8, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'

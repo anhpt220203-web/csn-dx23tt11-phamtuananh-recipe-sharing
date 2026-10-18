@@ -34,7 +34,7 @@ select
   'salad-bong-cai-tron-tom-bap',
   'Salad Bông Cải Trộn Tôm Bắp',
   'Bông cải trắng và xanh giòn ngọt luộc vừa chín, trộn cùng tôm xào bơ tỏi thơm lừng, thêm húng lủi và vỏ chanh vàng, rưới xốt mayonnaise béo mịn. Món salad tươi mát, giàu chất xơ, làm khai vị rất hợp.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/salad-bong-cai-tron-tom-bap.png',
+  'recipe-images/salad-bong-cai-tron-tom-bap.png',
   4, 5, 5, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'salad-goi'
@@ -86,7 +86,7 @@ select
   'dau-hu-nhoi-xot-me',
   'Đậu Hũ Nhồi Xốt Me',
   'Đậu hũ chiên nhồi nhân thịt băm, nấm mèo và bún tàu, rim trong xốt me chua ngọt sánh mịn. Vị chua thanh của me quyện với nhân đậm đà, ăn cùng cơm nóng và rau sống rất đưa cơm.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/dau-hu-nhoi-xot-me.png',
+  'recipe-images/dau-hu-nhoi-xot-me.png',
   4, 5, 5, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -144,7 +144,7 @@ select
   'canh-luon-nau-cai-chua',
   'Canh Lươn Nấu Cải Chua',
   'Thịt lươn dai ngọt nấu cùng cải chua giòn và cà chua trong nước dùng chua thanh, thơm mùi sả và rau om ngò gai. Món canh dân dã, bổ dưỡng, ăn nóng với cơm rất ngon.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/canh-luon-nau-cai-chua.png',
+  'recipe-images/canh-luon-nau-cai-chua.png',
   4, 5, 5, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -197,7 +197,7 @@ select
   'salad-uc-ga-xot-viet-quat',
   'Salad Ức Gà Xốt Việt Quất',
   'Ức gà áp chảo mềm mọng cắt lát, bày cùng rau củ nhiều màu sắc và việt quất tươi, rưới xốt chua ngọt béo nhẹ từ sữa chua và mayonnaise. Món salad thanh mát, giàu đạm, đẹp mắt.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/salad-uc-ga-xot-viet-quat.png',
+  'recipe-images/salad-uc-ga-xot-viet-quat.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'salad-goi'
@@ -252,7 +252,7 @@ select
   'sup-gyoza-miso-cay',
   'Súp Gyoza Miso Cay',
   'Nước súp miso cay thơm nồng nấu cùng bánh gyoza mềm, nấm đùi gà và cải bó xôi, thêm trứng lòng đào béo ngậy. Món súp kiểu Nhật ấm nóng, đậm đà, thích hợp cho bữa tối se lạnh.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/sup-gyoza-miso-cay.png',
+  'recipe-images/sup-gyoza-miso-cay.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -305,7 +305,7 @@ select
   'suon-cong-nuong-rau-cu',
   'Sườn Cọng Nướng Rau Củ',
   'Sườn non cọng ướp xốt nướng đậm đà, nướng bằng nồi chiên không dầu đến xém vàng, ăn kèm khoai tây, ớt chuông và thơm áp chảo. Món nướng thơm lừng, thịt mềm thấm vị, thích hợp cho bữa tiệc gia đình.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/suon-cong-nuong-rau-cu.png',
+  'recipe-images/suon-cong-nuong-rau-cu.png',
   6, 6, 6, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -353,7 +353,7 @@ select
   'thit-bo-xao-dau-rong-sa-te',
   'Thịt Bò Xào Đậu Rồng Sa Tế',
   'Thịt bò xào nhanh trên lửa lớn giữ độ mềm ngọt, đảo cùng đậu rồng và cà rốt giòn ngọt, thêm sa tế cay thơm. Món xào đậm đà, màu sắc bắt mắt, ăn với cơm nóng rất hao cơm.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/thit-bo-xao-dau-rong-sa-te.png',
+  'recipe-images/thit-bo-xao-dau-rong-sa-te.png',
   4, 5, 5, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -405,7 +405,7 @@ select
   'gyoza-chien-gion',
   'Gyoza Chiên Giòn',
   'Bánh gyoza áo ba lớp bột chiên vàng giòn rụm, nhân nóng hổi bên trong, chấm cùng xốt mayonnaise trộn tương ớt béo cay. Món ăn vặt kiểu Nhật giòn tan, ăn kèm rau tươi mát.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/gyoza-chien-gion.png',
+  'recipe-images/gyoza-chien-gion.png',
   4, 5, 5, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -455,7 +455,7 @@ select
   'canh-mong-toi-tom-bap',
   'Canh Mồng Tơi Tôm Bắp',
   'Nước canh ngọt thanh từ tôm và viên mọc giò sống, thêm rau mồng tơi xanh mướt. Món canh dân dã, dễ nấu, bổ dưỡng cho bữa cơm gia đình hằng ngày.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/canh-mong-toi-tom-bap.png',
+  'recipe-images/canh-mong-toi-tom-bap.png',
   4, 5, 5, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -506,7 +506,7 @@ select
   'canh-ca-tam-vi-thai',
   'Canh Cá Tầm Vị Thái',
   'Cá tầm nấu cùng thơm, cà chua và nấm rơm trong nước dùng chua cay kiểu Thái, thêm kèo nèo, rau nhút và rau thơm. Món canh chua cay hấp dẫn, thịt cá dai ngọt, nước dùng đậm đà.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/canh-ca-tam-vi-thai.png',
+  'recipe-images/canh-ca-tam-vi-thai.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-canh'
@@ -557,7 +557,7 @@ select
   'cha-gio-so-diep-xot-trung-muoi',
   'Chả Giò Sò Điệp Xốt Trứng Muối',
   'Chả giò nhân sò điệp, thanh cua và phô mai mozzarella kéo sợi, chiên vàng giòn, chấm xốt phô mai trứng muối béo ngậy. Món chiên cao cấp, giòn rụm, thích hợp đãi tiệc.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/cha-gio-so-diep-xot-trung-muoi.png',
+  'recipe-images/cha-gio-so-diep-xot-trung-muoi.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'mon-chinh'
@@ -612,7 +612,7 @@ select
   'goi-buoi-thit-bo-xot-me-rang',
   'Gỏi Bưởi Thịt Bò Xốt Mè Rang',
   'Bưởi da xanh chua ngọt trộn cùng thịt bò áp chảo mềm mọng, cà rốt, dưa leo giòn mát và xốt mè rang thơm béo. Món gỏi thanh mát, hài hòa vị chua ngọt mặn béo, ăn kèm bánh phồng tôm.',
-  'https://dnxxmmacrvsmngprnrlq.supabase.co/storage/v1/object/public/recipe-images/goi-buoi-thit-bo-xot-me-rang.png',
+  'recipe-images/goi-buoi-thit-bo-xot-me-rang.png',
   4, 2, 3, 'Dễ', 'published',
   'Tóm tắt từ monngonmoingay.com'
 from public.categories c where c.slug = 'salad-goi'
