@@ -38,12 +38,16 @@ function sanitizePreviewUrl(url: string | null | undefined): string | null {
   try {
     const parsed = new URL(trimmed);
 
-    if (parsed.protocol === 'https:') {
-      return parsed.href;
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return encodeURI(parsed.href);
     }
 
     return null;
   } catch {
+    if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+      return encodeURI(trimmed);
+    }
+
     return null;
   }
 }

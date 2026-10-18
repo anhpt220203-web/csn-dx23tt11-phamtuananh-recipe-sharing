@@ -58,13 +58,13 @@ function sanitizePreviewUrl(url: string | null | undefined): string | null {
     const parsed = new URL(trimmed);
 
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return parsed.href;
+      return encodeURI(parsed.href);
     }
 
     return null;
   } catch {
     if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-      return trimmed;
+      return encodeURI(trimmed);
     }
 
     return null;
