@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { connection } from 'next/server';
+import { ExternalLink } from 'lucide-react';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
@@ -101,9 +103,18 @@ export default async function TipsAdminPage() {
                         </Badge>
                       </div>
 
-                      <p className={'text-muted-foreground truncate font-mono text-xs'}>
-                        /meo-vat/{tip.slug}
-                      </p>
+                      <div className={'mt-1 flex items-center gap-2'}>
+                        <Link
+                          href={`/meo-vat/${tip.slug}`}
+                          target={'_blank'}
+                          rel={'noopener noreferrer'}
+                          className={'inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium'}
+                          title={`Xem bài viết: ${tip.title}`}
+                        >
+                          <span>Xem bài viết</span>
+                          <ExternalLink className={'h-3 w-3'} />
+                        </Link>
+                      </div>
 
                       {tip.excerpt && (
                         <p className={'text-muted-foreground line-clamp-1 text-xs mt-1'}>
