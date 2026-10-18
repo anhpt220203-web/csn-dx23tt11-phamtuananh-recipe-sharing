@@ -36,8 +36,22 @@ function sanitizePreviewUrl(url: string | null | undefined): string | null {
 
   const trimmed = url.trim();
 
+  if (trimmed.length === 0 || trimmed.length > 2048) {
+    return null;
+  }
+
+  // Chặn ký tự điều khiển và các meta-char nguy hiểm trong ngữ cảnh thuộc tính URL.
+  if (/[\u0000-\u001F\u007F<>"'`]/.test(trimmed)) {
+    return null;
+  }
+
   if (trimmed.startsWith('blob:')) {
-    return trimmed;
+    try {
+      const parsedBlob = new URL(trimmed);
+      return parsedBlob.protocol === 'blob:' ? parsedBlob.href : null;
+    } catch {
+      return null;
+    }
   }
 
   try {
