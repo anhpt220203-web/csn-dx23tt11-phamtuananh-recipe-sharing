@@ -31,19 +31,19 @@ function sanitizePreviewUrl(url: string | null | undefined): string | null {
     return trimmed;
   }
 
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return trimmed;
+  }
+
   try {
     const parsed = new URL(trimmed);
 
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+    if (parsed.protocol === 'https:') {
       return parsed.href;
     }
 
     return null;
   } catch {
-    if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-      return trimmed;
-    }
-
     return null;
   }
 }
