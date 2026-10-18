@@ -20,6 +20,34 @@ import { slugify } from '~/lib/recipes/slugify';
 import { saveRecipeAction } from '../actions';
 import { RECIPE_ACTION_INITIAL } from '../cong-thuc-constants';
 
+function sanitizePreviewUrl(url: string | null | undefined): string | null {
+  if (!url) {
+    return null;
+  }
+
+  const trimmed = url.trim();
+
+  if (trimmed.startsWith('blob:')) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.href;
+    }
+
+    return null;
+  } catch {
+    if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+      return trimmed;
+    }
+
+    return null;
+  }
+}
+
 const DIFFICULTIES = ['Dễ', 'Trung bình', 'Khó'];
 
 const STATUSES = [
@@ -336,28 +364,32 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
             không trùng. File tải lên sẽ ưu tiên hơn link đã dán.
           </p>
 
-          {preview && (
-            <div className={'mt-2 flex flex-col items-start gap-2'}>
-              <div className={'relative overflow-hidden rounded-lg border bg-muted shadow-sm'}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={preview}
-                  alt={'Xem trước ảnh đại diện'}
-                  className={'h-44 w-auto max-w-full rounded-md object-cover'}
-                />
-              </div>
+          {(() => {
+            const safePreview = sanitizePreviewUrl(preview);
+            if (!safePreview) return null;
+            return (
+              <div className={'mt-2 flex flex-col items-start gap-2'}>
+                <div className={'relative overflow-hidden rounded-lg border bg-muted shadow-sm'}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={safePreview}
+                    alt={'Xem trước ảnh đại diện'}
+                    className={'h-44 w-auto max-w-full rounded-md object-cover'}
+                  />
+                </div>
 
-              <Button
-                type={'button'}
-                variant={'outline'}
-                size={'sm'}
-                onClick={handleClearImage}
-                className={'text-xs text-destructive hover:text-destructive'}
-              >
-                Xóa ảnh đại diện
-              </Button>
-            </div>
-          )}
+                <Button
+                  type={'button'}
+                  variant={'outline'}
+                  size={'sm'}
+                  onClick={handleClearImage}
+                  className={'text-xs text-destructive hover:text-destructive'}
+                >
+                  Xóa ảnh đại diện
+                </Button>
+              </div>
+            );
+          })()}
         </div>
 
         <div className={'grid gap-1.5 sm:col-span-2'}>

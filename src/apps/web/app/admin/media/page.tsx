@@ -79,14 +79,84 @@ async function listFolder(prefix: string): Promise<MediaItem[]> {
   return items;
 }
 
+function normalizePath(url: string | null | undefined): string {
+  if (!url) return '';
+  const marker = '/recipe-images/';
+  const idx = url.indexOf(marker);
+  if (idx !== -1) {
+    return url.slice(idx + marker.length).split('?')[0] ?? '';
+  }
+  if (url.startsWith('recipe-images/')) {
+    return url.slice('recipe-images/'.length).split('?')[0] ?? '';
+  }
+  return url.split('?')[0] ?? '';
+}
+
 export default async function MediaAdminPage() {
   // Trang admin đọc Storage mỗi request, không prerender lúc build
   // (tránh gọi service-role key khi biến môi trường chưa có).
   await connection();
 
-  const folders = await Promise.all(MEDIA_FOLDERS.map(listFolder));
+  const admin = getSupabaseServerAdminClient();
 
-  const rootItems = await listFolder('');
+  const [folders, rootItems, recipesRes, tipsRes, categoriesRes, bannersRes] =
+    await Promise.all([
+      Promise.all(MEDIA_FOLDERS.map(listFolder)),
+      listFolder(''),
+      admin
+        .from('recipes')
+        .select('image_url, title')
+        .not('image_url', 'is', null),
+      admin.from('tips').select('image_url, title').not('image_url', 'is', null),
+      admin
+        .from('categories')
+        .select('image_url, name')
+        .not('image_url', 'is', null),
+      admin
+        .from('banners')
+        .select('image_url, title')
+        .not('image_url', 'is', null),
+    ]);
+
+  const recipeMap = new Map<string, string>();
+  for (const r of recipesRes.data ?? []) {
+    if (r.image_url) {
+      const p = normalizePath(r.image_url);
+      const name = p.split('/').pop() ?? '';
+      recipeMap.set(p, r.title);
+      recipeMap.set(name, r.title);
+    }
+  }
+
+  const tipMap = new Map<string, string>();
+  for (const t of tipsRes.data ?? []) {
+    if (t.image_url) {
+      const p = normalizePath(t.image_url);
+      const name = p.split('/').pop() ?? '';
+      tipMap.set(p, t.title);
+      tipMap.set(name, t.title);
+    }
+  }
+
+  const categoryMap = new Map<string, string>();
+  for (const c of categoriesRes.data ?? []) {
+    if (c.image_url) {
+      const p = normalizePath(c.image_url);
+      const name = p.split('/').pop() ?? '';
+      categoryMap.set(p, c.name);
+      categoryMap.set(name, c.name);
+    }
+  }
+
+  const bannerMap = new Map<string, string>();
+  for (const b of bannersRes.data ?? []) {
+    if (b.image_url) {
+      const p = normalizePath(b.image_url);
+      const name = p.split('/').pop() ?? '';
+      bannerMap.set(p, b.title);
+      bannerMap.set(name, b.title);
+    }
+  }
 
   // Bỏ các mục trùng tên thư mục đã liệt kê ở root.
   const knownFolders = new Set<string>(MEDIA_FOLDERS);
@@ -94,14 +164,58 @@ export default async function MediaAdminPage() {
     (item) => !knownFolders.has(item.name.split('/')[0] ?? ''),
   );
 
-  const items: MediaItem[] = [...folders.flat(), ...extraItems].sort(
-    (a, b) => {
+  const rawItems = [...folders.flat(), ...extraItems];
+
+  const items: MediaItem[] = rawItems
+    .map((item) => {
+      let source = item.source;
+      let usedIn: string | null = null;
+
+      if (
+        recipeMap.has(item.path) ||
+        recipeMap.has(item.name) ||
+        item.path.startsWith('recipes/')
+      ) {
+        source = 'recipes';
+        usedIn = recipeMap.get(item.path) || recipeMap.get(item.name) || null;
+      } else if (
+        tipMap.has(item.path) ||
+        tipMap.has(item.name) ||
+        item.path.startsWith('tips/')
+      ) {
+        source = 'tips';
+        usedIn = tipMap.get(item.path) || tipMap.get(item.name) || null;
+      } else if (
+        categoryMap.has(item.path) ||
+        categoryMap.has(item.name) ||
+        item.path.startsWith('categories/')
+      ) {
+        source = 'categories';
+        usedIn =
+          categoryMap.get(item.path) || categoryMap.get(item.name) || null;
+      } else if (
+        bannerMap.has(item.path) ||
+        bannerMap.has(item.name) ||
+        item.path.startsWith('banners/')
+      ) {
+        source = 'banners';
+        usedIn = bannerMap.get(item.path) || bannerMap.get(item.name) || null;
+      } else if (item.path.startsWith('uploads/')) {
+        source = 'uploads';
+      }
+
+      return {
+        ...item,
+        source,
+        usedIn,
+      };
+    })
+    .sort((a, b) => {
       const aTime = a.createdAt ? Date.parse(a.createdAt) : 0;
       const bTime = b.createdAt ? Date.parse(b.createdAt) : 0;
 
       return bTime - aTime;
-    },
-  );
+    });
 
   return (
     <div className={'flex flex-col gap-6'}>
