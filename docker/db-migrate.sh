@@ -176,10 +176,7 @@ create_user() { # email password role
 }
 
 log "Tạo tài khoản demo..."
-create_user "phamtuananh@example.com" "Demo@123456" "admin"
-create_user "tranbich@example.com" "Demo@123456" ""
-create_user "minhkhoi@example.com" "Demo@123456" ""
-create_user "hoangyen@example.com" "Demo@123456" ""
-create_user "duchuy@example.com" "Demo@123456" ""
+#create_user "phamtuananh@example.com" "Demo@123456" "admin"
+#create_user "member@example.com" "Demo@123456" ""
 
 log "XONG. Web app có thể khởi động."
