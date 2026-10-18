@@ -1,12 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
-import { ExternalLink, MessageSquare, Search, Sparkles } from 'lucide-react';
+import { ExternalLink, Sparkles } from 'lucide-react';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
 import { Button } from '@kit/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@kit/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
 
 import { PaginationNav } from '~/(marketing)/_components/pagination-nav';
@@ -29,6 +34,21 @@ const STATUS_FILTERS = [
 ] as const;
 
 type StatusFilter = (typeof STATUS_FILTERS)[number]['value'];
+
+type QuestionWithRecipe = {
+  id: number;
+  recipe_id: number;
+  user_id: string;
+  question: string;
+  answer: string | null;
+  created_at: string;
+  updated_at: string;
+  recipes: {
+    id: number;
+    title: string;
+    slug: string;
+  } | null;
+};
 
 function parsePage(value: string | undefined): number {
   const page = Number.parseInt(value ?? '1', 10);
@@ -67,15 +87,7 @@ function escapeLike(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
 }
 
-type QuestionWithRecipe = {
-  id: number;
-  question: string;
-  answer: string | null;
-  created_at: string;
-  recipes: { title: string; slug: string } | null;
-};
-
-export default async function QuestionsAdminPage({
+export default async function RecipeQuestionsAdminPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -102,14 +114,15 @@ export default async function QuestionsAdminPage({
 
   let query = admin
     .from('recipe_questions')
-    .select('id,question,answer,created_at,recipes(title,slug)', {
-      count: 'exact',
-    });
+    .select(
+      'id,recipe_id,user_id,question,answer,created_at,updated_at,recipes(id,title,slug)',
+      { count: 'exact' },
+    );
 
-  if (status === 'unanswered') {
-    query = query.is('answer', null);
-  } else if (status === 'answered') {
+  if (status === 'answered') {
     query = query.not('answer', 'is', null);
+  } else if (status === 'unanswered') {
+    query = query.is('answer', null);
   }
 
   if (q) {
@@ -127,7 +140,18 @@ export default async function QuestionsAdminPage({
 
   const questions = (data ?? []) as unknown as QuestionWithRecipe[];
   const total = count ?? 0;
-  const totalPages = Math.ceil(total / PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+
+  if (page > totalPages && total > 0) {
+    redirect(
+      buildQuestionsHref({
+        status,
+        q,
+        page: totalPages,
+      }),
+    );
+  }
 
   // Đếm riêng số câu hỏi chưa trả lời để hiển thị badge cảnh báo
   const { count: unansweredTotal } = await admin
@@ -135,219 +159,219 @@ export default async function QuestionsAdminPage({
     .select('id', { count: 'exact', head: true })
     .is('answer', null);
 
+  const hasActiveFilter = q !== '' || status !== 'all';
+
   return (
     <div className={'flex flex-col gap-6'}>
-      <div>
-        <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý hỏi đáp</h1>
+      {/* Header trang */}
+      <div className={'flex flex-wrap items-start justify-between gap-3'}>
+        <div>
+          <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý hỏi đáp</h1>
 
-        <p className={'text-muted-foreground mt-1 text-sm'}>
-          Giải đáp thắc mắc và hỗ trợ người dùng về các công thức nấu ăn.
-          {(unansweredTotal ?? 0) > 0 ? (
-            <span className={'ml-1 text-amber-600 font-medium'}>
-              (Hiện có {unansweredTotal} câu hỏi cần giải đáp)
-            </span>
-          ) : (
-            <span className={'ml-1 text-emerald-600'}>
-              (Tất cả câu hỏi đã được giải đáp)
-            </span>
-          )}
-        </p>
-      </div>
-
-      {/* Cụm thống nhất: Gộp bộ lọc, tìm kiếm và danh sách câu hỏi dạng lưới trong 1 Card */}
-      <Card className={'shadow-xs'}>
-        <CardHeader className={'space-y-4 border-b border-border/50 pb-5'}>
-          <div className={'flex flex-wrap items-center justify-between gap-2'}>
-            <CardTitle className={'text-base font-semibold flex items-center gap-2'}>
-              <MessageSquare className={'h-4 w-4 text-primary'} />
-              <span>Danh sách câu hỏi ({total})</span>
-            </CardTitle>
-
-            {total > 0 && (
-              <span className={'text-xs text-muted-foreground'}>
-                Trang {page} / {Math.max(1, totalPages)}
+          <p className={'text-muted-foreground mt-1 text-sm'}>
+            Tổng cộng {total} câu hỏi trong hệ thống. Giải đáp thắc mắc và hỗ trợ người dùng về các công thức nấu ăn.
+            {(unansweredTotal ?? 0) > 0 ? (
+              <span className={'ml-1 text-amber-600 font-medium'}>
+                (Hiện có {unansweredTotal} câu hỏi cần giải đáp)
+              </span>
+            ) : (
+              <span className={'ml-1 text-emerald-600'}>
+                (Tất cả câu hỏi đã được giải đáp)
               </span>
             )}
-          </div>
+          </p>
+        </div>
+      </div>
 
-          {/* Thanh công cụ: Tabs lọc trạng thái + Form tìm kiếm */}
-          <div className={'flex flex-col gap-3 md:flex-row md:items-center md:justify-between'}>
-            <div className={'flex flex-wrap items-center gap-1.5'}>
-              {STATUS_FILTERS.map((f) => {
-                const active = f.value === status;
-                return (
-                  <Button
-                    key={f.value}
-                    nativeButton={false}
-                    variant={active ? 'default' : 'outline'}
-                    size={'sm'}
-                    className={'h-8 text-xs'}
-                    render={
-                      <Link
-                        href={buildQuestionsHref({
-                          status: f.value,
-                          q,
-                          page: 1,
-                        })}
-                      >
-                        {f.label}
-                      </Link>
-                    }
-                  />
-                );
+      {/* Tabs lọc theo trạng thái */}
+      <div className={'flex flex-wrap gap-2'}>
+        {STATUS_FILTERS.map((f) => {
+          const active = f.value === status;
+
+          return (
+            <Link
+              key={f.value}
+              href={buildQuestionsHref({
+                status: f.value,
+                q,
+                page: 1,
               })}
-            </div>
-
-            <form
-              method={'GET'}
-              action={'/admin/hoi-dap'}
-              className={'flex items-center gap-2'}
+              aria-current={active ? 'page' : undefined}
+              className={
+                active
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-1.5 text-sm font-medium'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-3 py-1.5 text-sm font-medium'
+              }
             >
-              {status !== 'all' && (
-                <input type={'hidden'} name={'status'} value={status} />
-              )}
+              {f.label}
+            </Link>
+          );
+        })}
+      </div>
 
-              <div className={'relative min-w-56'}>
-                <Search className={'text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2'} />
-                <Input
-                  name={'q'}
-                  defaultValue={q}
-                  placeholder={'Tìm câu hỏi, câu trả lời...'}
-                  className={'h-8 pl-8 text-xs'}
-                />
-              </div>
+      {/* Bộ lọc theo từ khóa */}
+      <form
+        action={'/admin/hoi-dap'}
+        method={'GET'}
+        role={'search'}
+        className={'flex flex-col gap-2 sm:flex-row sm:items-end'}
+      >
+        {status !== 'all' && (
+          <input type={'hidden'} name={'status'} value={status} />
+        )}
 
-              <Button type={'submit'} variant={'secondary'} size={'sm'} className={'h-8 text-xs'}>
-                Tìm
-              </Button>
+        <div className={'flex-1'}>
+          <label
+            htmlFor={'admin-question-search'}
+            className={'mb-1 block text-xs font-medium'}
+          >
+            Tìm kiếm theo câu hỏi hoặc câu trả lời
+          </label>
 
-              {q && (
-                <Button
-                  nativeButton={false}
-                  variant={'ghost'}
-                  size={'sm'}
-                  className={'h-8 text-xs text-muted-foreground'}
-                  render={
-                    <Link
-                      href={buildQuestionsHref({
-                        status,
-                        q: '',
-                        page: 1,
-                      })}
-                    >
-                      Xóa
-                    </Link>
-                  }
-                />
-              )}
-            </form>
-          </div>
-        </CardHeader>
+          <Input
+            id={'admin-question-search'}
+            name={'q'}
+            type={'search'}
+            defaultValue={q}
+            placeholder={'Nhập nội dung câu hỏi hoặc câu trả lời…'}
+            className={'max-w-md'}
+          />
+        </div>
 
-        <CardContent className={'pt-5'}>
-          {questions.length === 0 ? (
-            <div className={'py-12 text-center'}>
-              <MessageSquare className={'mx-auto h-10 w-10 text-muted-foreground/30 mb-2'} />
-              <p className={'text-muted-foreground text-sm font-medium'}>
-                {q || status !== 'all'
-                  ? 'Không tìm thấy câu hỏi nào phù hợp với bộ lọc.'
-                  : 'Chưa có câu hỏi nào từ người dùng.'}
-              </p>
-            </div>
-          ) : (
-            /* Danh sách câu hỏi dạng lưới (Grid 2 cột trên desktop) */
-            <div className={'grid grid-cols-1 md:grid-cols-2 gap-4'}>
-              {questions.map((item) => (
-                <div
-                  key={item.id}
-                  className={
-                    'flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 transition-shadow hover:shadow-sm'
-                  }
+        <div className={'flex gap-2'}>
+          <Button type={'submit'} size={'sm'}>
+            Lọc
+          </Button>
+
+          {hasActiveFilter && (
+            <Button
+              nativeButton={false}
+              size={'sm'}
+              variant={'outline'}
+              render={
+                <Link
+                  href={buildQuestionsHref({
+                    status: 'all',
+                    q: '',
+                    page: 1,
+                  })}
                 >
-                  <div className={'space-y-3'}>
-                    {/* Header item: Badge trạng thái + Món ăn liên quan + Nút thao tác */}
-                    <div className={'flex items-start justify-between gap-2'}>
-                      <div className={'flex flex-wrap items-center gap-2 min-w-0'}>
-                        {item.answer ? (
-                          <Badge variant={'default'} className={'bg-emerald-600 text-[11px] h-5 px-2'}>
-                            Đã trả lời
-                          </Badge>
-                        ) : (
-                          <Badge variant={'destructive'} className={'text-[11px] h-5 px-2'}>
-                            Chưa trả lời
-                          </Badge>
-                        )}
+                  Xoá lọc
+                </Link>
+              }
+            />
+          )}
+        </div>
+      </form>
 
-                        <span className={'truncate text-xs font-medium text-foreground'}>
-                          {item.recipes?.title ? (
-                            <Link
-                              href={`/cong-thuc/${item.recipes.slug}`}
-                              target={'_blank'}
-                              rel={'noreferrer'}
-                              className={'hover:underline text-primary inline-flex items-center gap-1'}
-                              title={`Xem món: ${item.recipes.title}`}
-                            >
-                              <span>{item.recipes.title}</span>
-                              <ExternalLink className={'h-3 w-3 shrink-0'} />
-                            </Link>
-                          ) : (
-                            'Công thức'
-                          )}
-                        </span>
-                      </div>
-
-                      <QuestionRowActions
-                        id={item.id}
-                        question={item.question}
-                        recipeTitle={item.recipes?.title}
-                        currentAnswer={item.answer}
-                      />
-                    </div>
-
-                    {/* Nội dung câu hỏi */}
-                    <div>
-                      <p className={'font-medium text-sm leading-snug text-foreground'}>
-                        {item.question}
-                      </p>
-                      <p className={'text-[11px] text-muted-foreground mt-1'}>
-                        Hỏi lúc{' '}
-                        {new Date(item.created_at).toLocaleString('vi-VN', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                    </div>
-
-                    {/* Khung câu trả lời */}
-                    {item.answer ? (
-                      <div className={'rounded-lg bg-muted/50 p-3 text-xs border border-border/50 space-y-1'}>
-                        <div className={'flex items-center gap-1 font-semibold text-primary text-[11px]'}>
-                          <Sparkles className={'h-3 w-3'} />
-                          <span>Câu trả lời của bạn:</span>
-                        </div>
-                        <p className={'leading-relaxed text-muted-foreground whitespace-pre-line'}>
-                          {item.answer}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className={'rounded-lg border border-dashed border-border/60 bg-muted/20 p-2.5 text-center text-xs text-muted-foreground'}>
-                        Chưa có câu trả lời. Bấm &quot;Trả lời&quot; ở trên để giải đáp.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+      {/* Danh sách câu hỏi */}
+      {questions.length === 0 ? (
+        <Card>
+          <CardContent className={'py-10 text-center'}>
+            <p className={'text-muted-foreground text-sm'}>
+              {hasActiveFilter
+                ? 'Không tìm thấy câu hỏi nào với bộ lọc hiện tại.'
+                : 'Chưa có câu hỏi nào từ người dùng.'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className={'flex flex-col gap-4'}>
+          {total > 0 && (
+            <div className={'flex items-center justify-between text-xs text-muted-foreground'}>
+              <span>
+                Hiển thị {from + 1}–{Math.min(to + 1, total)} trên tổng số {total} câu hỏi
+              </span>
             </div>
           )}
-        </CardContent>
 
-        {totalPages > 1 && (
-          <CardFooter className={'border-t border-border/40 pt-4 flex justify-center'}>
+          <div className={'grid grid-cols-1 gap-3 lg:grid-cols-2'}>
+            {questions.map((item) => (
+              <Card key={item.id} className={'hover:shadow-xs transition-shadow'}>
+                <CardHeader className={'pb-3 space-y-2.5'}>
+                  {/* Header item: Badge trạng thái + Món ăn liên quan + Nút thao tác */}
+                  <div className={'flex items-start justify-between gap-2'}>
+                    <div className={'flex flex-wrap items-center gap-2 min-w-0'}>
+                      {item.answer ? (
+                        <Badge variant={'default'} className={'bg-emerald-600 text-[11px] h-5 px-2'}>
+                          Đã trả lời
+                        </Badge>
+                      ) : (
+                        <Badge variant={'destructive'} className={'text-[11px] h-5 px-2'}>
+                          Chưa trả lời
+                        </Badge>
+                      )}
+
+                      <span className={'truncate text-xs font-medium text-foreground'}>
+                        {item.recipes?.title ? (
+                          <Link
+                            href={`/cong-thuc/${item.recipes.slug}`}
+                            target={'_blank'}
+                            rel={'noreferrer'}
+                            className={'hover:underline text-primary inline-flex items-center gap-1'}
+                            title={`Xem món: ${item.recipes.title}`}
+                          >
+                            <span className={'truncate'}>{item.recipes.title}</span>
+                            <ExternalLink className={'h-3 w-3 shrink-0'} />
+                          </Link>
+                        ) : (
+                          'Công thức'
+                        )}
+                      </span>
+                    </div>
+
+                    <QuestionRowActions
+                      id={item.id}
+                      question={item.question}
+                      recipeTitle={item.recipes?.title}
+                      currentAnswer={item.answer}
+                    />
+                  </div>
+
+                  {/* Nội dung câu hỏi */}
+                  <div>
+                    <p className={'font-medium text-sm leading-snug text-foreground'}>
+                      {item.question}
+                    </p>
+                    <p className={'text-[11px] text-muted-foreground mt-1'}>
+                      Hỏi lúc{' '}
+                      {new Date(item.created_at).toLocaleString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </CardHeader>
+
+                <CardContent className={'pt-0'}>
+                  {/* Khung câu trả lời */}
+                  {item.answer ? (
+                    <div className={'rounded-lg bg-muted/50 p-3 text-xs border border-border/50 space-y-1'}>
+                      <div className={'flex items-center gap-1 font-semibold text-primary text-[11px]'}>
+                        <Sparkles className={'h-3 w-3'} />
+                        <span>Câu trả lời của bạn:</span>
+                      </div>
+                      <p className={'leading-relaxed text-muted-foreground whitespace-pre-line'}>
+                        {item.answer}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className={'rounded-lg border border-dashed border-border/60 bg-muted/20 p-2.5 text-center text-xs text-muted-foreground'}>
+                      Chưa có câu trả lời. Bấm &quot;Trả lời&quot; ở trên để giải đáp.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Phân trang */}
+          <div className={'pt-2'}>
             <PaginationNav
-              currentPage={page}
+              currentPage={safePage}
               totalPages={totalPages}
               buildHref={(p: number) =>
                 buildQuestionsHref({
@@ -357,9 +381,9 @@ export default async function QuestionsAdminPage({
                 })
               }
             />
-          </CardFooter>
-        )}
-      </Card>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
