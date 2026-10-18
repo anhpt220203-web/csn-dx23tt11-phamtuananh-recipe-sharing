@@ -8,6 +8,7 @@ import { Button } from '@kit/ui/button';
 import { Card, CardContent } from '@kit/ui/card';
 
 import type { RecipeSchema } from '~/lib/recipes/database';
+import { PaginationNav } from '~/(marketing)/_components/pagination-nav';
 
 import { DeleteRatingButton } from './_components/delete-rating-button';
 
@@ -189,39 +190,12 @@ export default async function RatingsAdminPage({
       )}
 
       {totalPages > 1 && (
-        <div
-          className={'flex items-center justify-center gap-3 text-sm'}
-          aria-label={'Phân trang'}
-        >
-          {page > 1 ? (
-            <Button
-              nativeButton={false}
-              variant={'outline'}
-              size={'sm'}
-              render={<Link href={`/admin/danh-gia?page=${page - 1}`}>← Trang trước</Link>}
-            />
-          ) : (
-            <Button variant={'outline'} size={'sm'} disabled>
-              ← Trang trước
-            </Button>
-          )}
-
-          <span className={'text-muted-foreground'}>
-            Trang {page} / {totalPages}
-          </span>
-
-          {page < totalPages ? (
-            <Button
-              nativeButton={false}
-              variant={'outline'}
-              size={'sm'}
-              render={<Link href={`/admin/danh-gia?page=${page + 1}`}>Trang sau →</Link>}
-            />
-          ) : (
-            <Button variant={'outline'} size={'sm'} disabled>
-              Trang sau →
-            </Button>
-          )}
+        <div className={'flex justify-center pt-2'}>
+          <PaginationNav
+            currentPage={page}
+            totalPages={totalPages}
+            getPageHref={(p) => `/admin/danh-gia?page=${p}`}
+          />
         </div>
       )}
     </div>

@@ -141,10 +141,25 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
       });
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 12;
+
   const filtered =
     sourceFilter === 'all'
       ? items
       : items.filter((item) => item.source === sourceFilter);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedItems = filtered.slice(
+    (safePage - 1) * PER_PAGE,
+    safePage * PER_PAGE,
+  );
+
+  const handleSourceChange = (val: string) => {
+    setSourceFilter(val);
+    setCurrentPage(1);
+  };
 
   return (
     <div className={'flex flex-col gap-4'}>
@@ -152,7 +167,7 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
         <div className={'flex flex-wrap items-center gap-3'}>
           <NativeSelect
             value={sourceFilter}
-            onChange={(event) => setSourceFilter(event.target.value)}
+            onChange={(event) => handleSourceChange(event.target.value)}
             className={'w-56'}
             aria-label={'Lọc theo nguồn ảnh'}
           >
@@ -165,6 +180,7 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
 
           <span className={'text-muted-foreground text-sm'}>
             {filtered.length} ảnh
+            {totalPages > 1 && ` (Trang ${safePage}/${totalPages})`}
           </span>
         </div>
 
@@ -187,7 +203,7 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
         </Card>
       ) : (
         <ul className={'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'}>
-          {filtered.map((item) => (
+          {paginatedItems.map((item) => (
             <li key={item.path}>
               <Card className={'overflow-hidden'}>
                 <div className={'relative aspect-video w-full bg-muted'}>
