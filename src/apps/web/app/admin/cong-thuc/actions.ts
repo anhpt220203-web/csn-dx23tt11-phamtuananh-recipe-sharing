@@ -9,6 +9,7 @@ import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client'
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { slugify } from '~/lib/recipes/slugify';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
+import { normalizeDirectImageUrl } from '~/lib/server/storage-images';
 
 const IMAGE_BUCKET = 'recipe-images';
 const IMAGE_FOLDER = 'recipes';
@@ -213,9 +214,11 @@ export async function saveRecipeAction(
     const ingredients = splitLines(formData.get('ingredients'));
     const steps = splitLines(formData.get('steps'));
 
-    // Ảnh: file mới (nếu có) -> upload; không thì giữ ảnh cũ.
+    // Ảnh: file mới (nếu có) -> upload; không thì dùng link dán trực tiếp;
+    // còn lại giữ ảnh cũ.
     const imageFile = formData.get('image');
     const existingImageUrl = String(formData.get('existing_image_url') ?? '');
+    const imageUrlText = String(formData.get('image_url') ?? '').trim();
 
     let imageUrl: string | null =
       existingImageUrl.length > 0 ? existingImageUrl : null;
@@ -224,6 +227,22 @@ export async function saveRecipeAction(
       imageUrl = await uploadRecipeImage(admin, imageFile);
 
       // Sửa công thức + đổi ảnh: xóa ảnh cũ cho gọn kho lưu trữ.
+      if (id !== null && existingImageUrl && existingImageUrl !== imageUrl) {
+        await removeRecipeImage(admin, existingImageUrl);
+      }
+    } else if (imageUrlText.length > 0) {
+      const directUrl = normalizeDirectImageUrl(imageUrlText);
+
+      if (!directUrl) {
+        return {
+          ok: false,
+          message: 'Link ảnh đại diện phải bắt đầu bằng http:// hoặc https://.',
+        };
+      }
+
+      imageUrl = directUrl;
+
+      // Sửa công thức + đổi sang link ngoài: xóa ảnh cũ trong Storage.
       if (id !== null && existingImageUrl && existingImageUrl !== imageUrl) {
         await removeRecipeImage(admin, existingImageUrl);
       }

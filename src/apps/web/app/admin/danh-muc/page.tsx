@@ -23,7 +23,7 @@ export default async function CategoriesAdminPage() {
 
   const { data, error } = await admin
     .from('categories')
-    .select('id,name,slug,description,dimension')
+    .select('id,name,slug,description,dimension,image_url')
     .order('id', { ascending: true });
 
   if (error) {
@@ -59,8 +59,25 @@ export default async function CategoriesAdminPage() {
         {categories.map((category) => (
           <Card key={category.id}>
             <CardHeader className={'pb-3'}>
-              <div className={'flex items-center justify-between gap-2'}>
-                <CardTitle className={'text-base'}>{category.name}</CardTitle>
+              <div className={'flex items-start justify-between gap-2'}>
+                <div className={'flex items-center gap-3 min-w-0'}>
+                  {category.image_url && (
+                    <div
+                      className={
+                        'h-12 w-12 shrink-0 overflow-hidden rounded-md border bg-muted'
+                      }
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={category.image_url}
+                        alt={category.name}
+                        className={'h-full w-full object-cover'}
+                      />
+                    </div>
+                  )}
+
+                  <CardTitle className={'text-base'}>{category.name}</CardTitle>
+                </div>
 
                 <Badge variant={'secondary'} className={'font-mono text-xs'}>
                   {category.slug}

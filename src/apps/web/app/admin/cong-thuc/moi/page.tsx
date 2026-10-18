@@ -22,7 +22,7 @@ export default async function NewRecipePage() {
 
   const { data, error } = await admin
     .from('categories')
-    .select('id,name,slug,description,dimension')
+    .select('id,name,slug,description,dimension,image_url')
     .order('id', { ascending: true });
 
   if (error) {

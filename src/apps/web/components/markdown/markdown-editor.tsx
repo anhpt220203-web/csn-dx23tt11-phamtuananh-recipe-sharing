@@ -227,7 +227,7 @@ export function MarkdownEditor({
         {showPreview ? (
           <div className={'min-h-32 p-3'}>
             {value.trim() ? (
-              <MarkdownPreview value={value} />
+              <MarkdownRenderer content={value} />
             ) : (
               <p className={'text-muted-foreground text-sm italic'}>
                 Chưa có nội dung để xem trước.

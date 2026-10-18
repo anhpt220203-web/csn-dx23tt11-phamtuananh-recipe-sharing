@@ -17,6 +17,7 @@ import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
 
 import { MarkdownEditor } from '~/components/markdown/markdown-editor';
+import { AdminImagePicker } from '../../_components/admin-image-picker';
 
 import type { TipRow } from '~/lib/content/database';
 
@@ -72,13 +73,10 @@ export function CreateTipForm() {
       </div>
 
       <div className={'grid gap-1.5 sm:col-span-2'}>
-        <Label htmlFor={'tip-image'}>URL ảnh</Label>
-        <Input
-          id={'tip-image'}
-          name={'image_url'}
-          type={'url'}
-          maxLength={500}
-          placeholder={'https://...'}
+        <AdminImagePicker
+          urlName={'image_url'}
+          fileName={'image_file'}
+          existingName={'existing_image_url'}
         />
       </div>
 
@@ -242,14 +240,12 @@ export function EditTipModal({
           </div>
 
           <div className={'grid gap-1.5 sm:col-span-2'}>
-            <Label htmlFor={`edit-image-${tip.id}`}>URL ảnh</Label>
-            <Input
-              id={`edit-image-${tip.id}`}
-              name={'image_url'}
-              type={'url'}
-              defaultValue={tip.image_url ?? ''}
-              maxLength={500}
-              placeholder={'https://...'}
+            <AdminImagePicker
+              urlName={'image_url'}
+              fileName={'image_file'}
+              existingName={'existing_image_url'}
+              defaultUrl={tip.image_url}
+              idPrefix={`tip-${tip.id}`}
             />
           </div>
 

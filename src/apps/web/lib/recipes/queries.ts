@@ -276,7 +276,7 @@ export async function getCategories(): Promise<CategoryRow[]> {
 
   const { data, error } = await client
     .from('categories')
-    .select('id,name,slug,description,dimension')
+    .select('id,name,slug,description,dimension,image_url')
     .order('id', { ascending: true });
 
   if (error) {
@@ -296,7 +296,7 @@ export async function getCategoryBySlug(
 
   const { data, error } = await client
     .from('categories')
-    .select('id,name,slug,description,dimension')
+    .select('id,name,slug,description,dimension,image_url')
     .eq('slug', slug)
     .maybeSingle();
 
