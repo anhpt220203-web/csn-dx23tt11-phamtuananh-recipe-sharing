@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 
 import { BackToTop } from '~/components/content/back-to-top';
 import { CookieConsent } from '~/components/cookie-consent';
+import { AuthModalProvider } from '~/components/recipes/auth-modal';
 import { SiteFooter } from '~/(marketing)/_components/site-footer';
 import { SiteHeader } from '~/(marketing)/_components/site-header';
 
@@ -14,8 +15,6 @@ import { SiteHeader } from '~/(marketing)/_components/site-header';
  * SiteHeader dùng `usePathname()` (đánh dấu menu đang chọn) nên phải bọc trong
  * `<Suspense>`: khi prerender, phần header sẽ stream sau thay vì làm fail build.
  */
-import { AuthModalProvider } from '~/components/recipes/auth-modal';
-
 function SiteLayout(props: React.PropsWithChildren) {
   return (
     <AuthModalProvider>

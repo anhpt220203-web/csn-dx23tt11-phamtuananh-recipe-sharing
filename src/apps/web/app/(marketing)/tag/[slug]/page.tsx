@@ -8,6 +8,10 @@ import type { RecipeSchema } from '~/lib/recipes/database';
 import { getRecipesByTagSlug } from '~/lib/recipes/queries';
 
 import { RecipeCard } from '~/components/recipes/recipe-card';
+import {
+  getFavoriteRecipeIds,
+  getRecipeFavoriteCounts,
+} from '~/lib/recipes/favorites';
 
 import { SitePageHeader } from '~/(marketing)/_components/site-page-header';
 
@@ -62,6 +66,11 @@ export default async function TagPage({ params }: TagPageProps) {
   }
 
   const recipes = await getRecipesByTagSlug(slug);
+  const recipeIds = recipes.map((recipe) => recipe.id);
+  const [favoriteIds, favoriteCounts] = await Promise.all([
+    getFavoriteRecipeIds(recipeIds),
+    getRecipeFavoriteCounts(recipeIds),
+  ]);
 
   return (
     <div>
@@ -85,7 +94,12 @@ export default async function TagPage({ params }: TagPageProps) {
               className={'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'}
             >
               {recipes.map((recipe) => (
-                <RecipeCard key={recipe.slug} recipe={recipe} />
+                <RecipeCard
+                  key={recipe.slug}
+                  recipe={recipe}
+                  initialFavorited={favoriteIds.has(recipe.id)}
+                  initialFavoriteCount={favoriteCounts.get(recipe.id) ?? 0}
+                />
               ))}
             </div>
           </>

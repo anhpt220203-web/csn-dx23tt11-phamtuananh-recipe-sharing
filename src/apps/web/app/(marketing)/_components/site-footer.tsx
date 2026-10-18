@@ -21,6 +21,26 @@ async function getCopyrightYear() {
   return new Date().getFullYear();
 }
 
+const FOOTER_SECTIONS = [
+  {
+    heading: 'Khám phá ẩm thực',
+    links: [
+      { href: '/danh-muc', label: 'Danh mục món ăn' },
+      { href: '/tim-kiem', label: 'Tìm kiếm công thức' },
+      { href: '/meo-vat', label: 'Mẹo vặt bếp núc' },
+      { href: '/yeu-thich', label: 'Món ăn yêu thích' },
+    ],
+  },
+  {
+    heading: 'Điều khoản & Chính sách',
+    links: [
+      { href: '/terms-of-service', label: 'Điều khoản dịch vụ' },
+      { href: '/privacy-policy', label: 'Chính sách bảo mật' },
+      { href: '/cookie-policy', label: 'Chính sách Cookie' },
+    ],
+  },
+];
+
 export async function SiteFooter() {
   const year = await getCopyrightYear();
 
@@ -37,7 +57,7 @@ export async function SiteFooter() {
           }}
         />
       }
-      sections={[]}
+      sections={FOOTER_SECTIONS}
     />
   );
 }

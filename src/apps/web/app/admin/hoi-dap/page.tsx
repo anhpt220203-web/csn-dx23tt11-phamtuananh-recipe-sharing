@@ -96,6 +96,8 @@ export default async function QuestionsAdminPage() {
 
                     <QuestionRowActions
                       id={item.id}
+                      question={item.question}
+                      recipeTitle={item.recipes?.title}
                       currentAnswer={item.answer}
                     />
                   </div>

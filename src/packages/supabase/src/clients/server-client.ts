@@ -15,6 +15,12 @@ export function getSupabaseServerClient<GenericSchema = Database>() {
   const keys = getSupabaseClientKeys();
 
   return createServerClient<GenericSchema>(keys.url, keys.anonKey, {
+    // Dữ liệu trang đọc theo từng request — không cho Next fetch cache
+    // giữ response (tránh lỗi body cắt cụt ở dev với cacheComponents).
+    global: {
+      fetch: (input, init) =>
+        fetch(input, { ...init, cache: 'no-store' as RequestCache }),
+    },
     cookies: {
       async getAll() {
         const cookieStore = await cookies();

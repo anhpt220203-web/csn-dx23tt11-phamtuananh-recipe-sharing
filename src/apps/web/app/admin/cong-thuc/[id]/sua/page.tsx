@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   title: 'Sửa công thức',
 };
 
+export const instant = false;
+
 type EditRecipePageProps = {
   params: Promise<{ id: string }>;
 };

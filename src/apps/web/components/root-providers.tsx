@@ -11,11 +11,26 @@ import { If } from '@kit/ui/if';
 import { VersionUpdater } from '@kit/ui/version-updater';
 
 import { AuthProvider } from '~/components/auth-provider';
+import { AuthModalProvider } from '~/components/recipes/auth-modal';
 import appConfig from '~/config/app.config';
 import authConfig from '~/config/auth.config';
 import featuresFlagConfig from '~/config/feature-flags.config';
 
 import { ReactQueryProvider } from './react-query-provider';
+
+// Bỏ qua cảnh báo false-positive của React 19 đối với thẻ inline <script> của next-themes
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  const originalError = console.error;
+  console.error = (...args: unknown[]) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('Encountered a script tag')
+    ) {
+      return;
+    }
+    originalError.apply(console, args);
+  };
+}
 
 const captchaSiteKey = authConfig.captchaTokenSiteKey;
 
@@ -57,7 +72,9 @@ export function RootProviders({
               defaultTheme={theme}
               enableColorScheme={false}
             >
-              {children}
+              <AuthModalProvider>
+                {children}
+              </AuthModalProvider>
             </ThemeProvider>
           </AuthProvider>
         </CaptchaProvider>

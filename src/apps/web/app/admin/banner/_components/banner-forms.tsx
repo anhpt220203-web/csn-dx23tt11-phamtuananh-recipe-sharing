@@ -1,8 +1,18 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
+import { Eye, Pencil } from 'lucide-react';
+import { toast } from 'sonner';
 
+import { Badge } from '@kit/ui/badge';
 import { Button } from '@kit/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@kit/ui/dialog';
 import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
 
@@ -28,21 +38,29 @@ function FormError({ message }: { message?: string }) {
 }
 
 export function CreateBannerForm() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     createBannerAction,
     BANNER_ACTION_INITIAL,
   );
 
+  useEffect(() => {
+    if (state.ok) {
+      toast.success('Đã thêm banner mới thành công!');
+      formRef.current?.reset();
+    }
+  }, [state]);
+
   return (
-    <form action={formAction} className={'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
+    <form ref={formRef} action={formAction} className={'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
       <div className={'grid gap-1.5'}>
         <Label htmlFor={'new-title'}>Tiêu đề *</Label>
-        <Input id={'new-title'} name={'title'} required maxLength={200} />
+        <Input id={'new-title'} name={'title'} required maxLength={200} placeholder={'Hương vị ẩm thực Việt Nam'} />
       </div>
 
       <div className={'grid gap-1.5'}>
         <Label htmlFor={'new-subtitle'}>Phụ đề</Label>
-        <Input id={'new-subtitle'} name={'subtitle'} maxLength={300} />
+        <Input id={'new-subtitle'} name={'subtitle'} maxLength={300} placeholder={'Khám phá hàng ngàn công thức nấu ăn ngon...'} />
       </div>
 
       <div className={'grid gap-1.5'}>
@@ -62,7 +80,7 @@ export function CreateBannerForm() {
           id={'new-link'}
           name={'link_url'}
           maxLength={500}
-          placeholder={'/tim-kiem?q=phở'}
+          placeholder={'/tim-kiem?category=mon-canh'}
         />
       </div>
 
@@ -100,98 +118,264 @@ export function CreateBannerForm() {
   );
 }
 
-export function BannerRowActions({ banner }: { banner: BannerRow }) {
-  const [editing, setEditing] = useState(false);
+export function EditBannerModal({
+  banner,
+  open,
+  onOpenChange,
+}: {
+  banner: BannerRow;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [updateState, updateAction, updatePending] = useActionState(
     updateBannerAction,
     BANNER_ACTION_INITIAL,
   );
-  const [deleteState, deleteAction, deletePending] = useActionState(
-    deleteBannerAction,
-    BANNER_ACTION_INITIAL,
-  );
+
+  useEffect(() => {
+    if (updateState.ok) {
+      toast.success('Đã cập nhật banner thành công!');
+      onOpenChange(false);
+    }
+  }, [updateState, onOpenChange]);
 
   return (
-    <div className={'flex shrink-0 items-center gap-2'}>
-      <Button
-        type={'button'}
-        variant={'outline'}
-        size={'sm'}
-        onClick={() => setEditing((v) => !v)}
-      >
-        Sửa
-      </Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={'max-h-[90vh] overflow-y-auto sm:max-w-xl'}>
+        <DialogHeader>
+          <DialogTitle>Sửa banner</DialogTitle>
+          <DialogDescription>
+            Chỉnh sửa thông tin banner carousel hiển thị trên trang chủ.
+          </DialogDescription>
+        </DialogHeader>
 
-      <form action={deleteAction}>
-        <input type={'hidden'} name={'id'} value={banner.id} />
-        <Button
-          type={'submit'}
-          variant={'destructive'}
-          size={'sm'}
-          disabled={deletePending}
-        >
-          Xóa
-        </Button>
-      </form>
-
-      {editing ? (
-        <form
-          action={updateAction}
-          className={
-            'absolute z-10 mt-2 grid w-72 gap-3 rounded-lg border bg-background p-4 shadow-lg'
-          }
-        >
+        <form action={updateAction} className={'grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2'}>
           <input type={'hidden'} name={'id'} value={banner.id} />
 
-          <div className={'grid gap-1.5'}>
-            <Label htmlFor={`title-${banner.id}`}>Tiêu đề *</Label>
+          <div className={'grid gap-1.5 sm:col-span-2'}>
+            <Label htmlFor={`edit-title-${banner.id}`}>Tiêu đề *</Label>
             <Input
-              id={`title-${banner.id}`}
+              id={`edit-title-${banner.id}`}
               name={'title'}
               required
               defaultValue={banner.title}
+              maxLength={200}
+            />
+          </div>
+
+          <div className={'grid gap-1.5 sm:col-span-2'}>
+            <Label htmlFor={`edit-subtitle-${banner.id}`}>Phụ đề</Label>
+            <Input
+              id={`edit-subtitle-${banner.id}`}
+              name={'subtitle'}
+              defaultValue={banner.subtitle ?? ''}
+              maxLength={300}
+            />
+          </div>
+
+          <div className={'grid gap-1.5 sm:col-span-2'}>
+            <Label htmlFor={`edit-image-${banner.id}`}>URL ảnh</Label>
+            <Input
+              id={`edit-image-${banner.id}`}
+              name={'image_url'}
+              type={'url'}
+              defaultValue={banner.image_url ?? ''}
+              maxLength={500}
+              placeholder={'https://...'}
             />
           </div>
 
           <div className={'grid gap-1.5'}>
-            <Label htmlFor={`order-${banner.id}`}>Thứ tự</Label>
+            <Label htmlFor={`edit-link-${banner.id}`}>Liên kết</Label>
             <Input
-              id={`order-${banner.id}`}
+              id={`edit-link-${banner.id}`}
+              name={'link_url'}
+              defaultValue={banner.link_url ?? ''}
+              maxLength={500}
+              placeholder={'/tim-kiem'}
+            />
+          </div>
+
+          <div className={'grid gap-1.5'}>
+            <Label htmlFor={`edit-order-${banner.id}`}>Thứ tự hiển thị</Label>
+            <Input
+              id={`edit-order-${banner.id}`}
               name={'sort_order'}
               type={'number'}
               defaultValue={banner.sort_order}
             />
           </div>
 
-          <div className={'flex items-center gap-2'}>
+          <div className={'flex items-center gap-2 sm:col-span-2'}>
             <input
-              id={`active-${banner.id}`}
+              id={`edit-active-${banner.id}`}
               name={'is_active'}
               type={'checkbox'}
               defaultChecked={banner.is_active}
               className={'h-4 w-4'}
             />
-            <Label htmlFor={`active-${banner.id}`}>Đang hoạt động</Label>
+            <Label htmlFor={`edit-active-${banner.id}`}>Đang hoạt động</Label>
           </div>
 
-          <FormError message={updateState.ok ? undefined : updateState.message} />
-          <FormError message={deleteState.ok ? undefined : deleteState.message} />
+          <div className={'sm:col-span-2'}>
+            <FormError message={updateState.ok ? undefined : updateState.message} />
+          </div>
 
-          <div className={'flex gap-2'}>
-            <Button type={'submit'} size={'sm'} disabled={updatePending}>
-              Lưu
-            </Button>
+          <div className={'flex justify-end gap-2 sm:col-span-2'}>
             <Button
               type={'button'}
-              variant={'ghost'}
-              size={'sm'}
-              onClick={() => setEditing(false)}
+              variant={'outline'}
+              onClick={() => onOpenChange(false)}
+              disabled={updatePending}
             >
-              Đóng
+              Hủy
+            </Button>
+            <Button type={'submit'} disabled={updatePending}>
+              {updatePending ? 'Đang lưu...' : 'Lưu thay đổi'}
             </Button>
           </div>
         </form>
-      ) : null}
-    </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function PreviewBannerModal({
+  banner,
+  open,
+  onOpenChange,
+}: {
+  banner: BannerRow;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={'max-h-[90vh] overflow-y-auto sm:max-w-2xl'}>
+        <DialogHeader className={'space-y-2'}>
+          <div className={'flex items-center gap-2'}>
+            <Badge variant={banner.is_active ? 'default' : 'secondary'}>
+              {banner.is_active ? 'Đang hoạt động' : 'Đang ẩn'}
+            </Badge>
+            <span className={'text-xs text-muted-foreground'}>
+              Thứ tự: {banner.sort_order}
+            </span>
+          </div>
+
+          <DialogTitle className={'text-xl font-bold leading-tight'}>
+            {banner.title}
+          </DialogTitle>
+
+          {banner.subtitle && (
+            <DialogDescription className={'text-sm text-muted-foreground'}>
+              {banner.subtitle}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+
+        <div className={'space-y-4 pt-2'}>
+          {banner.image_url ? (
+            <div className={'relative aspect-video w-full overflow-hidden rounded-lg bg-muted border'}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={banner.image_url}
+                alt={banner.title}
+                className={'h-full w-full object-cover'}
+              />
+            </div>
+          ) : (
+            <div className={'flex h-36 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground'}>
+              Không có ảnh banner
+            </div>
+          )}
+
+          {banner.link_url && (
+            <div className={'rounded-md bg-muted/50 p-2.5 text-xs'}>
+              <span className={'font-semibold'}>Đường dẫn liên kết: </span>
+              <span className={'font-mono text-primary'}>{banner.link_url}</span>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function BannerRowActions({ banner }: { banner: BannerRow }) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const [deleteState, deleteAction, deletePending] = useActionState(
+    deleteBannerAction,
+    BANNER_ACTION_INITIAL,
+  );
+
+  useEffect(() => {
+    if (deleteState.ok) {
+      toast.success('Đã xóa banner thành công!');
+    }
+  }, [deleteState]);
+
+  return (
+    <>
+      <div className={'flex shrink-0 items-center gap-2'}>
+        <Button
+          type={'button'}
+          variant={'outline'}
+          size={'sm'}
+          onClick={() => setPreviewOpen(true)}
+          className={'gap-1'}
+          title={'Xem trước banner'}
+        >
+          <Eye className={'h-3.5 w-3.5'} />
+          <span>Xem</span>
+        </Button>
+
+        <Button
+          type={'button'}
+          variant={'outline'}
+          size={'sm'}
+          onClick={() => setEditOpen(true)}
+          className={'gap-1'}
+          title={'Sửa banner'}
+        >
+          <Pencil className={'h-3.5 w-3.5'} />
+          <span>Sửa</span>
+        </Button>
+
+        <form
+          action={deleteAction}
+          onSubmit={(e) => {
+            if (!window.confirm(`Xóa banner "${banner.title}"? Thao tác không thể hoàn tác.`)) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <input type={'hidden'} name={'id'} value={banner.id} />
+          <Button
+            type={'submit'}
+            variant={'destructive'}
+            size={'sm'}
+            disabled={deletePending}
+          >
+            {deletePending ? 'Đang xóa...' : 'Xóa'}
+          </Button>
+        </form>
+
+        <FormError message={deleteState.ok ? undefined : deleteState.message} />
+      </div>
+
+      <EditBannerModal
+        banner={banner}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+
+      <PreviewBannerModal
+        banner={banner}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
+    </>
   );
 }

@@ -9,6 +9,8 @@ import 'server-only';
 
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
+import type { RecipeSchema } from './database';
+
 export type FavoriteRow = {
   user_id: string;
   recipe_id: number;
@@ -160,23 +162,34 @@ export async function getRecipeFavoriteCounts(
     const { getSupabaseServerAdminClient } = await import(
       '@kit/supabase/server-admin-client'
     );
-    const client = getSupabaseServerAdminClient();
+    const client = getSupabaseServerAdminClient<RecipeSchema>();
+    const cleanIds = Array.from(
+      new Set(recipeIds.map(Number).filter((id) => Number.isFinite(id) && id > 0)),
+    );
+
+    if (cleanIds.length === 0) {
+      return new Map();
+    }
+
     const { data, error } = await client
       .from('favorites')
       .select('recipe_id')
-      .in('recipe_id', recipeIds);
+      .in('recipe_id', cleanIds);
 
     if (error) {
+      console.error('[getRecipeFavoriteCounts] Error fetching favorite counts:', error);
       return new Map();
     }
 
     const countMap = new Map<number, number>();
     for (const row of data ?? []) {
-      countMap.set(row.recipe_id, (countMap.get(row.recipe_id) ?? 0) + 1);
+      const id = Number(row.recipe_id);
+      countMap.set(id, (countMap.get(id) ?? 0) + 1);
     }
 
     return countMap;
-  } catch {
+  } catch (err) {
+    console.error('[getRecipeFavoriteCounts] Catch error:', err);
     return new Map();
   }
 }
