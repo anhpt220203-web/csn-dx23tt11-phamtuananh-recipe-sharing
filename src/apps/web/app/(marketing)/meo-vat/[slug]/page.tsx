@@ -13,6 +13,8 @@ import {
 
 import { getTipBySlug } from '~/lib/content/queries';
 
+import { MarkdownRenderer } from '~/components/markdown/markdown-renderer';
+
 type TipPageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -95,13 +97,7 @@ export default async function TipDetailPage({ params }: TipPageProps) {
           </p>
         ) : null}
 
-        <div
-          className={
-            'prose dark:prose-invert mt-6 max-w-none leading-relaxed whitespace-pre-wrap'
-          }
-        >
-          {tip.content}
-        </div>
+        <MarkdownRenderer content={tip.content} className={'mt-6 text-base'} />
       </article>
     </div>
   );

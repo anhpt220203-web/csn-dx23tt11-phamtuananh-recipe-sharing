@@ -8,6 +8,8 @@ import { Label } from '@kit/ui/label';
 import { NativeSelect, NativeSelectOption } from '@kit/ui/native-select';
 import { Textarea } from '@kit/ui/textarea';
 
+import { MarkdownEditor } from '~/components/markdown/markdown-editor';
+
 import type {
   CategoryRow,
   RecipeDetail,
@@ -243,16 +245,15 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
           </div>
         </div>
 
-        <div className={'grid gap-1.5 sm:col-span-2'}>
-          <Label htmlFor={'description'}>Mô tả ngắn</Label>
-
-          <Textarea
-            id={'description'}
+        <div className={'sm:col-span-2'}>
+          <MarkdownEditor
             name={'description'}
-            rows={3}
-            maxLength={500}
+            label={'Mô tả món ăn (hỗ trợ Markdown — in đậm, danh sách, bảng...)'}
             defaultValue={initial?.description ?? ''}
+            rows={6}
+            maxLength={2000}
             placeholder={'Mô tả hấp dẫn về món ăn...'}
+            helpText={'Dùng thanh công cụ để in đậm, tạo danh sách, bảng... Nội dung hiển thị đúng định dạng ở trang chi tiết.'}
           />
         </div>
 

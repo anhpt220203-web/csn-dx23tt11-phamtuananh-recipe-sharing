@@ -13,7 +13,8 @@ import {
   DialogTitle,
 } from '@kit/ui/dialog';
 import { Label } from '@kit/ui/label';
-import { Textarea } from '@kit/ui/textarea';
+
+import { MarkdownEditor } from '~/components/markdown/markdown-editor';
 
 import {
   answerQuestionAction,
@@ -85,13 +86,14 @@ export function AnswerQuestionModal({
 
             <div className={'grid gap-1.5'}>
               <Label htmlFor={`answer-${id}`}>Nội dung câu trả lời *</Label>
-              <Textarea
-                id={`answer-${id}`}
+              <MarkdownEditor
                 name={'answer'}
-                rows={5}
+                label={'Câu trả lời (hỗ trợ Markdown)'}
+                rows={7}
                 required
                 defaultValue={currentAnswer ?? ''}
                 placeholder={'Nhập câu trả lời chi tiết, hướng dẫn cho người dùng...'}
+                helpText={'Có thể in đậm, tạo danh sách, bảng... câu trả lời hiển thị đúng định dạng.'}
               />
             </div>
 

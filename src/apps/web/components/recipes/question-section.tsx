@@ -11,6 +11,7 @@ import { useAuthModal } from '~/components/recipes/auth-modal';
 import type { RecipeQuestionRow } from '~/lib/recipes/database';
 import { askQuestionAction, type QuestionActionResult } from './actions';
 
+import { MarkdownRenderer } from '~/components/markdown/markdown-renderer';
 const QUESTION_ACTION_INITIAL: QuestionActionResult = { ok: true };
 
 function FormError({ message }: { message?: string }) {
@@ -122,7 +123,10 @@ export function QuestionList({ questions }: { questions: RecipeQuestionRow[] }) 
                   className={'mt-3 rounded-lg bg-muted p-3 text-sm'}
                 >
                   <p className={'font-medium text-primary'}>Trả lời:</p>
-                  <p className={'mt-1'}>{item.answer}</p>
+                  <MarkdownRenderer
+                    content={item.answer}
+                    className={'mt-1'}
+                  />
                 </div>
               ) : (
                 <p className={'text-muted-foreground mt-3 text-sm italic'}>
