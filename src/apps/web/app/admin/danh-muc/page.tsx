@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { connection } from 'next/server';
-import { Plus, Search } from 'lucide-react';
+import { ExternalLink, Layers, Plus, Search, Utensils } from 'lucide-react';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
 import { Button } from '@kit/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
 
 import { PaginationNav } from '~/(marketing)/_components/pagination-nav';
@@ -102,13 +102,19 @@ export default async function CategoriesAdminPage({
     query = query.or(`name.ilike.%${escaped}%,slug.ilike.%${escaped}%`);
   }
 
-  const { data, count, error } = await query
-    .order('id', { ascending: true })
-    .range(from, to);
+  const [{ data, count, error }, { data: recipeCounts }] = await Promise.all([
+    query.order('id', { ascending: true }).range(from, to),
+    admin.from('recipes').select('category_id'),
+  ]);
 
   if (error) {
     throw new Error(`Không tải được danh mục: ${error.message}`);
   }
+
+  const countByCat = new Map<number, number>();
+  (recipeCounts ?? []).forEach((r) => {
+    countByCat.set(r.category_id, (countByCat.get(r.category_id) ?? 0) + 1);
+  });
 
   const categories = data ?? [];
   const total = count ?? 0;
@@ -139,16 +145,35 @@ export default async function CategoriesAdminPage({
         />
       </div>
 
-      <Card>
-        <CardContent className={'p-4'}>
-          <form method={'GET'} action={'/admin/danh-muc'} className={'flex flex-wrap items-center gap-3'}>
+      {/* Cụm thống nhất: Gộp bộ lọc, tìm kiếm và danh sách danh mục trong 1 Card */}
+      <Card className={'shadow-xs'}>
+        <CardHeader className={'space-y-4 border-b border-border/50 pb-5'}>
+          <div className={'flex flex-wrap items-center justify-between gap-2'}>
+            <CardTitle className={'text-base font-semibold flex items-center gap-2'}>
+              <Layers className={'h-4 w-4 text-primary'} />
+              <span>Danh sách danh mục ({total})</span>
+            </CardTitle>
+
+            {total > 0 && (
+              <span className={'text-xs text-muted-foreground'}>
+                Trang {page} / {Math.max(1, totalPages)}
+              </span>
+            )}
+          </div>
+
+          {/* Thanh công cụ tìm kiếm và lọc dimension */}
+          <form
+            method={'GET'}
+            action={'/admin/danh-muc'}
+            className={'flex flex-wrap items-center gap-3'}
+          >
             <div className={'relative min-w-56 flex-1'}>
-              <Search className={'text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2'} />
+              <Search className={'text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2'} />
               <Input
                 name={'q'}
                 defaultValue={q}
                 placeholder={'Tìm kiếm theo tên danh mục, slug...'}
-                className={'pl-9 text-sm'}
+                className={'h-8 pl-8 text-xs'}
               />
             </div>
 
@@ -156,7 +181,7 @@ export default async function CategoriesAdminPage({
               <select
                 name={'dimension'}
                 defaultValue={dimension}
-                className={'border-input bg-background rounded-md border px-3 py-2 text-sm'}
+                className={'border-input bg-background rounded-md border px-3 py-1.5 text-xs h-8'}
               >
                 {DIMENSION_OPTIONS.map((dim) => (
                   <option key={dim.value} value={dim.value}>
@@ -166,7 +191,7 @@ export default async function CategoriesAdminPage({
               </select>
             </div>
 
-            <Button type={'submit'} variant={'secondary'} size={'sm'} className={'h-9'}>
+            <Button type={'submit'} variant={'secondary'} size={'sm'} className={'h-8 text-xs'}>
               Tìm kiếm
             </Button>
 
@@ -175,91 +200,158 @@ export default async function CategoriesAdminPage({
                 nativeButton={false}
                 variant={'ghost'}
                 size={'sm'}
-                className={'h-9 text-xs text-muted-foreground'}
+                className={'h-8 text-xs text-muted-foreground'}
                 render={<Link href={'/admin/danh-muc'}>Xóa bộ lọc</Link>}
               />
             )}
           </form>
-        </CardContent>
-      </Card>
+        </CardHeader>
 
-      <div className={'grid grid-cols-1 gap-3 lg:grid-cols-2'}>
-        {categories.map((category) => (
-          <Card key={category.id}>
-            <CardHeader className={'pb-3'}>
-              <div className={'flex items-start justify-between gap-2'}>
-                <div className={'flex items-center gap-3 min-w-0'}>
-                  {category.image_url && (
-                    <div
-                      className={
-                        'h-12 w-12 shrink-0 overflow-hidden rounded-md border bg-muted'
-                      }
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={category.image_url}
-                        alt={category.name}
-                        className={'h-full w-full object-cover'}
-                      />
-                    </div>
-                  )}
-
-                  <div className={'min-w-0'}>
-                    <CardTitle className={'text-base'}>{category.name}</CardTitle>
-                    {category.dimension && (
-                      <span className={'text-muted-foreground text-xs'}>
-                        {DIMENSION_OPTIONS.find((d) => d.value === category.dimension)?.label ?? category.dimension}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <Badge variant={'secondary'} className={'font-mono text-xs'}>
-                  {category.slug}
-                </Badge>
-              </div>
-
-              {category.description && (
-                <p className={'text-muted-foreground text-sm'}>
-                  {category.description}
-                </p>
-              )}
-            </CardHeader>
-
-            <CardContent className={'pt-0'}>
-              <CategoryRowActions category={category} />
-            </CardContent>
-          </Card>
-        ))}
-
-        {categories.length === 0 && (
-          <Card className={'lg:col-span-2'}>
-            <CardContent className={'py-10 text-center'}>
-              <p className={'text-muted-foreground text-sm'}>
+        <CardContent className={'pt-5'}>
+          {categories.length === 0 ? (
+            <div className={'py-12 text-center'}>
+              <Layers className={'mx-auto h-10 w-10 text-muted-foreground/30 mb-2'} />
+              <p className={'text-muted-foreground text-sm font-medium'}>
                 {q || dimension !== 'all'
                   ? 'Không tìm thấy danh mục nào phù hợp với bộ lọc.'
                   : 'Chưa có danh mục nào. Hãy bấm "Thêm danh mục mới" ở trên để bắt đầu.'}
               </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            </div>
+          ) : (
+            /* Danh sách danh mục dạng lưới 2 cột */
+            <div className={'grid grid-cols-1 gap-4 lg:grid-cols-2'}>
+              {categories.map((category) => {
+                const recipeCount = countByCat.get(category.id) ?? 0;
 
-      {totalPages > 1 && (
-        <div className={'flex justify-center pt-2'}>
-          <PaginationNav
-            currentPage={page}
-            totalPages={totalPages}
-            buildHref={(p: number) =>
-              buildCategoriesHref({
-                q,
-                dimension,
-                page: p,
-              })
-            }
-          />
-        </div>
-      )}
+                return (
+                  <Card
+                    key={category.id}
+                    className={'flex flex-col justify-between overflow-hidden border-border/70 shadow-xs hover:shadow-sm transition-shadow'}
+                  >
+                    <CardHeader className={'p-4 pb-3 space-y-2.5'}>
+                      <div className={'flex items-start justify-between gap-3'}>
+                        <div className={'flex items-center gap-3 min-w-0'}>
+                          {category.image_url ? (
+                            <div
+                              className={
+                                'h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/60 bg-muted'
+                              }
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={category.image_url}
+                                alt={category.name}
+                                className={'h-full w-full object-cover'}
+                              />
+                            </div>
+                          ) : (
+                            <div className={'flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted text-muted-foreground'}>
+                              <Layers className={'h-5 w-5'} />
+                            </div>
+                          )}
+
+                          <div className={'min-w-0'}>
+                            <CardTitle className={'text-base font-semibold leading-snug line-clamp-1'}>
+                              {category.name}
+                            </CardTitle>
+
+                            <div className={'flex flex-wrap items-center gap-1.5 mt-1'}>
+                              <Badge variant={'secondary'} className={'font-mono text-[10px] h-4 px-1.5'}>
+                                {category.slug}
+                              </Badge>
+
+                              {category.dimension && (
+                                <span className={'text-muted-foreground text-xs'}>
+                                  · {DIMENSION_OPTIONS.find((d) => d.value === category.dimension)?.label ?? category.dimension}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <Badge
+                          variant={recipeCount > 0 ? 'default' : 'outline'}
+                          className={'text-[11px] shrink-0 h-5 px-2'}
+                        >
+                          {recipeCount} món
+                        </Badge>
+                      </div>
+
+                      {category.description && (
+                        <p className={'text-muted-foreground text-xs leading-relaxed line-clamp-2'}>
+                          {category.description}
+                        </p>
+                      )}
+                    </CardHeader>
+
+                    {/* Footer chứa nút "Xem danh mục", "Xem list công thức" và hành động Sửa/Xóa */}
+                    <CardFooter className={'p-4 pt-3 border-t border-border/40 bg-muted/10 flex flex-col gap-2.5'}>
+                      <div className={'flex flex-wrap items-center gap-2 w-full'}>
+                        {/* Nút xem danh mục công khai */}
+                        <Button
+                          nativeButton={false}
+                          variant={'outline'}
+                          size={'sm'}
+                          className={'h-8 gap-1.5 text-xs flex-1 min-w-32'}
+                          render={
+                            <Link
+                              href={`/danh-muc/${category.slug}`}
+                              target={'_blank'}
+                              rel={'noreferrer'}
+                              title={`Xem trang danh mục ${category.name} công khai`}
+                            >
+                              <ExternalLink className={'h-3.5 w-3.5'} />
+                              <span>Xem danh mục</span>
+                            </Link>
+                          }
+                        />
+
+                        {/* Nút xem list công thức trong danh mục */}
+                        <Button
+                          nativeButton={false}
+                          variant={'outline'}
+                          size={'sm'}
+                          className={'h-8 gap-1.5 text-xs flex-1 min-w-36'}
+                          render={
+                            <Link
+                              href={`/admin/cong-thuc?category=${category.slug}`}
+                              title={`Xem tất cả công thức thuộc danh mục ${category.name}`}
+                            >
+                              <Utensils className={'h-3.5 w-3.5 text-primary'} />
+                              <span>Xem list công thức ({recipeCount})</span>
+                            </Link>
+                          }
+                        />
+                      </div>
+
+                      {/* Các thao tác Sửa / Xóa */}
+                      <div className={'w-full pt-1 border-t border-border/30'}>
+                        <CategoryRowActions category={category} />
+                      </div>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+
+        {totalPages > 1 && (
+          <CardFooter className={'border-t border-border/40 pt-4 flex justify-center'}>
+            <PaginationNav
+              currentPage={page}
+              totalPages={totalPages}
+              buildHref={(p: number) =>
+                buildCategoriesHref({
+                  q,
+                  dimension,
+                  page: p,
+                })
+              }
+            />
+          </CardFooter>
+        )}
+      </Card>
     </div>
   );
 }
