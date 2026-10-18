@@ -15,7 +15,8 @@ import {
 } from '@kit/ui/dialog';
 import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
-import { Textarea } from '@kit/ui/textarea';
+
+import { MarkdownEditor } from '~/components/markdown/markdown-editor';
 
 import type { TipRow } from '~/lib/content/database';
 
@@ -83,7 +84,21 @@ export function CreateTipForm() {
 
       <div className={'grid gap-1.5 sm:col-span-2'}>
         <Label htmlFor={'tip-content'}>Nội dung *</Label>
-        <Textarea id={'tip-content'} name={'content'} rows={8} required placeholder={'Nhập chi tiết nội dung mẹo vặt, các bước thực hiện...'} />
+        <MarkdownEditor
+          name={'content'}
+          label={'Nội dung (hỗ trợ Markdown đầy đủ: tiêu đề, bảng, danh sách, ảnh...)'}
+          rows={10}
+          required
+          placeholder={'Nhập chi tiết nội dung mẹo vặt...
+
+## Bước 1
+Sơ chế nguyên liệu
+
+| Nguyên liệu | Số lượng |
+| --- | --- |
+| Gạo | 200g |'}
+          helpText={'Nội dung hiển thị dạng Markdown ở trang mẹo vặt: tiêu đề, bảng, danh sách, in đậm, liên kết, ảnh.'}
+        />
       </div>
 
       <div className={'flex items-center gap-2'}>
@@ -247,11 +262,11 @@ export function EditTipModal({
 
           <div className={'grid gap-1.5 sm:col-span-2'}>
             <Label htmlFor={`edit-content-${tip.id}`}>Nội dung *</Label>
-            <Textarea
-              id={`edit-content-${tip.id}`}
+            <MarkdownEditor
               name={'content'}
-              rows={8}
+              label={'Nội dung (Markdown)'}
               defaultValue={tip.content}
+              rows={10}
               required
             />
           </div>

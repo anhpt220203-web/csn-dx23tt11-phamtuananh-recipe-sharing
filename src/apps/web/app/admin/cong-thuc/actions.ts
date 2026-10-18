@@ -85,6 +85,7 @@ function splitLines(value: FormDataEntryValue | null): string[] {
   }
 
   return value
+    .replace(/\r\n?/g, '\n')
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
@@ -172,7 +173,10 @@ export async function saveRecipeAction(
       return { ok: false, message: 'Vui lòng chọn danh mục.' };
     }
 
-    const description = String(formData.get('description') ?? '').trim();
+    // Chuẩn hoá xuống dòng Windows (CRLF) sang LF để markdown render sạch.
+    const description = String(formData.get('description') ?? '')
+      .replace(/\r\n?/g, '\n')
+      .trim();
     const sourceName = String(formData.get('source_name') ?? '').trim();
     const sourceUrl = String(formData.get('source_url') ?? '').trim();
     const servings = parsePositiveInt(formData.get('servings'));
