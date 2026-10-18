@@ -10,11 +10,11 @@ import { Textarea } from '@kit/ui/textarea';
 import type { CategoryRow } from '~/lib/recipes/database';
 
 import {
-  CATEGORY_ACTION_INITIAL,
   createCategoryAction,
   deleteCategoryAction,
   updateCategoryAction,
 } from '../actions';
+import { CATEGORY_ACTION_INITIAL } from '../category-constants';
 
 function FormError({ message }: { message?: string }) {
   if (!message) {

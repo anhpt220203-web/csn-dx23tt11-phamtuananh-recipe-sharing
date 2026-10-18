@@ -9,11 +9,11 @@ import { Label } from '@kit/ui/label';
 import type { BannerRow } from '~/lib/content/database';
 
 import {
-  BANNER_ACTION_INITIAL,
   createBannerAction,
   deleteBannerAction,
   updateBannerAction,
 } from '../actions';
+import { BANNER_ACTION_INITIAL } from '../banner-constants';
 
 function FormError({ message }: { message?: string }) {
   if (!message) {

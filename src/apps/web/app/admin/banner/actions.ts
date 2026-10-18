@@ -1,15 +1,12 @@
 'use server';
 
+import type { BannerActionResult } from './banner-constants';
 import { revalidatePath } from 'next/cache';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 import type { ContentSchema } from '~/lib/content/database';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
-
-export type BannerActionResult = { ok: true } | { ok: false; message: string };
-
-export const BANNER_ACTION_INITIAL: BannerActionResult = { ok: true };
 
 function getAdmin() {
   return getSupabaseServerAdminClient<ContentSchema>();

@@ -14,7 +14,8 @@ import type {
 } from '~/lib/recipes/database';
 import { slugify } from '~/lib/recipes/slugify';
 
-import { RECIPE_ACTION_INITIAL, saveRecipeAction } from '../actions';
+import { saveRecipeAction } from '../actions';
+import { RECIPE_ACTION_INITIAL } from '../cong-thuc-constants';
 
 const DIFFICULTIES = ['Dễ', 'Trung bình', 'Khó'];
 

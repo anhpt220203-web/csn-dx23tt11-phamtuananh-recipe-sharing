@@ -1,5 +1,6 @@
 'use server';
 
+import type { RecipeActionResult } from './cong-thuc-constants';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -8,12 +9,6 @@ import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client'
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { slugify } from '~/lib/recipes/slugify';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
-
-export type RecipeActionResult =
-  | { ok: true }
-  | { ok: false; message: string };
-
-const INITIAL: RecipeActionResult = { ok: true };
 
 const IMAGE_BUCKET = 'recipe-images';
 const IMAGE_FOLDER = 'recipes';
@@ -376,4 +371,3 @@ export async function deleteRecipeAction(
   }
 }
 
-export { INITIAL as RECIPE_ACTION_INITIAL };

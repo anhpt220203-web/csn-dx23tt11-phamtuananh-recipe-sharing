@@ -4,10 +4,8 @@ import { useActionState } from 'react';
 
 import { Button } from '@kit/ui/button';
 
-import {
-  RECIPE_ACTION_INITIAL,
-  deleteRecipeAction,
-} from '../actions';
+import { deleteRecipeAction } from '../actions';
+import { RECIPE_ACTION_INITIAL } from '../cong-thuc-constants';
 
 export function DeleteRecipeButton({
   id,

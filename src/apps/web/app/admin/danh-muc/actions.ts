@@ -4,15 +4,11 @@ import { revalidatePath } from 'next/cache';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
+import type { CategoryActionResult } from './category-constants';
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { slugify } from '~/lib/recipes/slugify';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
 
-export type CategoryActionResult =
-  | { ok: true }
-  | { ok: false; message: string };
-
-const INITIAL: CategoryActionResult = { ok: true };
 
 function getAdmin() {
   return getSupabaseServerAdminClient<RecipeSchema>();
@@ -179,5 +175,3 @@ export async function deleteCategoryAction(
     };
   }
 }
-
-export { INITIAL as CATEGORY_ACTION_INITIAL };

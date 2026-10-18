@@ -4,7 +4,8 @@ import { useActionState } from 'react';
 
 import { Button } from '@kit/ui/button';
 
-import { RATING_ACTION_INITIAL, deleteRatingAction } from '../actions';
+import { deleteRatingAction } from '../actions';
+import { RATING_ACTION_INITIAL } from '../danh-gia-constants';
 
 function FormError({ message }: { message?: string }) {
   if (!message) {

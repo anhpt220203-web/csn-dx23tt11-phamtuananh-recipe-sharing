@@ -10,11 +10,11 @@ import { Textarea } from '@kit/ui/textarea';
 import type { TipRow } from '~/lib/content/database';
 
 import {
-  TIP_ACTION_INITIAL,
   createTipAction,
   deleteTipAction,
   toggleTipPublishAction,
 } from '../actions';
+import { TIP_ACTION_INITIAL } from '../meo-vat-constants';
 
 function FormError({ message }: { message?: string }) {
   if (!message) {

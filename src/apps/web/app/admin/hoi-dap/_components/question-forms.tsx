@@ -7,10 +7,10 @@ import { Label } from '@kit/ui/label';
 import { Textarea } from '@kit/ui/textarea';
 
 import {
-  ANSWER_ACTION_INITIAL,
   answerQuestionAction,
   deleteQuestionAction,
 } from '../actions';
+import { ANSWER_ACTION_INITIAL } from '../hoi-dap-constants';
 
 function FormError({ message }: { message?: string }) {
   if (!message) {

@@ -5,13 +5,13 @@ import { useActionState } from 'react';
 import { Button } from '@kit/ui/button';
 
 import {
-  ACCOUNT_ACTION_INITIAL,
   deleteAccountAction,
   grantAdminAction,
   lockAccountAction,
   revokeAdminAction,
   unlockAccountAction,
 } from '../actions';
+import { ACCOUNT_ACTION_INITIAL } from '../user-constants';
 
 function ActionMessage({ message }: { message?: string }) {
   if (!message) {

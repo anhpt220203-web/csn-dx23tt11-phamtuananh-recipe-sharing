@@ -1,15 +1,12 @@
 'use server';
 
+import type { AnswerActionResult } from './hoi-dap-constants';
 import { revalidatePath } from 'next/cache';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
-
-export type AnswerActionResult = { ok: true } | { ok: false; message: string };
-
-export const ANSWER_ACTION_INITIAL: AnswerActionResult = { ok: true };
 
 export async function answerQuestionAction(
   _prev: AnswerActionResult,
