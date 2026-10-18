@@ -18,7 +18,14 @@ export const instant = false;
  * Các thư mục nguồn trong bucket `recipe-images` (khớp với
  * `MediaFolder` trong lib/server/storage-images).
  */
-const MEDIA_FOLDERS = ['recipes', 'tips', 'categories', 'uploads', 'avatars'] as const;
+const MEDIA_FOLDERS = [
+  'recipes',
+  'tips',
+  'categories',
+  'banners',
+  'uploads',
+  'avatars',
+] as const;
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 5; // giới hạn 500 file/thư mục để trang không quá nặng

@@ -6,10 +6,14 @@ import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client'
 
 import type { MediaActionResult } from './media-constants';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
-import { MEDIA_BUCKET } from '~/lib/server/storage-images';
+import {
+  MEDIA_BUCKET,
+  MediaFolder,
+  uploadStorageImage,
+} from '~/lib/server/storage-images';
 
 /**
- * Xóa một file ảnh trong bucket `recipe-images` (trang /admin/media).
+ * Xóa một file ảnh trong bucket `recipe-images` hoặc `account_image` (trang /admin/media).
  * Chỉ chấp nhận path tương đối trong bucket — chặn path traversal.
  */
 export async function deleteMediaFileAction(
@@ -56,11 +60,68 @@ export async function deleteMediaFileAction(
 
     revalidatePath('/admin/media');
 
-    return { ok: true };
+    return { ok: true, message: 'Đã xóa ảnh thành công.' };
   } catch (error) {
     return {
       ok: false,
       message: error instanceof Error ? error.message : 'Có lỗi xảy ra.',
+    };
+  }
+}
+
+/**
+ * Tải một hoặc nhiều file ảnh lên kho lưu trữ `recipe-images`.
+ */
+export async function uploadMediaFileAction(
+  _prev: MediaActionResult,
+  formData: FormData,
+): Promise<MediaActionResult> {
+  try {
+    await requireAdminUser();
+
+    const files = formData
+      .getAll('files')
+      .filter((item): item is File => item instanceof File && item.size > 0);
+    const rawFolder = String(formData.get('folder') ?? 'uploads').trim();
+    const folder = (
+      ['recipes', 'tips', 'categories', 'banners', 'uploads'].includes(rawFolder)
+        ? rawFolder
+        : 'uploads'
+    ) as MediaFolder;
+
+    if (files.length === 0) {
+      return { ok: false, message: 'Vui lòng chọn ít nhất một file ảnh.' };
+    }
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        return {
+          ok: false,
+          message: `File "${file.name}" không phải là ảnh hợp lệ.`,
+        };
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        return {
+          ok: false,
+          message: `File "${file.name}" vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn.`,
+        };
+      }
+    }
+
+    for (const file of files) {
+      await uploadStorageImage(file, folder);
+    }
+
+    revalidatePath('/admin/media');
+
+    return {
+      ok: true,
+      message: `Đã tải lên thành công ${files.length} ảnh vào thư mục "${folder}".`,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : 'Tải ảnh thất bại.',
     };
   }
 }

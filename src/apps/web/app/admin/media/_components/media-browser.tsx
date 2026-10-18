@@ -22,6 +22,7 @@ import { NativeSelect, NativeSelectOption } from '@kit/ui/native-select';
 
 import { deleteMediaFileAction } from '../actions';
 import { MEDIA_ACTION_INITIAL } from '../media-constants';
+import { MediaUploadDialog } from './media-upload-dialog';
 
 export type MediaItem = {
   /** Object path trong bucket, vd "tips/abc123.jpg". */
@@ -109,23 +110,27 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
 
   return (
     <div className={'flex flex-col gap-4'}>
-      <div className={'flex flex-wrap items-center gap-3'}>
-        <NativeSelect
-          value={sourceFilter}
-          onChange={(event) => setSourceFilter(event.target.value)}
-          className={'w-56'}
-          aria-label={'Lọc theo nguồn ảnh'}
-        >
-          {SOURCE_OPTIONS.map((option) => (
-            <NativeSelectOption key={option.value} value={option.value}>
-              {option.label}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
+      <div className={'flex flex-wrap items-center justify-between gap-3'}>
+        <div className={'flex flex-wrap items-center gap-3'}>
+          <NativeSelect
+            value={sourceFilter}
+            onChange={(event) => setSourceFilter(event.target.value)}
+            className={'w-56'}
+            aria-label={'Lọc theo nguồn ảnh'}
+          >
+            {SOURCE_OPTIONS.map((option) => (
+              <NativeSelectOption key={option.value} value={option.value}>
+                {option.label}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
 
-        <span className={'text-muted-foreground text-sm'}>
-          {filtered.length} ảnh
-        </span>
+          <span className={'text-muted-foreground text-sm'}>
+            {filtered.length} ảnh
+          </span>
+        </div>
+
+        <MediaUploadDialog />
       </div>
 
       {!deleteState.ok && (

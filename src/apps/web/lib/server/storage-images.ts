@@ -18,12 +18,18 @@ const EXT_BY_MIME: Record<string, string> = {
 };
 
 /** Thư mục đích trong bucket cho từng nguồn ảnh (dùng để lọc ở /admin/media). */
-export type MediaFolder = 'recipes' | 'tips' | 'categories' | 'uploads';
+export type MediaFolder =
+  | 'recipes'
+  | 'tips'
+  | 'categories'
+  | 'banners'
+  | 'uploads';
 
 const ALLOWED_FOLDERS: readonly MediaFolder[] = [
   'recipes',
   'tips',
   'categories',
+  'banners',
   'uploads',
 ];
 
