@@ -14,6 +14,7 @@ import type {
   CategoryRow,
   RecipeDetail,
 } from '~/lib/recipes/database';
+import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import { slugify } from '~/lib/recipes/slugify';
 
 import { saveRecipeAction } from '../actions';
@@ -40,8 +41,11 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [slug, setSlug] = useState(initial?.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(Boolean(initial?.slug));
+  const [existingImageUrl, setExistingImageUrl] = useState(
+    initial?.image_url ?? '',
+  );
   const [preview, setPreview] = useState<string | null>(
-    initial?.image_url ?? null,
+    resolveRecipeImageSrc(initial?.image_url) ?? null,
   );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +60,7 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
 
   const handleFileChange = (file: File | undefined) => {
     if (!file) {
-      setPreview(initial?.image_url ?? null);
+      setPreview(resolveRecipeImageSrc(existingImageUrl) ?? null);
       return;
     }
 
@@ -70,7 +74,7 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
       <input
         type={'hidden'}
         name={'existing_image_url'}
-        value={initial?.image_url ?? ''}
+        value={existingImageUrl}
       />
 
       <div className={'grid grid-cols-1 gap-4 sm:grid-cols-2'}>
@@ -277,13 +281,31 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
           </p>
 
           {preview && (
-            <div className={'mt-1'}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={preview}
-                alt={'Xem trước ảnh đại diện'}
-                className={'h-40 w-auto rounded-md border object-cover'}
-              />
+            <div className={'mt-2 flex flex-col items-start gap-2'}>
+              <div className={'relative overflow-hidden rounded-lg border bg-muted shadow-sm'}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={preview}
+                  alt={'Xem trước ảnh đại diện'}
+                  className={'h-44 w-auto max-w-full rounded-md object-cover'}
+                />
+              </div>
+
+              <Button
+                type={'button'}
+                variant={'outline'}
+                size={'sm'}
+                onClick={() => {
+                  setPreview(null);
+                  setExistingImageUrl('');
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                }}
+                className={'text-xs text-destructive hover:text-destructive'}
+              >
+                Xóa ảnh đại diện
+              </Button>
             </div>
           )}
         </div>
