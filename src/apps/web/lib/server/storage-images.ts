@@ -64,7 +64,20 @@ export async function uploadStorageImage(
     file.name.split('.').pop()?.toLowerCase() ??
     'jpg';
 
-  const path = `${folder}/${Date.now()}-${randomUUID()}.${ext}`;
+  const rawBaseName = file.name.replace(/\.[^/.]+$/, '').trim();
+  const cleanBaseName =
+    rawBaseName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9_-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'anh';
+
+  // Chèn mã ngắn ngẫu nhiên 4 ký tự thay vì UUID dài ngoằn để vừa tránh trùng vừa giữ tên gốc
+  const shortCode = Math.random().toString(36).substring(2, 6);
+  const path = `${folder}/${cleanBaseName}-${shortCode}.${ext}`;
 
   const storage = getSupabaseServerAdminClient().storage.from(MEDIA_BUCKET);
 
