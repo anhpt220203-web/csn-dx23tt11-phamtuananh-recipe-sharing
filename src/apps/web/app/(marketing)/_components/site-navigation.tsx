@@ -2,144 +2,171 @@ import { Suspense } from 'react';
 
 import Link from 'next/link';
 
-import { Menu } from 'lucide-react';
+import {
+  Heart,
+  Home,
+  Menu,
+  Search,
+  Sparkles,
+  UtensilsCrossed,
+} from 'lucide-react';
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@kit/ui/dropdown-menu';
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
-} from '@kit/ui/navigation-menu';
 
 import { SiteNavigationItem } from './site-navigation-item';
 
-/**
- * Add your navigation links here
- *
- * @example
- *
- * {
- *   FAQ: {
- *     label: 'marketing.faq',
- *     path: '/faq',
- *   },
- *   Pricing: {
- *     label: 'marketing.pricing',
- *     path: '/pricing',
- *   },
- * }
- */
-
-const links: Record<
-  string,
+export const NAVIGATION_LINKS = [
   {
-    label: string;
-    path: string;
-  }
-> = {
-  DanhMuc: {
+    key: 'TrangChu',
+    label: 'Trang chủ',
+    path: '/',
+    icon: Home,
+  },
+  {
+    key: 'DanhMuc',
     label: 'Danh mục',
     path: '/danh-muc',
+    icon: UtensilsCrossed,
   },
-  TimKiem: {
+  {
+    key: 'MeoVat',
+    label: 'Mẹo vặt',
+    path: '/meo-vat',
+    icon: Sparkles,
+  },
+  {
+    key: 'TimKiem',
     label: 'Tìm kiếm',
     path: '/tim-kiem',
+    icon: Search,
   },
-  /*
-    FAQ: {
-      label: 'marketing.faq',
-      path: '/faq',
-    },
-     */
-};
+];
 
+/**
+ * Menu điều hướng desktop dạng segmented pill hiện đại
+ */
 export function SiteNavigation() {
   return (
-    <>
-      <div className={'hidden items-center justify-center md:flex'}>
-        <NavigationMenu className={'px-4 py-2'}>
-          <NavigationMenuList className={'space-x-5'}>
-            {/*
-              SiteNavigationItem dùng `usePathname()` nên không thể prerender
-              tĩnh: bọc trong Suspense để phần active-state stream sau, layout
-              (marketing) vẫn được cache dùng chung cho mọi trang.
-            */}
-            <Suspense fallback={<StaticNavItems />}>
-              <DynamicNavItems />
-            </Suspense>
-          </NavigationMenuList>
-        </NavigationMenu>
-      </div>
-
-      <div className={'flex justify-start sm:items-center md:hidden'}>
-        <MobileDropdown />
-      </div>
-    </>
+    <nav
+      aria-label={'Menu chính'}
+      className={
+        'flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 p-1 backdrop-blur-xs'
+      }
+    >
+      <Suspense fallback={<StaticNavItems />}>
+        <DynamicNavItems />
+      </Suspense>
+    </nav>
   );
 }
 
 /**
- * Link điều hướng tĩnh (không active-state) — fallback lúc prerender,
- * vẫn đầy đủ link cho SEO và khi chưa có JS.
+ * Menu điều hướng mobile (Dropdown menu dạng popover gọn gàng)
+ */
+export function MobileNavigation() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={'Mở menu điều hướng'}
+        className={
+          'flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 text-foreground transition-colors hover:bg-muted/80'
+        }
+      >
+        <Menu className={'h-5 w-5'} />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        className={'w-56 p-1.5'}
+        align={'start'}
+        sideOffset={8}
+      >
+        <div
+          className={
+            'px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground'
+          }
+        >
+          Menu điều hướng
+        </div>
+
+        {NAVIGATION_LINKS.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <DropdownMenuItem
+              key={item.path}
+              className={'cursor-pointer rounded-md py-2'}
+              render={
+                <Link
+                  className={'flex w-full items-center gap-2.5 font-medium'}
+                  href={item.path}
+                />
+              }
+            >
+              <Icon className={'h-4 w-4 text-muted-foreground'} />
+              <span>{item.label}</span>
+            </DropdownMenuItem>
+          );
+        })}
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          className={'cursor-pointer rounded-md py-2'}
+          render={
+            <Link
+              className={
+                'flex w-full items-center gap-2.5 font-medium text-red-600 dark:text-red-400'
+              }
+              href={'/yeu-thich'}
+            />
+          }
+        >
+          <Heart className={'h-4 w-4 fill-red-500 text-red-500'} />
+          <span>Món yêu thích</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/**
+ * Fallback tĩnh cho SEO và trước khi JS hydrate
  */
 function StaticNavItems() {
   return (
     <>
-      {Object.values(links).map((item) => (
-        <NavigationMenuItem key={item.path}>
-          <Link
-            className={
-              'inline-flex w-max text-sm font-medium transition-colors duration-300'
-            }
-            href={item.path}
-          >
-            {item.label}
-          </Link>
-        </NavigationMenuItem>
+      {NAVIGATION_LINKS.map((item) => (
+        <Link
+          key={item.path}
+          href={item.path}
+          className={
+            'inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:text-foreground'
+          }
+        >
+          {item.label}
+        </Link>
       ))}
     </>
   );
 }
 
-/** Link điều hướng có active-state theo pathname hiện tại (client hook). */
+/**
+ * Item động có active state
+ */
 function DynamicNavItems() {
   return (
     <>
-      {Object.values(links).map((item) => (
+      {NAVIGATION_LINKS.map((item) => (
         <SiteNavigationItem key={item.path} path={item.path}>
           {item.label}
         </SiteNavigationItem>
       ))}
     </>
-  );
-}
-
-function MobileDropdown() {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger aria-label={'Mở menu'}>
-        <Menu className={'h-8 w-8'} />
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent className={'w-full'}>
-        {Object.values(links).map((item) => {
-          const className = 'flex w-full h-full items-center';
-
-          return (
-            <DropdownMenuItem
-              key={item.path}
-              render={<Link className={className} href={item.path} />}
-            >
-              {item.label}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

@@ -3,20 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { NavigationMenuItem } from '@kit/ui/navigation-menu';
 import { cn, isRouteActive } from '@kit/ui/utils';
-
-const getClassName = (path: string, currentPathName: string) => {
-  const isActive = isRouteActive(path, currentPathName);
-
-  return cn(
-    `inline-flex w-max text-sm font-medium transition-colors duration-300`,
-    {
-      'dark:text-gray-300 dark:hover:text-white': !isActive,
-      'text-current dark:text-white': isActive,
-    },
-  );
-};
 
 export function SiteNavigationItem({
   path,
@@ -25,13 +12,19 @@ export function SiteNavigationItem({
   path: string;
 }>) {
   const currentPathName = usePathname();
-  const className = getClassName(path, currentPathName);
+  const isActive = isRouteActive(path, currentPathName);
 
   return (
-    <NavigationMenuItem key={path}>
-      <Link className={className} href={path}>
-        {children}
-      </Link>
-    </NavigationMenuItem>
+    <Link
+      href={path}
+      className={cn(
+        'relative inline-flex items-center px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 select-none',
+        isActive
+          ? 'bg-background text-primary font-semibold shadow-xs ring-1 ring-border/60'
+          : 'text-muted-foreground hover:text-foreground hover:bg-background/50',
+      )}
+    >
+      {children}
+    </Link>
   );
 }
