@@ -20,6 +20,9 @@ export async function deleteMediaFileAction(
     await requireAdminUser();
 
     const path = String(formData.get('path') ?? '').trim();
+    const rawBucket = String(formData.get('bucket') ?? MEDIA_BUCKET).trim();
+    const bucket =
+      rawBucket === 'account_image' ? 'account_image' : MEDIA_BUCKET;
 
     if (
       path.length === 0 ||
@@ -30,12 +33,25 @@ export async function deleteMediaFileAction(
       return { ok: false, message: 'Đường dẫn file không hợp lệ.' };
     }
 
-    const { error } = await getSupabaseServerAdminClient()
-      .storage.from(MEDIA_BUCKET)
-      .remove([path]);
+    const admin = getSupabaseServerAdminClient();
+
+    const { error } = await admin.storage.from(bucket).remove([path]);
 
     if (error) {
       return { ok: false, message: `Không xóa được ảnh: ${error.message}` };
+    }
+
+    // Nếu xóa avatar trong bucket account_image, xóa luôn liên kết trong bảng accounts
+    if (bucket === 'account_image') {
+      const fileName = path.split('/').pop()?.split('?')[0];
+      const userId = fileName?.split('.')[0];
+
+      if (userId) {
+        await admin
+          .from('accounts')
+          .update({ picture_url: null })
+          .eq('id', userId);
+      }
     }
 
     revalidatePath('/admin/media');

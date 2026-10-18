@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server';
  * (server mới fetch thật bằng SUPABASE_URL phía server). Chỉ cho phép bucket
  * trong danh sách dưới để tránh bị dùng làm open proxy.
  */
-const ALLOWED_BUCKETS = new Set(['recipe-images']);
+const ALLOWED_BUCKETS = new Set(['recipe-images', 'account_image']);
 
 export async function GET(
   _request: NextRequest,

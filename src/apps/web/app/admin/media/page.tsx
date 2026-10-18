@@ -18,7 +18,7 @@ export const instant = false;
  * Các thư mục nguồn trong bucket `recipe-images` (khớp với
  * `MediaFolder` trong lib/server/storage-images).
  */
-const MEDIA_FOLDERS = ['recipes', 'tips', 'categories', 'uploads'] as const;
+const MEDIA_FOLDERS = ['recipes', 'tips', 'categories', 'uploads', 'avatars'] as const;
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 5; // giới hạn 500 file/thư mục để trang không quá nặng
@@ -31,6 +31,10 @@ function toSourceLabel(folder: string): string {
       return 'tips';
     case 'categories':
       return 'categories';
+    case 'banners':
+      return 'banners';
+    case 'avatars':
+      return 'avatars';
     case 'uploads':
       return 'uploads';
     default:
@@ -39,19 +43,20 @@ function toSourceLabel(folder: string): string {
 }
 
 /**
- * Liệt kê toàn bộ file trong một prefix của bucket (phân trang bằng offset).
+ * Liệt kê toàn bộ file trong một bucket và prefix (phân trang bằng offset).
  */
-async function listFolder(prefix: string): Promise<MediaItem[]> {
+async function listFolder(bucket: string, prefix: string): Promise<MediaItem[]> {
   const admin = getSupabaseServerAdminClient();
   const items: MediaItem[] = [];
 
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const { data, error } = await admin.storage
-      .from(MEDIA_BUCKET)
+      .from(bucket)
       .list(prefix, { limit: PAGE_SIZE, offset: page * PAGE_SIZE });
 
     if (error) {
-      throw new Error(`Không liệt kê được ảnh (${prefix}): ${error.message}`);
+      console.warn(`Không liệt kê được ảnh (${bucket}/${prefix}): ${error.message}`);
+      return [];
     }
 
     const files = data ?? [];
@@ -65,7 +70,8 @@ async function listFolder(prefix: string): Promise<MediaItem[]> {
       items.push({
         path: prefix ? `${prefix}/${file.name}` : file.name,
         name: file.name,
-        source: toSourceLabel(prefix),
+        bucket,
+        source: bucket === 'account_image' ? 'avatars' : toSourceLabel(prefix),
         createdAt: file.created_at ?? null,
         size: file.metadata?.size ?? null,
       });
@@ -99,24 +105,36 @@ export default async function MediaAdminPage() {
 
   const admin = getSupabaseServerAdminClient();
 
-  const [folders, rootItems, recipesRes, tipsRes, categoriesRes, bannersRes] =
-    await Promise.all([
-      Promise.all(MEDIA_FOLDERS.map(listFolder)),
-      listFolder(''),
-      admin
-        .from('recipes')
-        .select('image_url, title')
-        .not('image_url', 'is', null),
-      admin.from('tips').select('image_url, title').not('image_url', 'is', null),
-      admin
-        .from('categories')
-        .select('image_url, name')
-        .not('image_url', 'is', null),
-      admin
-        .from('banners')
-        .select('image_url, title')
-        .not('image_url', 'is', null),
-    ]);
+  const [
+    recipeImageFolders,
+    recipeImageRootItems,
+    avatarBucketItems,
+    recipesRes,
+    tipsRes,
+    categoriesRes,
+    bannersRes,
+    accountsRes,
+  ] = await Promise.all([
+    Promise.all(MEDIA_FOLDERS.map((f) => listFolder(MEDIA_BUCKET, f))),
+    listFolder(MEDIA_BUCKET, ''),
+    listFolder('account_image', ''),
+    admin
+      .from('recipes')
+      .select('image_url, title')
+      .not('image_url', 'is', null),
+    admin.from('tips').select('image_url, title').not('image_url', 'is', null),
+    admin
+      .from('categories')
+      .select('image_url, name')
+      .not('image_url', 'is', null),
+    admin
+      .from('banners')
+      .select('image_url, title')
+      .not('image_url', 'is', null),
+    admin
+      .from('accounts')
+      .select('id, name, email, picture_url'),
+  ]);
 
   const recipeMap = new Map<string, string>();
   for (const r of recipesRes.data ?? []) {
@@ -158,13 +176,31 @@ export default async function MediaAdminPage() {
     }
   }
 
-  // Bỏ các mục trùng tên thư mục đã liệt kê ở root.
+  const accountMap = new Map<string, string>();
+  for (const a of accountsRes.data ?? []) {
+    const displayName = a.name
+      ? `${a.name}${a.email ? ` (${a.email})` : ''}`
+      : (a.email ?? 'Tài khoản người dùng');
+    accountMap.set(a.id, displayName);
+    if (a.picture_url) {
+      const p = normalizePath(a.picture_url);
+      const name = p.split('/').pop()?.split('?')[0] ?? '';
+      accountMap.set(p, displayName);
+      accountMap.set(name, displayName);
+    }
+  }
+
+  // Bỏ các mục trùng tên thư mục đã liệt kê ở root của recipe-images.
   const knownFolders = new Set<string>(MEDIA_FOLDERS);
-  const extraItems = rootItems.filter(
+  const extraItems = recipeImageRootItems.filter(
     (item) => !knownFolders.has(item.name.split('/')[0] ?? ''),
   );
 
-  const rawItems = [...folders.flat(), ...extraItems];
+  const rawItems = [
+    ...recipeImageFolders.flat(),
+    ...extraItems,
+    ...avatarBucketItems,
+  ];
 
   const items: MediaItem[] = rawItems
     .map((item) => {
@@ -172,6 +208,18 @@ export default async function MediaAdminPage() {
       let usedIn: string | null = null;
 
       if (
+        item.bucket === 'account_image' ||
+        source === 'avatars' ||
+        item.path.startsWith('avatars/')
+      ) {
+        source = 'avatars';
+        const userId = item.name.split('.')[0] ?? '';
+        usedIn =
+          accountMap.get(userId) ||
+          accountMap.get(item.path) ||
+          accountMap.get(item.name) ||
+          'Tài khoản người dùng';
+      } else if (
         recipeMap.has(item.path) ||
         recipeMap.has(item.name) ||
         item.path.startsWith('recipes/')
@@ -223,8 +271,9 @@ export default async function MediaAdminPage() {
         <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý media</h1>
 
         <p className={'text-muted-foreground mt-1 text-sm'}>
-          Toàn bộ ảnh đã tải lên kho lưu trữ (bucket “recipe-images”). Lọc
-          theo nguồn, xem ảnh gốc hoặc xóa ảnh không còn dùng.
+          Toàn bộ ảnh đã tải lên kho lưu trữ (công thức, mẹo vặt, danh mục, banner
+          và avatar tài khoản người dùng). Lọc theo nguồn, xem ảnh gốc hoặc xóa ảnh
+          không còn dùng.
         </p>
       </div>
 
