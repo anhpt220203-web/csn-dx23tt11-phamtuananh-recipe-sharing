@@ -1,8 +1,14 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 
 import { SearchX } from 'lucide-react';
 
-import { getCategories, parseSearchSort, searchRecipes } from '~/lib/recipes/queries';
+import {
+  getCategories,
+  listPublishedRecipes,
+  parseSearchSort,
+  searchRecipes,
+} from '~/lib/recipes/queries';
 import { getFavoriteRecipeIds } from '~/lib/recipes/favorites';
 
 import { RecipeCard } from '~/components/recipes/recipe-card';
@@ -12,16 +18,19 @@ import { SitePageHeader } from '../_components/site-page-header';
 import { CategoryChipNav } from '../_components/category-chip-nav';
 
 export const metadata: Metadata = {
-  title: 'Tìm kiếm công thức',
+  title: 'Danh sách món ăn',
   description:
-    'Tìm kiếm công thức nấu ăn theo tên món, nguyên liệu hoặc nhóm món.',
+    'Duyệt toàn bộ công thức nấu ăn: tìm kiếm theo tên món, nguyên liệu, lọc theo nhóm món và sắp xếp.',
 };
+
+export const instant = false;
 
 type SearchPageProps = {
   searchParams: Promise<{ q?: string; category?: string; sort?: string }>;
 };
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
+  await connection();
   const params = await searchParams;
   const q = (params.q ?? '').trim();
   const categorySlug = params.category || undefined;
@@ -29,7 +38,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const categories = await getCategories();
 
-  const results = q ? await searchRecipes({ q, categorySlug, sort }) : [];
+  // Có từ khoá → tìm kiếm; không có → duyệt toàn bộ catalog (kiểu
+  // /tim-kiem-mon-ngon của trang tham chiếu).
+  const results = q
+    ? await searchRecipes({ q, categorySlug, sort })
+    : await listPublishedRecipes({ categorySlug, sort });
 
   const favoriteIds = await getFavoriteRecipeIds(
     results.map((recipe) => recipe.id),
@@ -42,8 +55,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <div>
       <SitePageHeader
-        title={'Tìm kiếm công thức'}
-        subtitle={'Nhập tên món ăn hoặc nguyên liệu, có thể lọc theo nhóm món.'}
+        title={q ? 'Tìm kiếm công thức' : 'Danh sách món ăn'}
+        subtitle={
+          q
+            ? 'Nhập tên món ăn hoặc nguyên liệu, có thể lọc theo nhóm món.'
+            : 'Duyệt toàn bộ công thức: tìm theo tên món, nguyên liệu, lọc theo nhóm món và sắp xếp.'
+        }
       />
 
       <div className={'container mx-auto py-8'}>
@@ -65,11 +82,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         </div>
 
         <div className={'mt-2'}>
-          {!q ? (
-            <p className={'text-muted-foreground'}>
-              Nhập từ khóa vào ô tìm kiếm để bắt đầu.
-            </p>
-          ) : results.length === 0 ? (
+          {results.length === 0 ? (
             <div
               className={
                 'text-muted-foreground flex flex-col items-center gap-3 py-16 text-center'
@@ -77,20 +90,38 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             >
               <SearchX className={'h-10 w-10'} aria-hidden={true} />
               <p>
-                Không tìm thấy công thức nào cho “{q}”
-                {activeCategory ? ` trong nhóm “${activeCategory.name}”` : ''}.
-                Hãy thử từ khóa khác hoặc bỏ bộ lọc nhóm món.
+                {q
+                  ? `Không tìm thấy công thức nào cho “${q}”${
+                      activeCategory ? ` trong nhóm “${activeCategory.name}”` : ''
+                    }. Hãy thử từ khóa khác hoặc bỏ bộ lọc nhóm món.`
+                  : 'Chưa có công thức nào được xuất bản. Vui lòng quay lại sau.'}
               </p>
             </div>
           ) : (
             <>
               <p className={'text-muted-foreground mb-6 text-sm'}>
-                Tìm thấy{' '}
-                <span className={'text-primary font-semibold'}>
-                  {results.length}
-                </span>{' '}
-                kết quả cho “{q}”
-                {activeCategory ? ` trong nhóm “${activeCategory.name}”` : ''}.
+                {q ? (
+                  <>
+                    Tìm thấy{' '}
+                    <span className={'text-primary font-semibold'}>
+                      {results.length}
+                    </span>{' '}
+                    kết quả cho “{q}”
+                    {activeCategory
+                      ? ` trong nhóm “${activeCategory.name}”`
+                      : ''}
+                    .
+                  </>
+                ) : (
+                  <>
+                    <span className={'text-primary font-semibold'}>
+                      {results.length}
+                    </span>{' '}
+                    món ăn được hiển thị
+                    {activeCategory ? ` trong nhóm “${activeCategory.name}”` : ''}
+                    .
+                  </>
+                )}
               </p>
 
               <div

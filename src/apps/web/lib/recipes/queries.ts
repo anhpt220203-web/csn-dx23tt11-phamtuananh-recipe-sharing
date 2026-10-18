@@ -172,6 +172,87 @@ function toRecipeSearchResult(row: RecipeSearchRow): RecipeSearchResult {
 }
 
 /**
+ * Liệt kê TOÀN BỘ công thức đã xuất bản (không cần từ khoá) — dùng cho trang
+ * danh sách món ăn kiểu "/tim-kiem-mon-ngon". Lọc theo slug danh mục, sắp xếp
+ * mới nhất hoặc đánh giá cao (tổng hợp ratings phía ứng dụng — quy mô demo nhỏ).
+ */
+export async function listPublishedRecipes(params: {
+  categorySlug?: string;
+  sort?: SearchSort;
+  limit?: number;
+}): Promise<RecipeSearchResult[]> {
+  const client = getClient();
+
+  let query = client
+    .from('recipes')
+    .select(RECIPE_COLUMNS)
+    .eq('status', 'published')
+    .limit(params.limit ?? 200);
+
+  if (params.categorySlug) {
+    const category = await getCategoryBySlug(params.categorySlug);
+
+    if (!category) {
+      return [];
+    }
+
+    query = query.eq('category_id', category.id);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Không tải được danh sách công thức: ${error.message}`);
+  }
+
+  const recipes = ((data ?? []) as unknown as RecipeQueryRow[]).map(
+    toRecipeWithCategory,
+  );
+
+  if (params.sort !== 'danh-gia-cao') {
+    return recipes.map((recipe) => ({
+      ...recipe,
+      rating: { average: null, count: 0 },
+    }));
+  }
+
+  const { data: ratingRows, error: ratingError } = await client
+    .from('ratings')
+    .select('recipe_id,rating');
+
+  if (ratingError) {
+    throw new Error(`Không tải được đánh giá: ${ratingError.message}`);
+  }
+
+  const totals = new Map<number, { sum: number; count: number }>();
+
+  for (const row of ratingRows ?? []) {
+    const current = totals.get(row.recipe_id) ?? { sum: 0, count: 0 };
+    current.sum += row.rating;
+    current.count += 1;
+    totals.set(row.recipe_id, current);
+  }
+
+  return recipes
+    .map((recipe) => {
+      const summary = totals.get(recipe.id);
+
+      return {
+        ...recipe,
+        rating: {
+          average: summary ? summary.sum / summary.count : null,
+          count: summary?.count ?? 0,
+        },
+      };
+    })
+    .sort(
+      (a, b) =>
+        (b.rating.average ?? 0) - (a.rating.average ?? 0) ||
+        b.rating.count - a.rating.count,
+    );
+}
+
+/**
  * Danh sách nhóm món, sắp theo thứ tự id.
  */
 export async function getCategories(): Promise<CategoryRow[]> {
