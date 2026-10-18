@@ -29,7 +29,7 @@ type AdminImagePickerProps = {
  * Hiển thị xem trước và nút xóa ảnh. Dùng chung cho công thức, mẹo vặt,
  * danh mục để UI đồng nhất.
  */
-function sanitizePreviewUrl(url: string | null | undefined): string | null {
+export function sanitizePreviewUrl(url: string | null | undefined): string | null {
   if (!url) {
     return null;
   }

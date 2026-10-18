@@ -305,72 +305,72 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
                         <span>Xem</span>
                       </Button>
 
-                    <AlertDialog
-                      open={confirmPath === item.path}
-                      onOpenChange={(open) =>
-                        setConfirmPath(open ? item.path : null)
-                      }
-                    >
-                      <AlertDialogTrigger
-                        render={
-                          <Button
-                            type={'button'}
-                            variant={'destructive'}
-                            size={'sm'}
-                            className={'gap-1'}
-                          />
+                      <AlertDialog
+                        open={confirmPath === item.path}
+                        onOpenChange={(open: any) =>
+                          setConfirmPath(open ? item.path : null)
                         }
                       >
-                        <Trash2 className={'h-3.5 w-3.5'} />
-                        <span>Xóa</span>
-                      </AlertDialogTrigger>
-
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Xóa ảnh khỏi kho lưu trữ?
-                          </AlertDialogTitle>
-
-                          <AlertDialogDescription>
-                            Ảnh “{item.name}” sẽ bị xóa vĩnh viễn khỏi
-                            Storage. Các bài viết đang dùng ảnh này sẽ bị
-                            hỏng ảnh. Thao tác không thể hoàn tác.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-
-                        <AlertDialogFooter>
-                          <AlertDialogCancel disabled={deletePending}>
-                            Hủy
-                          </AlertDialogCancel>
-
-                          <form action={deleteAction}>
-                            <input
-                              type={'hidden'}
-                              name={'path'}
-                              value={item.path}
+                        <AlertDialogTrigger
+                          render={
+                            <Button
+                              type={'button'}
+                              variant={'destructive'}
+                              size={'sm'}
+                              className={'gap-1'}
                             />
-                            <input
-                              type={'hidden'}
-                              name={'bucket'}
-                              value={item.bucket ?? 'recipe-images'}
-                            />
+                          }
+                        >
+                          <Trash2 className={'h-3.5 w-3.5'} />
+                          <span>Xóa</span>
+                        </AlertDialogTrigger>
 
-                            <AlertDialogAction
-                              type={'submit'}
-                              disabled={deletePending}
-                              className={
-                                'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                              }
-                            >
-                              {deletePending ? 'Đang xóa...' : 'Xóa ảnh'}
-                            </AlertDialogAction>
-                          </form>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Xóa ảnh khỏi kho lưu trữ?
+                            </AlertDialogTitle>
+
+                            <AlertDialogDescription>
+                              Ảnh “{item.name}” sẽ bị xóa vĩnh viễn khỏi
+                              Storage. Các bài viết đang dùng ảnh này sẽ bị
+                              hỏng ảnh. Thao tác không thể hoàn tác.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={deletePending}>
+                              Hủy
+                            </AlertDialogCancel>
+
+                            <form action={deleteAction}>
+                              <input
+                                type={'hidden'}
+                                name={'path'}
+                                value={item.path}
+                              />
+                              <input
+                                type={'hidden'}
+                                name={'bucket'}
+                                value={item.bucket ?? 'recipe-images'}
+                              />
+
+                              <AlertDialogAction
+                                type={'submit'}
+                                disabled={deletePending}
+                                className={
+                                  'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                                }
+                              >
+                                {deletePending ? 'Đang xóa...' : 'Xóa ảnh'}
+                              </AlertDialogAction>
+                            </form>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
+                </CardContent>
               </Card>
             </li>
           ))}

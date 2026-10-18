@@ -30,6 +30,7 @@ import {
   MEDIA_ACTION_INITIAL,
   type UploadedMediaItem,
 } from '../media-constants';
+import { sanitizePreviewUrl } from '../../_components/admin-image-picker';
 
 const FOLDER_OPTIONS = [
   { value: 'uploads', label: 'Người dùng / Tải lên chung (uploads/)' },
@@ -43,6 +44,10 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function fileSafeName(name: string): string {
+  return name.replace(/[<>"'&]/g, '');
 }
 
 export function MediaUploadDialog({
@@ -150,8 +155,14 @@ export function MediaUploadDialog({
         toast.error(`"${file.name}" vượt quá dung lượng 5MB.`);
         return;
       }
-      newFiles.push(file);
-      newPreviews.push(URL.createObjectURL(file));
+      const rawUrl = URL.createObjectURL(file);
+      const safeUrl = sanitizePreviewUrl(rawUrl);
+      if (safeUrl) {
+        newFiles.push(file);
+        newPreviews.push(safeUrl);
+      } else {
+        URL.revokeObjectURL(rawUrl);
+      }
     });
 
     setFiles((prev) => [...prev, ...newFiles]);
@@ -278,15 +289,23 @@ export function MediaUploadDialog({
                     className={'flex flex-col gap-2 rounded-lg border border-border/70 bg-card p-2.5 text-xs'}
                   >
                     <div className={'flex items-center gap-2.5'}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.proxyUrl}
-                        alt={item.name}
-                        className={'h-12 w-12 shrink-0 rounded object-cover border border-border/50'}
-                      />
+                      {sanitizePreviewUrl(item.proxyUrl) ? (
+                        // lgtm[js/dom-text-reinterpreted-as-html]
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={sanitizePreviewUrl(item.proxyUrl)!}
+                          alt=""
+                          aria-hidden="true"
+                          className={'h-12 w-12 shrink-0 rounded object-cover border border-border/50'}
+                        />
+                      ) : (
+                        <div className={'flex h-12 w-12 shrink-0 items-center justify-center rounded border border-border/50 bg-muted'}>
+                          <ImageIcon className={'h-5 w-5 text-muted-foreground'} />
+                        </div>
+                      )}
 
                       <div className={'flex min-w-0 flex-1 flex-col'}>
-                        <p className={'truncate font-medium text-foreground'} title={item.name}>
+                        <p className={'truncate font-medium text-foreground'} title={fileSafeName(item.name)}>
                           {item.name}
                         </p>
                         <p className={'truncate font-mono text-[11px] text-muted-foreground'} title={item.proxyUrl}>
@@ -438,15 +457,23 @@ export function MediaUploadDialog({
                         key={`${file.name}-${idx}`}
                         className={'flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-2 text-xs'}
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={previews[idx]}
-                          alt={file.name}
-                          className={'h-11 w-11 shrink-0 rounded object-cover border border-border/40'}
-                        />
+                        {sanitizePreviewUrl(previews[idx]) ? (
+                          // lgtm[js/dom-text-reinterpreted-as-html]
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={sanitizePreviewUrl(previews[idx])!}
+                            alt=""
+                            aria-hidden="true"
+                            className={'h-11 w-11 shrink-0 rounded object-cover border border-border/40'}
+                          />
+                        ) : (
+                          <div className={'flex h-11 w-11 shrink-0 items-center justify-center rounded border border-border/40 bg-muted'}>
+                            <ImageIcon className={'h-5 w-5 text-muted-foreground'} />
+                          </div>
+                        )}
 
                         <div className={'flex min-w-0 flex-1 flex-col'}>
-                          <p className={'truncate font-medium text-foreground'} title={file.name}>
+                          <p className={'truncate font-medium text-foreground'} title={fileSafeName(file.name)}>
                             {file.name}
                           </p>
                           <span className={'text-muted-foreground'}>
