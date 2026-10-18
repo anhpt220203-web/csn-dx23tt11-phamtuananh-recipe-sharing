@@ -1,12 +1,19 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
-import { ExternalLink, Layers, Plus, Search, Utensils } from 'lucide-react';
+import { ExternalLink, Layers, Plus, Utensils } from 'lucide-react';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
 import { Button } from '@kit/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@kit/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
 
 import { PaginationNav } from '~/(marketing)/_components/pagination-nav';
@@ -118,18 +125,32 @@ export default async function CategoriesAdminPage({
 
   const categories = data ?? [];
   const total = count ?? 0;
-  const totalPages = Math.ceil(total / PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+
+  if (page > totalPages && total > 0) {
+    redirect(
+      buildCategoriesHref({
+        q,
+        dimension,
+        page: totalPages,
+      }),
+    );
+  }
+
+  const hasActiveFilter = q !== '' || dimension !== 'all';
 
   return (
     <div className={'flex flex-col gap-6'}>
-      <div className={'flex flex-wrap items-center justify-between gap-4'}>
+      {/* Header trang & nút Thêm danh mục mới */}
+      <div className={'flex flex-wrap items-start justify-between gap-3'}>
         <div>
           <h1 className={'text-2xl font-bold tracking-tight'}>
             Quản lý danh mục
           </h1>
 
           <p className={'text-muted-foreground mt-1 text-sm'}>
-            Quản lý các nhóm phân loại món ăn ({total} danh mục). Danh mục còn công thức thì không xóa được.
+            Tổng cộng {total} danh mục trong hệ thống. Danh mục còn công thức thì không xóa được.
           </p>
         </div>
 
@@ -139,207 +160,206 @@ export default async function CategoriesAdminPage({
           render={
             <Link href={'/admin/danh-muc/moi'}>
               <Plus className={'h-4 w-4'} />
-              <span>Thêm danh mục mới</span>
+              <span>Thêm danh mục</span>
             </Link>
           }
         />
       </div>
 
-      {/* Cụm thống nhất: Gộp bộ lọc, tìm kiếm và danh sách danh mục trong 1 Card */}
-      <Card className={'shadow-xs'}>
-        <CardHeader className={'space-y-4 border-b border-border/50 pb-5'}>
-          <div className={'flex flex-wrap items-center justify-between gap-2'}>
-            <CardTitle className={'text-base font-semibold flex items-center gap-2'}>
-              <Layers className={'h-4 w-4 text-primary'} />
-              <span>Danh sách danh mục ({total})</span>
-            </CardTitle>
+      {/* Tabs lọc theo chiều phân loại */}
+      <div className={'flex flex-wrap gap-2'}>
+        {DIMENSION_OPTIONS.map((dim) => {
+          const active = dimension === dim.value;
 
-            {total > 0 && (
-              <span className={'text-xs text-muted-foreground'}>
-                Trang {page} / {Math.max(1, totalPages)}
-              </span>
-            )}
-          </div>
-
-          {/* Thanh công cụ tìm kiếm và lọc dimension */}
-          <form
-            method={'GET'}
-            action={'/admin/danh-muc'}
-            className={'flex flex-wrap items-center gap-3'}
-          >
-            <div className={'relative min-w-56 flex-1'}>
-              <Search className={'text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2'} />
-              <Input
-                name={'q'}
-                defaultValue={q}
-                placeholder={'Tìm kiếm theo tên danh mục, slug...'}
-                className={'h-8 pl-8 text-xs'}
-              />
-            </div>
-
-            <div className={'w-auto'}>
-              <select
-                name={'dimension'}
-                defaultValue={dimension}
-                className={'border-input bg-background rounded-md border px-3 py-1.5 text-xs h-8'}
-              >
-                {DIMENSION_OPTIONS.map((dim) => (
-                  <option key={dim.value} value={dim.value}>
-                    {dim.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <Button type={'submit'} variant={'secondary'} size={'sm'} className={'h-8 text-xs'}>
-              Tìm kiếm
-            </Button>
-
-            {(q || (dimension && dimension !== 'all')) && (
-              <Button
-                nativeButton={false}
-                variant={'ghost'}
-                size={'sm'}
-                className={'h-8 text-xs text-muted-foreground'}
-                render={<Link href={'/admin/danh-muc'}>Xóa bộ lọc</Link>}
-              />
-            )}
-          </form>
-        </CardHeader>
-
-        <CardContent className={'pt-5'}>
-          {categories.length === 0 ? (
-            <div className={'py-12 text-center'}>
-              <Layers className={'mx-auto h-10 w-10 text-muted-foreground/30 mb-2'} />
-              <p className={'text-muted-foreground text-sm font-medium'}>
-                {q || dimension !== 'all'
-                  ? 'Không tìm thấy danh mục nào phù hợp với bộ lọc.'
-                  : 'Chưa có danh mục nào. Hãy bấm "Thêm danh mục mới" ở trên để bắt đầu.'}
-              </p>
-            </div>
-          ) : (
-            /* Danh sách danh mục dạng lưới 2 cột */
-            <div className={'grid grid-cols-1 gap-4 lg:grid-cols-2'}>
-              {categories.map((category) => {
-                const recipeCount = countByCat.get(category.id) ?? 0;
-
-                return (
-                  <Card
-                    key={category.id}
-                    className={'flex flex-col justify-between overflow-hidden border-border/70 shadow-xs hover:shadow-sm transition-shadow'}
-                  >
-                    <CardHeader className={'p-4 pb-3 space-y-2.5'}>
-                      <div className={'flex items-start justify-between gap-3'}>
-                        <div className={'flex items-center gap-3 min-w-0'}>
-                          {category.image_url ? (
-                            <div
-                              className={
-                                'h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/60 bg-muted'
-                              }
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={category.image_url}
-                                alt={category.name}
-                                className={'h-full w-full object-cover'}
-                              />
-                            </div>
-                          ) : (
-                            <div className={'flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted text-muted-foreground'}>
-                              <Layers className={'h-5 w-5'} />
-                            </div>
-                          )}
-
-                          <div className={'min-w-0'}>
-                            <CardTitle className={'text-base font-semibold leading-snug line-clamp-1'}>
-                              {category.name}
-                            </CardTitle>
-
-                            <div className={'flex flex-wrap items-center gap-1.5 mt-1'}>
-                              <Badge variant={'secondary'} className={'font-mono text-[10px] h-4 px-1.5'}>
-                                {category.slug}
-                              </Badge>
-
-                              {category.dimension && (
-                                <span className={'text-muted-foreground text-xs'}>
-                                  · {DIMENSION_OPTIONS.find((d) => d.value === category.dimension)?.label ?? category.dimension}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <Badge
-                          variant={recipeCount > 0 ? 'default' : 'outline'}
-                          className={'text-[11px] shrink-0 h-5 px-2'}
-                        >
-                          {recipeCount} món
-                        </Badge>
-                      </div>
-
-                      {category.description && (
-                        <p className={'text-muted-foreground text-xs leading-relaxed line-clamp-2'}>
-                          {category.description}
-                        </p>
-                      )}
-                    </CardHeader>
-
-                    {/* Footer chứa nút "Xem danh mục", "Xem list công thức" và hành động Sửa/Xóa */}
-                    <CardFooter className={'p-4 pt-3 border-t border-border/40 bg-muted/10 flex flex-col gap-2.5'}>
-                      <div className={'flex flex-wrap items-center gap-2 w-full'}>
-                        {/* Nút xem danh mục công khai */}
-                        <Button
-                          nativeButton={false}
-                          variant={'outline'}
-                          size={'sm'}
-                          className={'h-8 gap-1.5 text-xs flex-1 min-w-32'}
-                          render={
-                            <Link
-                              href={`/danh-muc/${category.slug}`}
-                              target={'_blank'}
-                              rel={'noreferrer'}
-                              title={`Xem trang danh mục ${category.name} công khai`}
-                            >
-                              <ExternalLink className={'h-3.5 w-3.5'} />
-                              <span>Xem danh mục</span>
-                            </Link>
-                          }
-                        />
-
-                        {/* Nút xem list công thức trong danh mục */}
-                        <Button
-                          nativeButton={false}
-                          variant={'outline'}
-                          size={'sm'}
-                          className={'h-8 gap-1.5 text-xs flex-1 min-w-36'}
-                          render={
-                            <Link
-                              href={`/admin/cong-thuc?category=${category.slug}`}
-                              title={`Xem tất cả công thức thuộc danh mục ${category.name}`}
-                            >
-                              <Utensils className={'h-3.5 w-3.5 text-primary'} />
-                              <span>Xem list công thức ({recipeCount})</span>
-                            </Link>
-                          }
-                        />
-                      </div>
-
-                      {/* Các thao tác Sửa / Xóa */}
-                      <div className={'w-full pt-1 border-t border-border/30'}>
-                        <CategoryRowActions category={category} />
-                      </div>
-                    </CardFooter>
-                  </Card>
-                );
+          return (
+            <Link
+              key={dim.value}
+              href={buildCategoriesHref({
+                dimension: dim.value,
+                q,
+                page: 1,
               })}
+              aria-current={active ? 'page' : undefined}
+              className={
+                active
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-1.5 text-sm font-medium'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-3 py-1.5 text-sm font-medium'
+              }
+            >
+              {dim.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Bộ lọc theo từ khóa */}
+      <form
+        action={'/admin/danh-muc'}
+        method={'GET'}
+        role={'search'}
+        className={'flex flex-col gap-2 sm:flex-row sm:items-end'}
+      >
+        {dimension !== 'all' && (
+          <input type={'hidden'} name={'dimension'} value={dimension} />
+        )}
+
+        <div className={'flex-1'}>
+          <label
+            htmlFor={'admin-category-search'}
+            className={'mb-1 block text-xs font-medium'}
+          >
+            Tìm kiếm theo tên hoặc slug
+          </label>
+
+          <Input
+            id={'admin-category-search'}
+            name={'q'}
+            type={'search'}
+            defaultValue={q}
+            placeholder={'Nhập tên danh mục, slug…'}
+            className={'max-w-md'}
+          />
+        </div>
+
+        <div className={'flex gap-2'}>
+          <Button type={'submit'} size={'sm'}>
+            Lọc
+          </Button>
+
+          {hasActiveFilter && (
+            <Button
+              nativeButton={false}
+              size={'sm'}
+              variant={'outline'}
+              render={
+                <Link
+                  href={buildCategoriesHref({
+                    dimension: 'all',
+                    q: '',
+                    page: 1,
+                  })}
+                >
+                  Xoá lọc
+                </Link>
+              }
+            />
+          )}
+        </div>
+      </form>
+
+      {/* Danh sách danh mục */}
+      {categories.length === 0 ? (
+        <Card>
+          <CardContent className={'py-10 text-center'}>
+            <p className={'text-muted-foreground text-sm'}>
+              {hasActiveFilter
+                ? 'Không tìm thấy danh mục nào với bộ lọc hiện tại.'
+                : 'Chưa có danh mục nào. Hãy thêm danh mục đầu tiên.'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className={'flex flex-col gap-4'}>
+          {total > 0 && (
+            <div className={'flex items-center justify-between text-xs text-muted-foreground'}>
+              <span>
+                Hiển thị {from + 1}–{Math.min(to + 1, total)} trên tổng số {total} danh mục
+              </span>
             </div>
           )}
-        </CardContent>
 
-        {totalPages > 1 && (
-          <CardFooter className={'border-t border-border/40 pt-4 flex justify-center'}>
+          <div className={'grid grid-cols-1 gap-3 lg:grid-cols-2'}>
+            {categories.map((category) => {
+              const recipeCount = countByCat.get(category.id) ?? 0;
+
+              return (
+                <Card key={category.id} className={'hover:shadow-xs transition-shadow'}>
+                  <CardHeader className={'pb-3'}>
+                    <div className={'flex gap-3'}>
+                      {category.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={category.image_url}
+                          alt={category.name}
+                          className={'h-16 w-16 shrink-0 rounded-md object-cover border'}
+                          loading={'lazy'}
+                        />
+                      ) : (
+                        <div
+                          className={
+                            'bg-muted flex h-16 w-16 shrink-0 items-center justify-center rounded-md text-xs text-muted-foreground border'
+                          }
+                        >
+                          <Layers className={'h-6 w-6'} />
+                        </div>
+                      )}
+
+                      <div className={'min-w-0 flex-1'}>
+                        <CardTitle className={'truncate text-base'}>
+                          {category.name}
+                        </CardTitle>
+
+                        <div className={'flex items-center gap-2 mt-0.5'}>
+                          <CardDescription className={'truncate font-mono text-xs'}>
+                            {category.slug}
+                          </CardDescription>
+
+                          <Link
+                            href={`/danh-muc/${category.slug}`}
+                            target={'_blank'}
+                            rel={'noopener noreferrer'}
+                            className={
+                              'inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium shrink-0'
+                            }
+                            title={`Xem trang danh mục "${category.name}"`}
+                          >
+                            <span>Xem danh mục</span>
+                            <ExternalLink className={'h-3 w-3'} />
+                          </Link>
+                        </div>
+
+                        <div className={'mt-1.5 flex flex-wrap items-center gap-1.5'}>
+                          <Badge variant={'secondary'}>
+                            {DIMENSION_OPTIONS.find((d) => d.value === category.dimension)?.label ?? category.dimension}
+                          </Badge>
+
+                          <Badge variant={recipeCount > 0 ? 'default' : 'outline'}>
+                            {recipeCount} món
+                          </Badge>
+
+                          <Link
+                            href={`/admin/cong-thuc?category=${category.slug}`}
+                            className={
+                              'inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline ml-1'
+                            }
+                            title={`Xem tất cả công thức thuộc danh mục ${category.name}`}
+                          >
+                            <Utensils className={'h-3 w-3 text-primary'} />
+                            <span>Xem list ({recipeCount})</span>
+                          </Link>
+                        </div>
+
+                        {category.description && (
+                          <p className={'text-muted-foreground text-xs line-clamp-1 mt-1.5'}>
+                            {category.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className={'pt-0'}>
+                    <CategoryRowActions category={category} />
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Phân trang */}
+          <div className={'pt-2'}>
             <PaginationNav
-              currentPage={page}
+              currentPage={safePage}
               totalPages={totalPages}
               buildHref={(p: number) =>
                 buildCategoriesHref({
@@ -349,9 +369,9 @@ export default async function CategoriesAdminPage({
                 })
               }
             />
-          </CardFooter>
-        )}
-      </Card>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
