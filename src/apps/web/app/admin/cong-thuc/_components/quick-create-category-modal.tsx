@@ -22,6 +22,7 @@ import { Textarea } from '@kit/ui/textarea';
 import type { CategoryRow } from '~/lib/recipes/database';
 import { slugify } from '~/lib/recipes/slugify';
 
+import { AdminImagePicker } from '../../_components/admin-image-picker';
 import { createCategoryAction } from '../../danh-muc/actions';
 import { CATEGORY_ACTION_INITIAL } from '../../danh-muc/category-constants';
 
@@ -39,6 +40,7 @@ export function QuickCreateCategoryModal({
   onCategoryCreated: (category: CategoryRow) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [modalKey, setModalKey] = useState(0);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [slugTouched, setSlugTouched] = useState(false);
@@ -65,6 +67,7 @@ export function QuickCreateCategoryModal({
       setDimension('nhom-mon');
       setDescription('');
       setErrorMsg(null);
+      setModalKey((k) => k + 1);
     }
   };
 
@@ -73,12 +76,14 @@ export function QuickCreateCategoryModal({
     if (!name.trim() || isPending) return;
 
     setErrorMsg(null);
-    const formData = new FormData();
-    formData.append('name', name.trim());
-    formData.append('slug', (slug.trim() || slugify(name)).trim());
-    formData.append('dimension', dimension);
+    const formData = new FormData(e.currentTarget);
+    formData.set('name', name.trim());
+    formData.set('slug', (slug.trim() || slugify(name)).trim());
+    formData.set('dimension', dimension);
     if (description.trim()) {
-      formData.append('description', description.trim());
+      formData.set('description', description.trim());
+    } else {
+      formData.delete('description');
     }
 
     startTransition(async () => {
@@ -115,7 +120,7 @@ export function QuickCreateCategoryModal({
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className={'max-w-md sm:max-w-lg'}>
+        <DialogContent className={'max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto'}>
           <DialogHeader>
             <DialogTitle className={'text-base font-semibold'}>
               Tạo danh mục món ăn mới
@@ -125,7 +130,7 @@ export function QuickCreateCategoryModal({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className={'flex flex-col gap-3 py-1'}>
+          <form key={modalKey} onSubmit={handleSubmit} className={'flex flex-col gap-3 py-1'}>
             <div className={'grid gap-1.5'}>
               <Label htmlFor={'quick-cat-name'}>Tên danh mục *</Label>
               <Input
@@ -185,6 +190,16 @@ export function QuickCreateCategoryModal({
                 maxLength={300}
                 placeholder={'Mô tả ngắn về danh mục này...'}
                 disabled={isPending}
+              />
+            </div>
+
+            <div className={'grid gap-1.5'}>
+              <AdminImagePicker
+                urlName={'image_url'}
+                fileName={'image_file'}
+                existingName={'existing_image_url'}
+                idPrefix={'quick-cat'}
+                mediaFolder={'categories'}
               />
             </div>
 

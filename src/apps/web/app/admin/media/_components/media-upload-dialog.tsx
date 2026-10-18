@@ -30,7 +30,7 @@ import {
   MEDIA_ACTION_INITIAL,
   type UploadedMediaItem,
 } from '../media-constants';
-import { sanitizePreviewUrl } from '../../_components/admin-image-picker';
+import { sanitizePreviewUrl } from '../../_lib/sanitize-preview-url';
 
 const FOLDER_OPTIONS = [
   { value: 'uploads', label: 'Người dùng / Tải lên chung (uploads/)' },

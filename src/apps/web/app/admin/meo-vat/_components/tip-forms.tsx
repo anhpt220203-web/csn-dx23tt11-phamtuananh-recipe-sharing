@@ -115,6 +115,7 @@ export function CreateTipForm({
           urlName={'image_url'}
           fileName={'image_file'}
           existingName={'existing_image_url'}
+          mediaFolder={'tips'}
         />
       </div>
 
@@ -284,6 +285,7 @@ export function EditTipModal({
               existingName={'existing_image_url'}
               defaultUrl={tip.image_url}
               idPrefix={`tip-${tip.id}`}
+              mediaFolder={'tips'}
             />
           </div>
 

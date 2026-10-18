@@ -160,6 +160,10 @@ export function normalizeDirectImageUrl(value: string): string | null {
 
     return trimmed;
   } catch {
+    if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+      return trimmed;
+    }
+
     return null;
   }
 }

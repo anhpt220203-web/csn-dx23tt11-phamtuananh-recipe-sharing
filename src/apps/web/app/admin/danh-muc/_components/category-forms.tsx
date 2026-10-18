@@ -121,6 +121,7 @@ export function CreateCategoryForm({
           fileName={'image_file'}
           existingName={'existing_image_url'}
           idPrefix={'new-category'}
+          mediaFolder={'categories'}
         />
       </div>
 
@@ -263,6 +264,7 @@ export function CategoryRowActions({ category }: { category: CategoryRow }) {
               existingName={'existing_image_url'}
               defaultUrl={category.image_url}
               idPrefix={`category-${category.id}`}
+              mediaFolder={'categories'}
             />
           </div>
 

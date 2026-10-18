@@ -1,10 +1,16 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@kit/ui/button';
 import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
+
+import { MediaUploadDialog } from '../media/_components/media-upload-dialog';
+import { sanitizePreviewUrl } from '../_lib/sanitize-preview-url';
+
+export { sanitizePreviewUrl };
 
 type AdminImagePickerProps = {
   /** Tên field cho ô dán URL ảnh trực tiếp. */
@@ -21,55 +27,9 @@ type AdminImagePickerProps = {
   hint?: string;
   /** id duy nhất để phân biệt các picker trên cùng trang (modal sửa). */
   idPrefix?: string;
+  /** Thư mục kho media để hiện nút "Tải ảnh vào kho". */
+  mediaFolder?: 'recipes' | 'categories' | 'tips' | 'banners' | 'uploads';
 };
-
-/**
- * Bộ chọn ảnh đại diện cho form admin: 2 tùy chọn —
- * (1) dán link ảnh trực tiếp, hoặc (2) tải file ảnh lên Storage.
- * Hiển thị xem trước và nút xóa ảnh. Dùng chung cho công thức, mẹo vặt,
- * danh mục để UI đồng nhất.
- */
-export function sanitizePreviewUrl(url: string | null | undefined): string | null {
-  if (!url) {
-    return null;
-  }
-
-  const trimmed = url.trim();
-
-  if (trimmed.length === 0 || trimmed.length > 2048) {
-    return null;
-  }
-
-  // Chặn ký tự điều khiển và các meta-char nguy hiểm trong ngữ cảnh thuộc tính URL.
-  if (/[\u0000-\u001F\u007F<>"'`]/.test(trimmed)) {
-    return null;
-  }
-
-  if (trimmed.startsWith('blob:')) {
-    try {
-      const parsedBlob = new URL(trimmed);
-      return parsedBlob.protocol === 'blob:' ? parsedBlob.href : null;
-    } catch {
-      return null;
-    }
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return encodeURI(parsed.href);
-    }
-
-    return null;
-  } catch {
-    if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-      return encodeURI(trimmed);
-    }
-
-    return null;
-  }
-}
 
 export function AdminImagePicker({
   urlName,
@@ -79,6 +39,7 @@ export function AdminImagePicker({
   label = 'Ảnh đại diện',
   hint = 'Dán link ảnh trực tiếp, hoặc tải file lên (JPG/PNG/WEBP/GIF, tối đa 5MB).',
   idPrefix,
+  mediaFolder,
 }: AdminImagePickerProps) {
   const [urlText, setUrlText] = useState(defaultUrl ?? '');
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
@@ -123,7 +84,34 @@ export function AdminImagePicker({
 
   return (
     <div className={'grid gap-1.5'}>
-      <Label htmlFor={urlId}>{label}</Label>
+      <div className={'flex items-center justify-between'}>
+        <Label htmlFor={urlId}>{label}</Label>
+
+        {mediaFolder && (
+          <MediaUploadDialog
+            defaultFolder={mediaFolder}
+            buttonLabel={'Tải ảnh vào kho'}
+            buttonVariant={'outline'}
+            size={'sm'}
+            className={'h-6 text-xs px-2 text-primary hover:text-primary'}
+            onUploaded={(items) => {
+              if (items && items.length > 0) {
+                const first = items[0]!;
+                if (objectUrl) {
+                  URL.revokeObjectURL(objectUrl);
+                  setObjectUrl(null);
+                }
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                }
+                setUrlText(first.proxyUrl);
+                setExistingCleared(false);
+                toast.success(`Đã tự động chọn ảnh "${first.name}"!`);
+              }
+            }}
+          />
+        )}
+      </div>
 
       <input
         type={'hidden'}
