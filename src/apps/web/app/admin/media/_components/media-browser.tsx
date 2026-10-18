@@ -27,10 +27,12 @@ export type MediaItem = {
   /** Object path trong bucket, vd "tips/abc123.jpg". */
   path: string;
   name: string;
-  /** Nguồn ảnh: recipes | tips | categories | uploads | khac. */
+  /** Nguồn ảnh: recipes | tips | categories | banners | uploads | khac. */
   source: string;
   createdAt: string | null;
   size: number | null;
+  /** Tên thực thể đang sử dụng ảnh này (nếu tìm thấy). */
+  usedIn?: string | null;
 };
 
 const SOURCE_OPTIONS = [
@@ -38,14 +40,16 @@ const SOURCE_OPTIONS = [
   { value: 'recipes', label: 'Công thức' },
   { value: 'tips', label: 'Mẹo vặt' },
   { value: 'categories', label: 'Danh mục' },
+  { value: 'banners', label: 'Banner' },
   { value: 'uploads', label: 'Người dùng tải lên' },
-  { value: 'khac', label: 'Khác' },
+  { value: 'khac', label: 'Khác / Chưa dùng' },
 ] as const;
 
 const SOURCE_LABELS: Record<string, string> = {
   recipes: 'Công thức',
   tips: 'Mẹo vặt',
   categories: 'Danh mục',
+  banners: 'Banner',
   uploads: 'Người dùng tải lên',
   khac: 'Khác',
 };
@@ -87,7 +91,7 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
 
   useEffect(() => {
     // Chỉ toast khi action vừa chạy xong (không còn pending) và thành công.
-    if (!deletePending && deleteState.ok && confirmPath) {
+    if (!deletePending && deleteState.ok && !deleteState.initial && confirmPath) {
       toast.success('Đã xóa ảnh khỏi kho lưu trữ.');
       setConfirmPath(null);
     }
@@ -156,6 +160,15 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
                     {item.name}
                   </p>
 
+                  {item.usedIn && (
+                    <p
+                      className={'truncate text-xs font-medium text-primary'}
+                      title={`Đang dùng trong: ${item.usedIn}`}
+                    >
+                      {item.usedIn}
+                    </p>
+                  )}
+
                   <div className={'flex items-center gap-2'}>
                     <Badge variant={'secondary'} className={'text-xs'}>
                       {SOURCE_LABELS[item.source] ?? item.source}
@@ -174,7 +187,7 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
 
                   <div className={'flex items-center gap-2 pt-1'}>
                     <Button
-                      type={'button'}
+                      nativeButton={false}
                       variant={'outline'}
                       size={'sm'}
                       className={'gap-1'}

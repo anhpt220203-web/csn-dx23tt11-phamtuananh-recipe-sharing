@@ -2,6 +2,11 @@
 // PHẢI nằm ở file riêng (không "use server"): Next.js 16 chỉ cho phép file
 // "use server" export async function — export object sẽ vỡ lúc build/dev.
 
-export type RatingActionResult = { ok: true } | { ok: false; message: string };
+export type RatingActionResult =
+  | { ok: true; initial?: false }
+  | { ok: false; message?: string; initial?: boolean };
 
-export const RATING_ACTION_INITIAL: RatingActionResult = { ok: true };
+export const RATING_ACTION_INITIAL: RatingActionResult = {
+  ok: false,
+  initial: true,
+};

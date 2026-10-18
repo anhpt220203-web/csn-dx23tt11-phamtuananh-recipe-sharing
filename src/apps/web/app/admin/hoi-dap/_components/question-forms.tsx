@@ -55,7 +55,7 @@ export function AnswerQuestionModal({
   );
 
   useEffect(() => {
-    if (answerState.ok) {
+    if (answerState.ok && !answerState.initial) {
       toast.success(currentAnswer ? 'Đã cập nhật câu trả lời!' : 'Đã gửi câu trả lời thành công!');
       onOpenChange(false);
     }
@@ -138,7 +138,7 @@ export function QuestionRowActions({
   );
 
   useEffect(() => {
-    if (deleteState.ok) {
+    if (deleteState.ok && !deleteState.initial) {
       toast.success('Đã xóa câu hỏi thành công!');
     }
   }, [deleteState]);

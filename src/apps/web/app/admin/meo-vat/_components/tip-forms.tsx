@@ -49,7 +49,7 @@ export function CreateTipForm() {
   );
 
   useEffect(() => {
-    if (state.ok) {
+    if (state.ok && !state.initial) {
       toast.success('Đã thêm bài viết mới thành công!');
       formRef.current?.reset();
     }
@@ -189,7 +189,7 @@ export function EditTipModal({
   );
 
   useEffect(() => {
-    if (state.ok) {
+    if (state.ok && !state.initial) {
       toast.success('Đã cập nhật bài viết thành công!');
       onOpenChange(false);
     }
@@ -308,13 +308,13 @@ export function TipRowActions({ tip }: { tip: TipRow }) {
   );
 
   useEffect(() => {
-    if (toggleState.ok) {
+    if (toggleState.ok && !toggleState.initial) {
       toast.success(tip.is_published ? 'Đã gỡ bài viết xuống!' : 'Đã xuất bản bài viết thành công!');
     }
   }, [toggleState, tip.is_published]);
 
   useEffect(() => {
-    if (deleteState.ok) {
+    if (deleteState.ok && !deleteState.initial) {
       toast.success('Đã xóa bài viết thành công!');
     }
   }, [deleteState]);

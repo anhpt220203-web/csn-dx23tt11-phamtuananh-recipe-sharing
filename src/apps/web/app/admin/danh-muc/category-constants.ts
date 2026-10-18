@@ -3,7 +3,10 @@
 // "use server" export async function — export object sẽ vỡ lúc build/dev.
 
 export type CategoryActionResult =
-  | { ok: true }
-  | { ok: false; message: string };
+  | { ok: true; initial?: false }
+  | { ok: false; message?: string; initial?: boolean };
 
-export const CATEGORY_ACTION_INITIAL: CategoryActionResult = { ok: true };
+export const CATEGORY_ACTION_INITIAL: CategoryActionResult = {
+  ok: false,
+  initial: true,
+};

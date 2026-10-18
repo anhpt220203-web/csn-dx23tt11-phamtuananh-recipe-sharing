@@ -45,7 +45,7 @@ export function CreateBannerForm() {
   );
 
   useEffect(() => {
-    if (state.ok) {
+    if (state.ok && !state.initial) {
       toast.success('Đã thêm banner mới thành công!');
       formRef.current?.reset();
     }
@@ -133,7 +133,7 @@ export function EditBannerModal({
   );
 
   useEffect(() => {
-    if (updateState.ok) {
+    if (updateState.ok && !updateState.initial) {
       toast.success('Đã cập nhật banner thành công!');
       onOpenChange(false);
     }
@@ -311,7 +311,7 @@ export function BannerRowActions({ banner }: { banner: BannerRow }) {
   );
 
   useEffect(() => {
-    if (deleteState.ok) {
+    if (deleteState.ok && !deleteState.initial) {
       toast.success('Đã xóa banner thành công!');
     }
   }, [deleteState]);
