@@ -55,7 +55,7 @@ export default async function CategoriesPage() {
     (dim) => (grouped[dim]?.length ?? 0) > 0,
   );
 
-  // 4 thẻ điều hướng chiều (trừ nhóm món mặc định), kiểu Knorr.
+  // 4 thẻ điều hướng chiều (trừ nhóm món mặc định).
   const navDimensions = dimensions.filter((dim) => dim !== 'nhom-mon');
 
   return (
