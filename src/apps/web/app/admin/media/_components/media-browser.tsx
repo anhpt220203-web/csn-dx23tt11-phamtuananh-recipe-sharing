@@ -27,7 +27,9 @@ export type MediaItem = {
   /** Object path trong bucket, vd "tips/abc123.jpg". */
   path: string;
   name: string;
-  /** Nguồn ảnh: recipes | tips | categories | banners | uploads | khac. */
+  /** Tên bucket lưu trữ: recipe-images hoặc account_image. */
+  bucket?: string;
+  /** Nguồn ảnh: recipes | tips | categories | banners | avatars | uploads | khac. */
   source: string;
   createdAt: string | null;
   size: number | null;
@@ -41,6 +43,7 @@ const SOURCE_OPTIONS = [
   { value: 'tips', label: 'Mẹo vặt' },
   { value: 'categories', label: 'Danh mục' },
   { value: 'banners', label: 'Banner' },
+  { value: 'avatars', label: 'Ảnh đại diện (Avatar)' },
   { value: 'uploads', label: 'Người dùng tải lên' },
   { value: 'khac', label: 'Khác / Chưa dùng' },
 ] as const;
@@ -50,6 +53,7 @@ const SOURCE_LABELS: Record<string, string> = {
   tips: 'Mẹo vặt',
   categories: 'Danh mục',
   banners: 'Banner',
+  avatars: 'Ảnh đại diện',
   uploads: 'Người dùng tải lên',
   khac: 'Khác',
 };
@@ -70,10 +74,11 @@ function formatBytes(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-function thumbnailSrc(path: string): string {
-  const encoded = path.split('/').map(encodeURIComponent).join('/');
+function thumbnailSrc(item: MediaItem): string {
+  const bucket = item.bucket ?? 'recipe-images';
+  const encoded = item.path.split('/').map(encodeURIComponent).join('/');
 
-  return `/api/image/recipe-images/${encoded}`;
+  return `/api/image/${bucket}/${encoded}`;
 }
 
 /**
@@ -145,7 +150,7 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
                 <div className={'relative aspect-video w-full bg-muted'}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={thumbnailSrc(item.path)}
+                    src={thumbnailSrc(item)}
                     alt={item.name}
                     loading={'lazy'}
                     className={'h-full w-full object-cover'}
@@ -193,7 +198,7 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
                       className={'gap-1'}
                       render={
                         <a
-                          href={thumbnailSrc(item.path)}
+                          href={thumbnailSrc(item)}
                           target={'_blank'}
                           rel={'noreferrer'}
                         />
@@ -246,6 +251,11 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
                               type={'hidden'}
                               name={'path'}
                               value={item.path}
+                            />
+                            <input
+                              type={'hidden'}
+                              name={'bucket'}
+                              value={item.bucket ?? 'recipe-images'}
                             />
 
                             <AlertDialogAction
