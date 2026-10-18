@@ -89,14 +89,7 @@ export function CreateTipForm() {
           label={'Nội dung (hỗ trợ Markdown đầy đủ: tiêu đề, bảng, danh sách, ảnh...)'}
           rows={10}
           required
-          placeholder={'Nhập chi tiết nội dung mẹo vặt...
-
-## Bước 1
-Sơ chế nguyên liệu
-
-| Nguyên liệu | Số lượng |
-| --- | --- |
-| Gạo | 200g |'}
+          placeholder={'Nhập chi tiết nội dung mẹo vặt... (Hỗ trợ định dạng Markdown: tiêu đề ##, bảng, danh sách, in đậm...)'}
           helpText={'Nội dung hiển thị dạng Markdown ở trang mẹo vặt: tiêu đề, bảng, danh sách, in đậm, liên kết, ảnh.'}
         />
       </div>
