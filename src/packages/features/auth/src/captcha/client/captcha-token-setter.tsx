@@ -19,7 +19,7 @@ export function CaptchaTokenSetter(props: {
     return null;
   }
 
-  const defaultOptions: TurnstileProps = {
+  const defaultOptions: Partial<TurnstileProps> = {
     options: {
       size: 'normal',
       theme: 'auto',
@@ -31,16 +31,16 @@ export function CaptchaTokenSetter(props: {
   return (
     <div className={props.className ?? 'flex justify-center my-3'}>
       <Turnstile
-        ref={(instance) => {
+        ref={(instance: any) => {
           if (instance) {
             setInstance(instance);
           }
         }}
+        {...options}
         siteKey={siteKey}
         onSuccess={setToken}
         onExpire={() => setToken('')}
         onError={() => setToken('')}
-        {...options}
       />
     </div>
   );

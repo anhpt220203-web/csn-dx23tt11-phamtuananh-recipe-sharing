@@ -15,6 +15,7 @@ import {
 } from '@kit/ui/dialog';
 import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
+import { MediaUploadDialog } from '../../media/_components/media-upload-dialog';
 
 import type { BannerRow } from '~/lib/content/database';
 
@@ -64,13 +65,30 @@ export function CreateBannerForm() {
       </div>
 
       <div className={'grid gap-1.5'}>
-        <Label htmlFor={'new-image'}>URL ảnh</Label>
+        <div className={'flex items-center justify-between'}>
+          <Label htmlFor={'new-image'}>URL ảnh</Label>
+          <MediaUploadDialog
+            defaultFolder={'banners'}
+            buttonLabel={'Tải ảnh & Điền link'}
+            buttonVariant={'ghost'}
+            size={'sm'}
+            className={'h-6 text-xs px-2 text-primary hover:text-primary'}
+            onUploaded={(items) => {
+              if (items[0]) {
+                const input = document.getElementById('new-image') as HTMLInputElement | null;
+                if (input) {
+                  input.value = items[0].proxyUrl;
+                  input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+              }
+            }}
+          />
+        </div>
         <Input
           id={'new-image'}
           name={'image_url'}
-          type={'url'}
           maxLength={500}
-          placeholder={'https://...'}
+          placeholder={'/api/image/recipe-images/banners/... hoặc https://...'}
         />
       </div>
 
@@ -174,14 +192,31 @@ export function EditBannerModal({
           </div>
 
           <div className={'grid gap-1.5 sm:col-span-2'}>
-            <Label htmlFor={`edit-image-${banner.id}`}>URL ảnh</Label>
+            <div className={'flex items-center justify-between'}>
+              <Label htmlFor={`edit-image-${banner.id}`}>URL ảnh</Label>
+              <MediaUploadDialog
+                defaultFolder={'banners'}
+                buttonLabel={'Tải ảnh mới & Điền link'}
+                buttonVariant={'ghost'}
+                size={'sm'}
+                className={'h-6 text-xs px-2 text-primary hover:text-primary'}
+                onUploaded={(items) => {
+                  if (items[0]) {
+                    const input = document.getElementById(`edit-image-${banner.id}`) as HTMLInputElement | null;
+                    if (input) {
+                      input.value = items[0].proxyUrl;
+                      input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                  }
+                }}
+              />
+            </div>
             <Input
               id={`edit-image-${banner.id}`}
               name={'image_url'}
-              type={'url'}
               defaultValue={banner.image_url ?? ''}
               maxLength={500}
-              placeholder={'https://...'}
+              placeholder={'/api/image/recipe-images/banners/... hoặc https://...'}
             />
           </div>
 
