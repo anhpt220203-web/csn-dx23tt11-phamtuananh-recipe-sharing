@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   title: 'Quản lý hỏi đáp',
 };
 
+export const instant = false;
+
 type QuestionWithRecipe = {
   id: number;
   question: string;
@@ -94,6 +96,8 @@ export default async function QuestionsAdminPage() {
 
                     <QuestionRowActions
                       id={item.id}
+                      question={item.question}
+                      recipeTitle={item.recipes?.title}
                       currentAnswer={item.answer}
                     />
                   </div>

@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   title: 'Thêm công thức',
 };
 
+export const instant = false;
+
 export default async function NewRecipePage() {
   // Trang admin đọc DB mỗi request, không prerender lúc build.
   await connection();

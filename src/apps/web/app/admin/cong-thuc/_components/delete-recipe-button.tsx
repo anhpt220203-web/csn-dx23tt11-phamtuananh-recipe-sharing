@@ -4,10 +4,8 @@ import { useActionState } from 'react';
 
 import { Button } from '@kit/ui/button';
 
-import {
-  RECIPE_ACTION_INITIAL,
-  deleteRecipeAction,
-} from '../actions';
+import { deleteRecipeAction } from '../actions';
+import { RECIPE_ACTION_INITIAL } from '../cong-thuc-constants';
 
 export function DeleteRecipeButton({
   id,
@@ -31,7 +29,7 @@ export function DeleteRecipeButton({
         variant={'ghost'}
         className={'text-destructive hover:text-destructive'}
         disabled={pending}
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           if (!window.confirm(`Xóa công thức “${title}”? Thao tác không thể hoàn tác.`)) {
             event.preventDefault();
           }

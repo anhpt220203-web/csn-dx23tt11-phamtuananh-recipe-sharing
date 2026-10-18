@@ -1,5 +1,6 @@
 'use server';
 
+import type { TipActionResult } from './meo-vat-constants';
 import { revalidatePath } from 'next/cache';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
@@ -7,10 +8,6 @@ import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client'
 import type { ContentSchema } from '~/lib/content/database';
 import { slugify } from '~/lib/recipes/slugify';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
-
-export type TipActionResult = { ok: true } | { ok: false; message: string };
-
-export const TIP_ACTION_INITIAL: TipActionResult = { ok: true };
 
 function getAdmin() {
   return getSupabaseServerAdminClient<ContentSchema>();

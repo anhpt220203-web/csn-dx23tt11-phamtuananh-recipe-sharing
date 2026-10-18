@@ -1,12 +1,9 @@
 'use server';
 
+import type { RatingActionResult } from './danh-gia-constants';
 import { revalidatePath } from 'next/cache';
 
 import { requireAdminUser } from '~/lib/server/require-admin-action';
-
-export type RatingActionResult = { ok: true } | { ok: false; message: string };
-
-const INITIAL: RatingActionResult = { ok: true };
 
 /**
  * Xóa một đánh giá theo `id`.
@@ -49,4 +46,3 @@ export async function deleteRatingAction(
   }
 }
 
-export { INITIAL as RATING_ACTION_INITIAL };

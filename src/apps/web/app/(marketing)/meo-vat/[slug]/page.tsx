@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { connection } from 'next/server';
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,6 +14,11 @@ import {
 } from '@kit/ui/breadcrumb';
 
 import { getTipBySlug } from '~/lib/content/queries';
+import { resolveRecipeImageSrc } from '~/lib/recipes/images';
+
+import { MarkdownRenderer } from '~/components/markdown/markdown-renderer';
+
+export const instant = false;
 
 type TipPageProps = {
   params: Promise<{ slug: string }>;
@@ -20,6 +27,7 @@ type TipPageProps = {
 export async function generateMetadata({
   params,
 }: TipPageProps): Promise<Metadata> {
+  await connection();
   const { slug } = await params;
   const tip = await getTipBySlug(slug);
 
@@ -34,6 +42,7 @@ export async function generateMetadata({
 }
 
 export default async function TipDetailPage({ params }: TipPageProps) {
+  await connection();
   const { slug } = await params;
   const tip = await getTipBySlug(slug);
 
@@ -79,7 +88,7 @@ export default async function TipDetailPage({ params }: TipPageProps) {
         {tip.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={tip.image_url}
+            src={resolveRecipeImageSrc(tip.image_url) ?? tip.image_url}
             alt={tip.title}
             className={'mt-6 aspect-[16/9] w-full rounded-xl object-cover'}
           />
@@ -95,13 +104,7 @@ export default async function TipDetailPage({ params }: TipPageProps) {
           </p>
         ) : null}
 
-        <div
-          className={
-            'prose dark:prose-invert mt-6 max-w-none leading-relaxed whitespace-pre-wrap'
-          }
-        >
-          {tip.content}
-        </div>
+        <MarkdownRenderer content={tip.content} className={'mt-6 text-base'} />
       </article>
     </div>
   );

@@ -10,6 +10,7 @@ import { Button } from '@kit/ui/button';
 import { toast } from '@kit/ui/sonner';
 import { cn } from '@kit/ui/utils';
 
+import { useAuthModal } from '~/components/recipes/auth-modal';
 import { toggleFavoriteAction } from '~/lib/recipes/favorite-actions';
 
 type FavoriteButtonProps = {
@@ -21,7 +22,7 @@ type FavoriteButtonProps = {
 
 /**
  * Nút đánh dấu / bỏ đánh dấu yêu thích.
- * Chưa đăng nhập → chuyển tới trang đăng nhập.
+ * Chưa đăng nhập → mở modal đăng nhập.
  */
 export function FavoriteButton({
   recipeId,
@@ -30,6 +31,7 @@ export function FavoriteButton({
   className,
 }: FavoriteButtonProps) {
   const router = useRouter();
+  const { openSignInModal } = useAuthModal();
   const [isPending, startTransition] = useTransition();
   const [favorited, setFavorited] = useState(initialFavorited);
 
@@ -39,8 +41,22 @@ export function FavoriteButton({
 
       if (!result.ok) {
         if (result.reason === 'unauthenticated') {
-          toast.info('Bạn cần đăng nhập để lưu món yêu thích.');
-          router.push('/auth/sign-in');
+          openSignInModal({
+            title: 'Lưu món yêu thích',
+            description:
+              'Đăng nhập để lưu công thức này vào danh sách yêu thích của bạn.',
+            onSuccess: async () => {
+              const retryResult = await toggleFavoriteAction(recipeId, slug);
+              if (retryResult.ok) {
+                setFavorited(retryResult.favorited);
+                toast.success(
+                  retryResult.favorited
+                    ? 'Đã thêm vào món yêu thích.'
+                    : 'Đã bỏ khỏi món yêu thích.',
+                );
+              }
+            },
+          });
           return;
         }
 

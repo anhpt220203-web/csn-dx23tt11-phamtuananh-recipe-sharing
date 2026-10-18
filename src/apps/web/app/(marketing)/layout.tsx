@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 
 import { BackToTop } from '~/components/content/back-to-top';
 import { CookieConsent } from '~/components/cookie-consent';
+import { AuthModalProvider } from '~/components/recipes/auth-modal';
 import { SiteFooter } from '~/(marketing)/_components/site-footer';
 import { SiteHeader } from '~/(marketing)/_components/site-header';
 
@@ -16,19 +17,21 @@ import { SiteHeader } from '~/(marketing)/_components/site-header';
  */
 function SiteLayout(props: React.PropsWithChildren) {
   return (
-    <div className={'flex min-h-[100vh] flex-col'}>
-      <Suspense>
-        <SiteHeader />
-      </Suspense>
+    <AuthModalProvider>
+      <div className={'flex min-h-[100vh] flex-col'}>
+        <Suspense>
+          <SiteHeader />
+        </Suspense>
 
-      {props.children}
+        {props.children}
 
-      <SiteFooter />
+        <SiteFooter />
 
-      <BackToTop />
+        <BackToTop />
 
-      <CookieConsent />
-    </div>
+        <CookieConsent />
+      </div>
+    </AuthModalProvider>
   );
 }
 

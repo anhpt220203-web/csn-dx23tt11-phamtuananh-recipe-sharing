@@ -4,7 +4,8 @@ import { useActionState } from 'react';
 
 import { Button } from '@kit/ui/button';
 
-import { RATING_ACTION_INITIAL, deleteRatingAction } from '../actions';
+import { deleteRatingAction } from '../actions';
+import { RATING_ACTION_INITIAL } from '../danh-gia-constants';
 
 function FormError({ message }: { message?: string }) {
   if (!message) {
@@ -41,7 +42,7 @@ export function DeleteRatingButton({
           variant={'ghost'}
           className={'text-destructive hover:text-destructive'}
           disabled={pending}
-          onClick={(event) => {
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
             if (
               !window.confirm(
                 `Xóa đánh giá của món “${recipeTitle}”? Thao tác không thể hoàn tác.`,

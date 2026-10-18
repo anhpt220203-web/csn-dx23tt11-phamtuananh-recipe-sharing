@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   title: 'Quản lý mẹo vặt',
 };
 
+export const instant = false;
+
 export default async function TipsAdminPage() {
   // Trang admin đọc DB mỗi request, không prerender lúc build
   // (tránh gọi service-role key khi biến môi trường chưa có).
@@ -68,19 +70,38 @@ export default async function TipsAdminPage() {
               {tips.map((tip) => (
                 <li
                   key={tip.id}
-                  className={'flex items-center justify-between gap-4 rounded-lg border p-3'}
+                  className={'flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'}
                 >
-                  <div className={'min-w-0'}>
-                    <p className={'font-medium'}>
-                      {tip.title}{' '}
-                      <Badge variant={tip.is_published ? 'default' : 'secondary'}>
-                        {tip.is_published ? 'Đã xuất bản' : 'Nháp'}
-                      </Badge>
-                    </p>
+                  <div className={'flex items-start gap-3 min-w-0 flex-1'}>
+                    {tip.image_url ? (
+                      <div className={'relative h-14 w-20 shrink-0 overflow-hidden rounded-md border bg-muted'}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={tip.image_url}
+                          alt={tip.title}
+                          className={'h-full w-full object-cover'}
+                        />
+                      </div>
+                    ) : null}
 
-                    <p className={'text-muted-foreground truncate text-sm'}>
-                      /meo-vat/{tip.slug}
-                    </p>
+                    <div className={'min-w-0 flex-1'}>
+                      <div className={'flex flex-wrap items-center gap-2'}>
+                        <p className={'font-semibold text-base'}>{tip.title}</p>
+                        <Badge variant={tip.is_published ? 'default' : 'secondary'}>
+                          {tip.is_published ? 'Đã xuất bản' : 'Nháp'}
+                        </Badge>
+                      </div>
+
+                      <p className={'text-muted-foreground truncate font-mono text-xs'}>
+                        /meo-vat/{tip.slug}
+                      </p>
+
+                      {tip.excerpt && (
+                        <p className={'text-muted-foreground line-clamp-1 text-xs mt-1'}>
+                          {tip.excerpt}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <TipRowActions tip={tip} />

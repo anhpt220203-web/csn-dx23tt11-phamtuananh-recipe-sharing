@@ -1,5 +1,6 @@
 'use server';
 
+import type { RecipeActionResult } from './cong-thuc-constants';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -8,12 +9,6 @@ import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client'
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { slugify } from '~/lib/recipes/slugify';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
-
-export type RecipeActionResult =
-  | { ok: true }
-  | { ok: false; message: string };
-
-const INITIAL: RecipeActionResult = { ok: true };
 
 const IMAGE_BUCKET = 'recipe-images';
 const IMAGE_FOLDER = 'recipes';
@@ -90,6 +85,7 @@ function splitLines(value: FormDataEntryValue | null): string[] {
   }
 
   return value
+    .replace(/\r\n?/g, '\n')
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
@@ -177,7 +173,10 @@ export async function saveRecipeAction(
       return { ok: false, message: 'Vui lòng chọn danh mục.' };
     }
 
-    const description = String(formData.get('description') ?? '').trim();
+    // Chuẩn hoá xuống dòng Windows (CRLF) sang LF để markdown render sạch.
+    const description = String(formData.get('description') ?? '')
+      .replace(/\r\n?/g, '\n')
+      .trim();
     const sourceName = String(formData.get('source_name') ?? '').trim();
     const sourceUrl = String(formData.get('source_url') ?? '').trim();
     const servings = parsePositiveInt(formData.get('servings'));
@@ -376,4 +375,3 @@ export async function deleteRecipeAction(
   }
 }
 
-export { INITIAL as RECIPE_ACTION_INITIAL };

@@ -41,6 +41,7 @@ import {
   isFavorite,
 } from '~/lib/recipes/queries';
 import { resolveRecipeImageSrc } from '~/lib/recipes/images';
+import { MarkdownRenderer } from '~/components/markdown/markdown-renderer';
 
 import { FavoriteButton } from '~/components/recipes/favorite-button';
 import {
@@ -62,6 +63,8 @@ export const instant = false;
 export async function generateMetadata({
   params,
 }: RecipePageProps): Promise<Metadata> {
+  await connection();
+
   const { slug } = await params;
   const recipe = await getRecipeBySlug(slug);
 
@@ -205,13 +208,10 @@ export default async function RecipePage({ params }: RecipePageProps) {
             </h2>
 
             {recipe.description ? (
-              <p
-                className={
-                  'text-muted-foreground mt-3 leading-relaxed whitespace-pre-line'
-                }
-              >
-                {recipe.description}
-              </p>
+              <MarkdownRenderer
+                content={recipe.description}
+                className={'mt-3 text-base'}
+              />
             ) : (
               <p className={'text-muted-foreground mt-3'}>
                 Chưa có mô tả cho công thức này.
@@ -493,7 +493,7 @@ function StepsSection({ recipe }: { recipe: RecipeDetail }) {
               >
                 {index + 1}
               </span>
-              <p className={'mt-1 leading-relaxed'}>{step}</p>
+              <MarkdownRenderer content={step} className={'mt-1'} />
             </li>
           ))}
         </ol>

@@ -30,7 +30,10 @@ function SignInPage() {
         <Heading level={2} className={'tracking-tighter'}>
           <Trans
             i18nKey={'auth.signInHeading'}
-            values={{ productName: process.env.NEXT_PUBLIC_PRODUCT_NAME }}
+            values={{
+              productName:
+                process.env.NEXT_PUBLIC_PRODUCT_NAME ?? 'Công Thức Việt',
+            }}
           />
         </Heading>
       </div>

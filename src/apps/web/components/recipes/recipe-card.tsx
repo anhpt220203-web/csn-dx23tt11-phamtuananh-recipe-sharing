@@ -1,18 +1,23 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 
-import { ChefHat, Clock, Star, Users } from 'lucide-react';
-
 import {
-  Card,
-  CardContent,
-  CardTitle,
-} from '@kit/ui/card';
+  ChefHat,
+  ChevronRight,
+  Flame,
+  Heart,
+  Star,
+  Users,
+} from 'lucide-react';
+
 import { cn } from '@kit/ui/utils';
 
 import { RecipeCardFavoriteButton } from './recipe-card-favorite-button';
 
-import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import type { RatingSummary, RecipeWithCategory } from '~/lib/recipes/database';
+import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 
 function formatCookTime(minutes: number | null): string {
   if (minutes === null || minutes === undefined) {
@@ -34,18 +39,25 @@ type RecipeCardProps = {
   rating?: RatingSummary;
   /** Trạng thái yêu thích ban đầu của người dùng hiện tại. */
   initialFavorited?: boolean;
+  /** Số lượt yêu thích ban đầu từ database */
+  initialFavoriteCount?: number;
 };
 
 /**
- * Thẻ công thức kiểu "tạp chí ẩm thực": ảnh 4:3 nổi bật, badge nhóm món
- * đè trên ảnh, tiêu đề và hàng thông số (khẩu phần · độ khó · thời gian ·
- * điểm đánh giá) ở phần thân. Dùng cho trang chủ, danh mục, tìm kiếm…
+ * Thẻ công thức nấu ăn hiện đại chuẩn mẫu:
+ * - Ảnh bo góc mượt mà kèm nút tim tròn nền trắng nổi bật ở góc phải.
+ * - Tiêu đề món + huy hiệu số lượt tim (like count) cập nhật tức thì.
+ * - 3 thẻ thông số có icon đỏ: [Khẩu phần] [Độ khó] [Thời gian nấu].
+ * - Nút "XEM CHI TIẾT >" nổi bật màu hồng cam.
  */
 export function RecipeCard({
   recipe,
   rating,
   initialFavorited = false,
+  initialFavoriteCount = 0,
 }: RecipeCardProps) {
+  const [favoriteCount, setFavoriteCount] = useState(initialFavoriteCount);
+  const [favorited, setFavorited] = useState(initialFavorited);
   const detailHref = `/cong-thuc/${recipe.slug}`;
   const imageSrc = resolveRecipeImageSrc(recipe.image_url);
   const hasRating =
@@ -54,15 +66,17 @@ export function RecipeCard({
       : null;
 
   return (
-    <Card
-      className={
-        'group flex h-full flex-col pt-0 transition-shadow hover:shadow-lg'
-      }
+    <div
+      className={cn(
+        'group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card p-3 shadow-xs',
+        'transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl',
+      )}
     >
-      <div className={'relative'}>
+      {/* ── Khối hình ảnh bo góc + Nút yêu thích + Badge danh mục ── */}
+      <div className={'relative aspect-[16/11] w-full overflow-hidden rounded-xl bg-muted'}>
         <Link
           href={detailHref}
-          className={'block overflow-hidden'}
+          className={'block h-full w-full overflow-hidden'}
           aria-label={`Xem công thức ${recipe.title}`}
         >
           {imageSrc ? (
@@ -72,13 +86,13 @@ export function RecipeCard({
               alt={recipe.title}
               loading={'lazy'}
               className={
-                'aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]'
+                'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'
               }
             />
           ) : (
             <div
               className={cn(
-                'flex aspect-[4/3] w-full items-center justify-center',
+                'flex h-full w-full items-center justify-center',
                 'bg-gradient-to-br from-orange-100 to-amber-200',
                 'dark:from-orange-950 dark:to-amber-950',
               )}
@@ -89,77 +103,116 @@ export function RecipeCard({
           )}
         </Link>
 
+        {/* Huy hiệu nhóm món góc trên bên trái */}
         {recipe.category_name ? (
           <Link
             href={`/danh-muc/${recipe.category_slug}`}
             className={
-              'bg-secondary/95 text-secondary-foreground absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-accent'
+              'absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/80'
             }
           >
-            {recipe.category_name}
+            <span className={'flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px]'}>
+              🍲
+            </span>
+            <span>{recipe.category_name}</span>
           </Link>
-        ) : null}
+        ) : (
+          <div
+            className={
+              'absolute top-2.5 left-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-sm'
+            }
+          >
+            <ChefHat className={'h-3.5 w-3.5'} aria-hidden={true} />
+          </div>
+        )}
 
+        {/* Nút yêu thích tròn nền trắng góc trên bên phải */}
         <RecipeCardFavoriteButton
           recipeId={recipe.id}
-          initialFavorited={initialFavorited}
+          slug={recipe.slug}
+          initialFavorited={favorited}
+          onFavoriteChange={(isFav) => {
+            setFavorited(isFav);
+            setFavoriteCount((prev) => (isFav ? prev + 1 : Math.max(0, prev - 1)));
+          }}
           className={'absolute top-2.5 right-2.5'}
         />
       </div>
 
-      <CardContent className={'flex flex-1 flex-col gap-2'}>
-        <CardTitle className={'line-clamp-2 text-base font-semibold'}>
-          <Link href={detailHref} className={'hover:text-primary'}>
+      {/* ── Phần thân thẻ: Tiêu đề + Huy hiệu tim ── */}
+      <div className={'mt-3 flex items-start justify-between gap-2'}>
+        <h3 className={'line-clamp-1 text-base font-bold text-foreground transition-colors group-hover:text-primary sm:text-lg'}>
+          <Link href={detailHref} className={'hover:underline'}>
             {recipe.title}
           </Link>
-        </CardTitle>
-
-        {recipe.description ? (
-          <p className={'text-muted-foreground line-clamp-2 text-sm'}>
-            {recipe.description}
-          </p>
-        ) : null}
+        </h3>
 
         <div
           className={
-            'text-muted-foreground mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs'
+            'inline-flex shrink-0 items-center gap-1 rounded-lg border border-border/60 bg-muted/20 px-2 py-0.5 text-xs font-semibold text-muted-foreground'
+          }
+          title={`${favoriteCount} lượt yêu thích`}
+        >
+          <span className={'tabular-nums font-semibold'}>{favoriteCount}</span>
+          <Heart className={'h-3.5 w-3.5 fill-red-500 text-red-500'} aria-hidden={true} />
+        </div>
+      </div>
+
+      {/* Đánh giá sao nếu có */}
+      {hasRating ? (
+        <div className={'mt-1 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400'}>
+          <Star className={'h-3.5 w-3.5 fill-amber-500 text-amber-500'} aria-hidden={true} />
+          <span className={'tabular-nums font-bold'}>{hasRating.average.toFixed(1)}</span>
+          <span className={'text-muted-foreground'}>({hasRating.count})</span>
+        </div>
+      ) : null}
+
+      {/* ── Hàng 3 thông số (Khẩu phần, Độ khó, Thời gian) với Icon màu đỏ ── */}
+      <div className={'mt-2.5 flex flex-wrap items-center gap-2'}>
+        <div
+          className={
+            'inline-flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/30 px-2.5 py-1 text-xs font-medium text-foreground'
           }
         >
-          {recipe.servings ? (
-            <span className={'inline-flex items-center gap-1'}>
-              <Users className={'h-3.5 w-3.5'} aria-hidden={true} />
-              {recipe.servings} người
-            </span>
-          ) : null}
+          <Users className={'h-3.5 w-3.5 text-red-500'} aria-hidden={true} />
+          <span className={'capitalize'}>
+            {recipe.servings ? `${recipe.servings} người` : '4 người'}
+          </span>
+        </div>
 
-          {recipe.difficulty ? (
-            <span className={'inline-flex items-center gap-1'}>
-              <ChefHat className={'h-3.5 w-3.5'} aria-hidden={true} />
-              {recipe.difficulty}
-            </span>
-          ) : null}
+        <div
+          className={
+            'inline-flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/30 px-2.5 py-1 text-xs font-medium text-foreground'
+          }
+        >
+          <ChefHat className={'h-3.5 w-3.5 text-red-500'} aria-hidden={true} />
+          <span>{recipe.difficulty ?? 'Dễ'}</span>
+        </div>
 
-          <span className={'inline-flex items-center gap-1'}>
-            <Clock className={'h-3.5 w-3.5'} aria-hidden={true} />
+        <div
+          className={
+            'inline-flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/30 px-2.5 py-1 text-xs font-medium text-foreground'
+          }
+        >
+          <Flame className={'h-3.5 w-3.5 text-red-500'} aria-hidden={true} />
+          <span className={'capitalize'}>
             {formatCookTime(recipe.cook_time)}
           </span>
-
-          {hasRating ? (
-            <span className={'text-primary inline-flex items-center gap-1 font-medium'}>
-              <Star
-                className={'fill-primary h-3.5 w-3.5'}
-                aria-hidden={true}
-              />
-              <span className={'tabular-nums'}>
-                {hasRating.average.toFixed(1)}
-              </span>
-              <span className={'text-muted-foreground'}>
-                ({hasRating.count})
-              </span>
-            </span>
-          ) : null}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* ── Nút XEM CHI TIẾT > màu hồng cam chuẩn thiết kế ── */}
+      <div className={'mt-auto pt-3.5'}>
+        <Link
+          href={detailHref}
+          className={
+            'inline-flex items-center gap-1 rounded-xl bg-rose-100 px-3.5 py-1.5 text-xs font-bold tracking-wider text-rose-600 transition-colors hover:bg-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/40'
+          }
+        >
+          <span>XEM CHI TIẾT</span>
+          <ChevronRight className={'h-3.5 w-3.5 stroke-[2.5] text-rose-600 dark:text-rose-300'} aria-hidden={true} />
+        </Link>
+      </div>
+    </div>
   );
 }

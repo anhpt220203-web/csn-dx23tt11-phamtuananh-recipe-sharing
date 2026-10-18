@@ -10,8 +10,6 @@ export type QuestionActionResult =
   | { ok: true; asked?: boolean }
   | { ok: false; message: string };
 
-export const QUESTION_ACTION_INITIAL: QuestionActionResult = { ok: true };
-
 export async function askQuestionAction(
   _prev: QuestionActionResult,
   formData: FormData,

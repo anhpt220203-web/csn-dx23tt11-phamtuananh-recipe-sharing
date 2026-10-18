@@ -15,6 +15,7 @@ import {
 import { Input } from '@kit/ui/input';
 
 import type { RecipeSchema } from '~/lib/recipes/database';
+import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import { getCategories } from '~/lib/recipes/queries';
 
 import { DeleteRecipeButton } from './_components/delete-recipe-button';
@@ -22,6 +23,8 @@ import { DeleteRecipeButton } from './_components/delete-recipe-button';
 export const metadata: Metadata = {
   title: 'Quản lý công thức',
 };
+
+export const instant = false;
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Tất cả' },
@@ -267,7 +270,7 @@ export default async function RecipesAdminPage({
                     {recipe.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={recipe.image_url}
+                        src={resolveRecipeImageSrc(recipe.image_url) ?? recipe.image_url}
                         alt={recipe.title}
                         className={'h-16 w-16 shrink-0 rounded-md object-cover'}
                         loading={'lazy'}

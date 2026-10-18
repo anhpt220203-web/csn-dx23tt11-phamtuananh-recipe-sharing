@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   title: 'Kiểm duyệt đánh giá',
 };
 
+export const instant = false;
+
 const PAGE_SIZE = 20;
 
 function getDisplayName(user: User): string {

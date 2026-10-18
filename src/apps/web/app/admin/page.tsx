@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   title: 'Tổng quan quản trị',
 };
 
+export const instant = false;
+
 type TopFavorite = {
   recipeId: number;
   title: string;

@@ -1,17 +1,12 @@
 'use server';
 
+import type { AccountActionResult } from './user-constants';
 import { revalidatePath } from 'next/cache';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
-
-export type AccountActionResult =
-  | { ok: true }
-  | { ok: false; message: string };
-
-const INITIAL: AccountActionResult = { ok: true };
 
 function getUserId(formData: FormData): string | null {
   const value = formData.get('userId');
@@ -194,7 +189,6 @@ export async function unlockAccountAction(
   }
 }
 
-export { INITIAL as ACCOUNT_ACTION_INITIAL };
 
 /**
  * Cấp quyền admin: đặt `app_metadata.role = 'admin'` qua Auth Admin API.

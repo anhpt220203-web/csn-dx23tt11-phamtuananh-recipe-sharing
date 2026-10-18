@@ -3,6 +3,8 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
+import { Heart, Shield } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { PersonalAccountDropdown } from '@kit/accounts/personal-account-dropdown';
 import { useSignOut } from '@kit/supabase/hooks/use-sign-out';
 import { useUser } from '@kit/supabase/hooks/use-user';
@@ -26,6 +28,7 @@ const ModeToggle = dynamic(
 const paths = {
   home: '/',
   profile: '/profile',
+  admin: '/admin',
 };
 
 const features = {
@@ -49,18 +52,69 @@ export function SiteHeaderAccountSection() {
     return <AuthButtons />;
   }
 
+  const role =
+    (user as Record<string, any>)?.app_metadata?.role ??
+    (user as Record<string, any>)?.user_metadata?.role;
+  const isAdmin = role === 'admin';
+
   return (
-    <PersonalAccountDropdown
-      showProfileName={false}
-      paths={paths}
-      features={features}
-      user={user}
-      signOutRequested={() => signOut.mutateAsync()}
-    />
+    <div className={'flex items-center gap-1.5'}>
+      <If condition={features.enableThemeToggle}>
+        <div className={'hidden sm:block'}>
+          <ModeToggle />
+        </div>
+      </If>
+
+      <Button
+        variant={'ghost'}
+        size={'sm'}
+        nativeButton={false}
+        render={<Link href={'/yeu-thich'} />}
+        className={'flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-red-500'}
+        title={'Danh sách món yêu thích'}
+      >
+        <Heart className={'h-4 w-4 fill-red-500 text-red-500'} aria-hidden={true} />
+        <span className={'hidden sm:inline'}>Món yêu thích</span>
+      </Button>
+
+      {isAdmin && (
+        <Button
+          variant={'outline'}
+          size={'sm'}
+          nativeButton={false}
+          render={<Link href={'/admin'} />}
+          className={'hidden sm:flex items-center gap-1.5 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/10'}
+          title={'Khu vực quản trị'}
+        >
+          <Shield className={'h-3.5 w-3.5 text-primary'} aria-hidden={true} />
+          <span>Quản trị</span>
+        </Button>
+      )}
+
+      <PersonalAccountDropdown
+        showProfileName={false}
+        paths={paths}
+        features={features}
+        user={user}
+        signOutRequested={() => signOut.mutateAsync()}
+      />
+    </div>
   );
 }
 
 function AuthButtons() {
+  const router = useRouter();
+
+  const handleNavigate = (path: string) => (e: React.MouseEvent) => {
+    if (typeof window !== 'undefined') {
+      const current = window.location.pathname + window.location.search;
+      if (current && !current.startsWith('/auth')) {
+        e.preventDefault();
+        router.push(`${path}?next=${encodeURIComponent(current)}`);
+      }
+    }
+  };
+
   return (
     <div className={'flex space-x-2'}>
       <div className={'hidden space-x-0.5 md:flex'}>
@@ -70,7 +124,12 @@ function AuthButtons() {
 
         <Button
           nativeButton={false}
-          render={<Link href={pathsConfig.auth.signIn} />}
+          render={
+            <Link
+              href={pathsConfig.auth.signIn}
+              onClick={handleNavigate(pathsConfig.auth.signIn)}
+            />
+          }
           variant={'ghost'}
         >
           <Trans i18nKey={'auth.signIn'} />
@@ -79,7 +138,12 @@ function AuthButtons() {
 
       <Button
         nativeButton={false}
-        render={<Link href={pathsConfig.auth.signUp} />}
+        render={
+          <Link
+            href={pathsConfig.auth.signUp}
+            onClick={handleNavigate(pathsConfig.auth.signUp)}
+          />
+        }
         className="group"
         variant={'default'}
       >
