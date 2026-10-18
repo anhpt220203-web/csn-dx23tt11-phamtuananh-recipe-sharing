@@ -377,6 +377,34 @@ export function MediaBrowser({ items }: { items: MediaItem[] }) {
         </ul>
       )}
 
+      {totalPages > 1 && (
+        <div className={'flex items-center justify-center gap-2 pt-2'}>
+          <Button
+            type={'button'}
+            variant={'outline'}
+            size={'sm'}
+            disabled={safePage <= 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          >
+            ← Trang trước
+          </Button>
+
+          <span className={'px-2 text-xs text-muted-foreground'}>
+            Trang {safePage} / {totalPages}
+          </span>
+
+          <Button
+            type={'button'}
+            variant={'outline'}
+            size={'sm'}
+            disabled={safePage >= totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Trang sau →
+          </Button>
+        </div>
+      )}
+
       <MediaRenameDialog
         item={itemToRename}
         open={Boolean(itemToRename)}
