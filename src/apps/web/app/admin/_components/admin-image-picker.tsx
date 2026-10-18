@@ -29,6 +29,34 @@ type AdminImagePickerProps = {
  * Hiển thị xem trước và nút xóa ảnh. Dùng chung cho công thức, mẹo vặt,
  * danh mục để UI đồng nhất.
  */
+function sanitizePreviewUrl(url: string | null | undefined): string | null {
+  if (!url) {
+    return null;
+  }
+
+  const trimmed = url.trim();
+
+  if (trimmed.startsWith('blob:')) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.href;
+    }
+
+    return null;
+  } catch {
+    if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+      return trimmed;
+    }
+
+    return null;
+  }
+}
+
 export function AdminImagePicker({
   urlName,
   fileName,
@@ -45,8 +73,9 @@ export function AdminImagePicker({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // File upload ưu tiên hơn URL dán tay; xem trước file nếu có.
-  const preview =
+  const rawPreview =
     objectUrl ?? (urlText.trim().length > 0 ? urlText.trim() : null);
+  const preview = sanitizePreviewUrl(rawPreview);
 
   const handleFileChange = (file: File | undefined) => {
     if (objectUrl) {
