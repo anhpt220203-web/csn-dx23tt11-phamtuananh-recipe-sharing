@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
-import { ExternalLink, Plus } from 'lucide-react';
+import { BookOpen, ExternalLink, Plus, Search } from 'lucide-react';
 
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
 import { Button } from '@kit/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
 
 import type { ContentSchema } from '~/lib/content/database';
@@ -22,7 +22,8 @@ export const metadata: Metadata = {
 
 export const instant = false;
 
-const PER_PAGE = 8;
+// 9 bài/trang chia đều cho lưới 3 cột trên desktop
+const PER_PAGE = 9;
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Tất cả' },
@@ -150,7 +151,7 @@ export default async function TipsAdminPage({
           <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý mẹo vặt</h1>
 
           <p className={'text-muted-foreground mt-1 text-sm'}>
-            Tổng cộng {total} bài viết mẹo vặt trong hệ thống.
+            Tổng cộng {total} bài viết kinh nghiệm và bí quyết làm bếp.
           </p>
         </div>
 
@@ -173,185 +174,209 @@ export default async function TipsAdminPage({
         </div>
       </div>
 
-      {/* Bộ lọc trạng thái tabs giống bên công thức */}
-      <div className={'flex flex-wrap gap-2'}>
-        {STATUS_FILTERS.map((filter) => {
-          const active = statusFilter === filter.value;
+      {/* Cụm thống nhất: Gộp bộ lọc, tìm kiếm và danh sách mẹo vặt dạng lưới trong 1 Card */}
+      <Card className={'shadow-xs'}>
+        <CardHeader className={'space-y-4 border-b border-border/50 pb-5'}>
+          <div className={'flex flex-wrap items-center justify-between gap-2'}>
+            <CardTitle className={'text-base font-semibold flex items-center gap-2'}>
+              <BookOpen className={'h-4 w-4 text-primary'} />
+              <span>Danh sách bài viết ({total})</span>
+            </CardTitle>
 
-          return (
-            <Link
-              key={filter.value}
-              href={buildTipsHref({
-                status: filter.value,
-                q: searchTerm,
-                page: 1,
+            {total > 0 && (
+              <span className={'text-xs text-muted-foreground'}>
+                Trang {safePage} / {totalPages}
+              </span>
+            )}
+          </div>
+
+          {/* Thanh công cụ: Tabs lọc trạng thái + Form tìm kiếm */}
+          <div className={'flex flex-col gap-3 md:flex-row md:items-center md:justify-between'}>
+            <div className={'flex flex-wrap items-center gap-1.5'}>
+              {STATUS_FILTERS.map((filter) => {
+                const active = statusFilter === filter.value;
+
+                return (
+                  <Button
+                    key={filter.value}
+                    nativeButton={false}
+                    variant={active ? 'default' : 'outline'}
+                    size={'sm'}
+                    className={'h-8 text-xs'}
+                    render={
+                      <Link
+                        href={buildTipsHref({
+                          status: filter.value,
+                          q: searchTerm,
+                          page: 1,
+                        })}
+                      >
+                        {filter.label}
+                      </Link>
+                    }
+                  />
+                );
               })}
-              aria-current={active ? 'page' : undefined}
-              className={
-                active
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-1.5 text-sm font-medium'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-3 py-1.5 text-sm font-medium'
-              }
+            </div>
+
+            <form
+              action={'/admin/meo-vat'}
+              method={'GET'}
+              role={'search'}
+              className={'flex items-center gap-2'}
             >
-              {filter.label}
-            </Link>
-          );
-        })}
-      </div>
+              <input type={'hidden'} name={'status'} value={statusFilter} />
 
-      {/* Form tìm kiếm bài viết */}
-      <form
-        action={'/admin/meo-vat'}
-        method={'GET'}
-        role={'search'}
-        className={'flex flex-col gap-2 sm:flex-row sm:items-end'}
-      >
-        <input type={'hidden'} name={'status'} value={statusFilter} />
+              <div className={'relative min-w-56'}>
+                <Search className={'text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2'} />
+                <Input
+                  id={'admin-tip-search'}
+                  name={'q'}
+                  type={'search'}
+                  defaultValue={searchTerm}
+                  placeholder={'Nhập tiêu đề mẹo vặt…'}
+                  className={'h-8 pl-8 text-xs'}
+                />
+              </div>
 
-        <div className={'flex-1'}>
-          <label
-            htmlFor={'admin-tip-search'}
-            className={'mb-1 block text-xs font-medium'}
-          >
-            Tìm kiếm theo tiêu đề bài viết
-          </label>
+              <Button type={'submit'} variant={'secondary'} size={'sm'} className={'h-8 text-xs'}>
+                Tìm
+              </Button>
 
-          <Input
-            id={'admin-tip-search'}
-            name={'q'}
-            type={'search'}
-            defaultValue={searchTerm}
-            placeholder={'Nhập tiêu đề mẹo vặt…'}
-            className={'max-w-md'}
-          />
-        </div>
-
-        <div className={'flex gap-2'}>
-          <Button type={'submit'} size={'sm'}>
-            Lọc
-          </Button>
-
-          {hasActiveFilter && (
-            <Button
-              nativeButton={false}
-              size={'sm'}
-              variant={'outline'}
-              render={
-                <Link
-                  href={buildTipsHref({
-                    status: 'all',
-                    q: '',
-                    page: 1,
-                  })}
-                >
-                  Xoá lọc
-                </Link>
-              }
-            />
-          )}
-        </div>
-      </form>
-
-      {/* Danh sách bài viết */}
-      <Card>
-        <CardHeader className={'flex flex-row items-center justify-between pb-3'}>
-          <CardTitle className={'text-base'}>
-            Danh sách bài viết ({total})
-          </CardTitle>
-
-          {total > 0 && (
-            <span className={'text-muted-foreground text-xs'}>
-              Hiển thị {from + 1}–{Math.min(to + 1, total)} trên tổng số {total} bài
-            </span>
-          )}
+              {hasActiveFilter && (
+                <Button
+                  nativeButton={false}
+                  variant={'ghost'}
+                  size={'sm'}
+                  className={'h-8 text-xs text-muted-foreground'}
+                  render={
+                    <Link
+                      href={buildTipsHref({
+                        status: 'all',
+                        q: '',
+                        page: 1,
+                      })}
+                    >
+                      Xóa
+                    </Link>
+                  }
+                />
+              )}
+            </form>
+          </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className={'pt-5'}>
           {tips.length === 0 ? (
-            <p className={'text-muted-foreground text-sm'}>
-              {hasActiveFilter
-                ? 'Không tìm thấy bài viết nào phù hợp với bộ lọc.'
-                : 'Chưa có bài viết nào.'}
-            </p>
+            <div className={'py-12 text-center'}>
+              <BookOpen className={'mx-auto h-10 w-10 text-muted-foreground/30 mb-2'} />
+              <p className={'text-muted-foreground text-sm font-medium'}>
+                {hasActiveFilter
+                  ? 'Không tìm thấy bài viết nào phù hợp với bộ lọc.'
+                  : 'Chưa có bài viết mẹo vặt nào.'}
+              </p>
+            </div>
           ) : (
-            <>
-              <ul className={'flex flex-col gap-3'}>
-                {tips.map((tip) => (
-                  <li
-                    key={tip.id}
-                    className={
-                      'flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between hover:bg-muted/30 transition-colors'
-                    }
-                  >
-                    <div className={'flex items-start gap-3 min-w-0 flex-1'}>
-                      {tip.image_url ? (
-                        <div
-                          className={
-                            'relative h-14 w-20 shrink-0 overflow-hidden rounded-md border bg-muted'
-                          }
+            /* Danh sách mẹo vặt dạng lưới (Grid 2 cột trên md, 3 cột trên lg/xl) */
+            <div className={'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}>
+              {tips.map((tip) => (
+                <Card
+                  key={tip.id}
+                  className={'flex flex-col justify-between overflow-hidden border-border/70 shadow-xs hover:shadow-sm transition-shadow'}
+                >
+                  <div>
+                    {/* Ảnh đại diện bài viết */}
+                    {tip.image_url ? (
+                      <div className={'relative aspect-video w-full overflow-hidden bg-muted border-b border-border/50'}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={tip.image_url}
+                          alt={tip.title}
+                          className={'h-full w-full object-cover'}
+                        />
+                      </div>
+                    ) : (
+                      <div className={'flex aspect-video w-full items-center justify-center border-b border-border/50 bg-muted/40 text-muted-foreground'}>
+                        <BookOpen className={'h-8 w-8 text-muted-foreground/40'} />
+                      </div>
+                    )}
+
+                    <div className={'p-4 space-y-2'}>
+                      <div className={'flex items-center justify-between gap-2'}>
+                        <Badge
+                          variant={tip.is_published ? 'default' : 'secondary'}
+                          className={'text-[11px] h-5 px-2'}
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={tip.image_url}
-                            alt={tip.title}
-                            className={'h-full w-full object-cover'}
-                          />
-                        </div>
-                      ) : null}
+                          {tip.is_published ? 'Đã xuất bản' : 'Nháp'}
+                        </Badge>
 
-                      <div className={'min-w-0 flex-1'}>
-                        <div className={'flex flex-wrap items-center gap-2'}>
-                          <p className={'font-semibold text-base'}>{tip.title}</p>
-                          <Badge variant={tip.is_published ? 'default' : 'secondary'}>
-                            {tip.is_published ? 'Đã xuất bản' : 'Nháp'}
-                          </Badge>
-                        </div>
+                        <span className={'text-[11px] text-muted-foreground font-mono'}>
+                          /{tip.slug}
+                        </span>
+                      </div>
 
-                        <div className={'mt-1 flex items-center gap-2'}>
+                      <h3
+                        className={'font-semibold text-base leading-snug text-foreground line-clamp-2'}
+                        title={tip.title}
+                      >
+                        {tip.title}
+                      </h3>
+
+                      {tip.excerpt && (
+                        <p className={'text-xs text-muted-foreground leading-relaxed line-clamp-2'}>
+                          {tip.excerpt}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Footer của card: Nút Xem bài viết & Cụm nút thao tác */}
+                  <CardFooter className={'p-4 pt-3 border-t border-border/40 bg-muted/10 flex flex-col gap-2.5'}>
+                    <div className={'w-full'}>
+                      <Button
+                        nativeButton={false}
+                        variant={'outline'}
+                        size={'sm'}
+                        className={'h-8 w-full gap-1.5 text-xs'}
+                        render={
                           <Link
                             href={`/meo-vat/${tip.slug}`}
                             target={'_blank'}
                             rel={'noopener noreferrer'}
-                            className={
-                              'inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium'
-                            }
                             title={`Xem bài viết: ${tip.title}`}
                           >
-                            <span>Xem bài viết</span>
-                            <ExternalLink className={'h-3 w-3'} />
+                            <ExternalLink className={'h-3.5 w-3.5'} />
+                            <span>Xem bài viết công khai</span>
                           </Link>
-                        </div>
-
-                        {tip.excerpt && (
-                          <p className={'text-muted-foreground line-clamp-1 text-xs mt-1'}>
-                            {tip.excerpt}
-                          </p>
-                        )}
-                      </div>
+                        }
+                      />
                     </div>
 
-                    <TipRowActions tip={tip} />
-                  </li>
-                ))}
-              </ul>
-
-              {/* Điều hướng phân trang */}
-              <div className={'pt-4'}>
-                <PaginationNav
-                  currentPage={safePage}
-                  totalPages={totalPages}
-                  buildHref={(targetPage: number) =>
-                    buildTipsHref({
-                      status: statusFilter,
-                      q: searchTerm,
-                      page: targetPage,
-                    })
-                  }
-                />
-              </div>
-            </>
+                    <div className={'w-full pt-1 border-t border-border/30 flex justify-end'}>
+                      <TipRowActions tip={tip} />
+                    </div>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
           )}
         </CardContent>
+
+        {totalPages > 1 && (
+          <CardFooter className={'border-t border-border/40 pt-4 flex justify-center'}>
+            <PaginationNav
+              currentPage={safePage}
+              totalPages={totalPages}
+              buildHref={(targetPage: number) =>
+                buildTipsHref({
+                  status: statusFilter,
+                  q: searchTerm,
+                  page: targetPage,
+                })
+              }
+            />
+          </CardFooter>
+        )}
       </Card>
     </div>
   );
