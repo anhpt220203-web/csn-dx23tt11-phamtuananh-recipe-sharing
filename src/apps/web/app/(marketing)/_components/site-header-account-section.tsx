@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
+import { Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { PersonalAccountDropdown } from '@kit/accounts/personal-account-dropdown';
 import { useSignOut } from '@kit/supabase/hooks/use-sign-out';
@@ -51,13 +52,33 @@ export function SiteHeaderAccountSection() {
   }
 
   return (
-    <PersonalAccountDropdown
-      showProfileName={false}
-      paths={paths}
-      features={features}
-      user={user}
-      signOutRequested={() => signOut.mutateAsync()}
-    />
+    <div className={'flex items-center gap-1.5'}>
+      <If condition={features.enableThemeToggle}>
+        <div className={'hidden sm:block'}>
+          <ModeToggle />
+        </div>
+      </If>
+
+      <Button
+        variant={'ghost'}
+        size={'sm'}
+        nativeButton={false}
+        render={<Link href={'/yeu-thich'} />}
+        className={'flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-red-500'}
+        title={'Danh sách món yêu thích'}
+      >
+        <Heart className={'h-4 w-4 fill-red-500 text-red-500'} aria-hidden={true} />
+        <span className={'hidden sm:inline'}>Món yêu thích</span>
+      </Button>
+
+      <PersonalAccountDropdown
+        showProfileName={false}
+        paths={paths}
+        features={features}
+        user={user}
+        signOutRequested={() => signOut.mutateAsync()}
+      />
+    </div>
   );
 }
 
