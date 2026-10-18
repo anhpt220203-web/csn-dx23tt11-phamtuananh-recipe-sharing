@@ -91,17 +91,19 @@ on conflict (email) where is_sso_user = false do update set
   updated_at = now();
 
 -- ─── 3. auth.identities — GoTrue bắt buộc, không có là không đăng nhập được ───
+-- (đúng convention GoTrue v2.19x: id = uuid ngẫu nhiên, provider = 'email',
+--  provider_id = user_id, identity_data.sub = user_id)
 insert into auth.identities (
-  id, user_id, provider_id, identity_data,
+  id, user_id, provider_id, provider, identity_data,
   last_sign_in_at, created_at, updated_at
 )
 select
-  u.id::text, u.id, 'email',
+  extensions.gen_random_uuid(), u.id, u.id, 'email',
   jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
   now(), now(), now()
 from auth.users u
 where u.email in ('phamtuananh@example.com', 'member@example.com')
-on conflict (provider_id, user_id) do nothing;
+  and not exists (select 1 from auth.identities i where i.user_id = u.id);
 
 -- ─── 4. Dòng public.accounts tương ứng (theo logic trigger kit.new_user_created_setup) ───
 insert into public.accounts (id, name, picture_url, email, created_by)

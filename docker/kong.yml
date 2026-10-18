@@ -49,6 +49,7 @@ plugins:
         - apikey
         - Content-Type
         - x-client-info
+        - x-supabase-api-version
         - prefer
         - range
         - content-range
