@@ -811,7 +811,9 @@ export default async function HomePage() {
               <Button
                 size={'lg'}
                 variant={'outline'}
-                className={'border-white/40 text-white hover:bg-white/10'}
+                className={
+                  'border-white/60 bg-white/10 text-white font-semibold shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white'
+                }
                 nativeButton={false}
                 render={<Link href={'/danh-muc'} />}
               >
