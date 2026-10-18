@@ -549,7 +549,7 @@ export default async function HomePage() {
         <div className={'grid grid-cols-1 gap-6 md:grid-cols-3'}>
           {/* Miền Bắc */}
           <Link
-            href={'/tim-kiem?q=Ha+Noi'}
+            href={'/tim-kiem?q=mien+bac'}
             className={
               'group relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-card p-6 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/40 hover:shadow-lg'
             }
@@ -574,7 +574,7 @@ export default async function HomePage() {
             </h3>
 
             <p className={'text-muted-foreground mt-2 text-sm leading-relaxed'}>
-              Đề cao sự thanh nhã, vừa vặn và hương vị mộc mạc: Phở bò Hà Nội, Bún chả, Chả cá Lã Vọng.
+              Đề cao sự thanh nhã, vừa vặn và hương vị mộc mạc: Canh gà củ sen, Canh nghêu nấu nấm, Bún đậu thanh đạm.
             </p>
 
             <div className={'text-primary mt-6 flex items-center gap-1 text-xs font-semibold'}>
@@ -585,7 +585,7 @@ export default async function HomePage() {
 
           {/* Miền Trung */}
           <Link
-            href={'/tim-kiem?q=Hue'}
+            href={'/tim-kiem?q=mien+trung'}
             className={
               'group relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-red-500/10 via-rose-500/5 to-card p-6 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-red-500/40 hover:shadow-lg'
             }
@@ -610,7 +610,7 @@ export default async function HomePage() {
             </h3>
 
             <p className={'text-muted-foreground mt-2 text-sm leading-relaxed'}>
-              Gia vị cay nồng quyến rũ, màu sắc rực rỡ và chiều sâu văn hóa: Bún bò Huế, Bánh xèo, Mì Quảng.
+              Gia vị cay nồng quyến rũ, màu sắc rực rỡ và chiều sâu văn hóa: Thịt bò xào sa tế, Súp gà chua cay, Chả giò ngũ vị.
             </p>
 
             <div className={'text-primary mt-6 flex items-center gap-1 text-xs font-semibold'}>
@@ -621,7 +621,7 @@ export default async function HomePage() {
 
           {/* Miền Nam */}
           <Link
-            href={'/tim-kiem?q=mien+tay'}
+            href={'/tim-kiem?q=mien+nam'}
             className={
               'group relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-card p-6 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-lg'
             }
@@ -646,7 +646,7 @@ export default async function HomePage() {
             </h3>
 
             <p className={'text-muted-foreground mt-2 text-sm leading-relaxed'}>
-              Đặc sản vùng sông nước với hương dừa béo bùi và vị ngọt tự nhiên: Canh chua cá lóc, Cá kho tộ.
+              Hương vị hào sảng, trù phú sông nước: Canh mồng tơi tôm bắp, Gỏi bưởi da xanh, Đậu hũ xốt me chua ngọt.
             </p>
 
             <div className={'text-primary mt-6 flex items-center gap-1 text-xs font-semibold'}>
