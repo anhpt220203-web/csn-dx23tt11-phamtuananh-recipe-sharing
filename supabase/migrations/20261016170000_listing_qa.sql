@@ -1,4 +1,4 @@
--- Danh mục nhiều chiều + tags + hỏi đáp (theo review Knorr, 2026-10-16)
+-- Danh mục nhiều chiều + tags + hỏi đáp (2026-10-16)
 
 -- 1. Chiều danh mục: nhom-mon (mặc định), nguyen-lieu-chinh,
 --    phuong-phap-che-bien, bua-an, phong-cach-am-thuc

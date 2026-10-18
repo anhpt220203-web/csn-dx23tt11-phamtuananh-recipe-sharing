@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { connection } from 'next/server';
 
-import { ArrowRight, ChefHat, Heart, Search, Star } from 'lucide-react';
+import { ArrowRight, ChefHat } from 'lucide-react';
 
 import { Button } from '@kit/ui/button';
 import {
@@ -37,33 +37,6 @@ export const metadata: Metadata = {
   description:
     'Khám phá hàng chục công thức nấu ăn Việt Nam: món chính, món canh, món chay, món ăn vặt, đồ uống và nhiều hơn nữa.',
 };
-
-const FEATURES = [
-  {
-    icon: ChefHat,
-    title: 'Công thức chi tiết',
-    description:
-      'Nguyên liệu định lượng rõ ràng, từng bước thực hiện kèm thời gian nấu và độ khó.',
-  },
-  {
-    icon: Search,
-    title: 'Tìm kiếm nhanh',
-    description:
-      'Tìm theo tên món, nguyên liệu hoặc lọc theo nhóm món chỉ trong vài giây.',
-  },
-  {
-    icon: Heart,
-    title: 'Lưu món yêu thích',
-    description:
-      'Đăng nhập để đánh dấu các món bạn thích và xem lại bất cứ lúc nào.',
-  },
-  {
-    icon: Star,
-    title: 'Đánh giá 5 sao',
-    description:
-      'Chấm điểm các món đã thử để giúp cộng đồng chọn được công thức ngon nhất.',
-  },
-] as const;
 
 /** Đầu dòng của mỗi section: tiêu đề + mô tả + link "Xem tất cả". */
 function SectionHeader({
@@ -335,40 +308,6 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {/* ── Tính năng ────────────────────────────────────── */}
-      <section className={'container mx-auto px-4 py-10 sm:py-14'}>
-        <h2
-          className={
-            'mb-6 text-center text-2xl font-bold tracking-tight sm:text-3xl'
-          }
-        >
-          Vì sao nên dùng {appConfig.name}?
-        </h2>
-
-        <div className={'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'}>
-          {FEATURES.map((feature) => (
-            <Card key={feature.title} className={'h-full'}>
-              <CardHeader>
-                <span
-                  className={
-                    'bg-primary/10 text-primary inline-flex h-10 w-10 items-center justify-center rounded-lg'
-                  }
-                >
-                  <feature.icon className={'h-5 w-5'} aria-hidden={true} />
-                </span>
-
-                <CardTitle className={'mt-3 text-lg'}>
-                  {feature.title}
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <CardDescription>{feature.description}</CardDescription>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
