@@ -104,8 +104,8 @@ export default async function CookingTipsAdminPage({
   const admin = getSupabaseServerAdminClient<ContentSchema>();
 
   let baseQuery = admin
-    .from('cooking_tips')
-    .select('id,title,slug,image_url,excerpt,content,is_published,views_count,created_at,updated_at', {
+    .from('tips')
+    .select('id,title,slug,image_url,excerpt,content,is_published,created_at,updated_at', {
       count: 'exact',
     })
     .order('created_at', { ascending: false });
@@ -339,7 +339,7 @@ export default async function CookingTipsAdminPage({
                         </Badge>
 
                         <Badge variant={'outline'}>
-                          {tip.views_count ?? 0} lượt xem
+                          {new Date(tip.created_at).toLocaleDateString('vi-VN')}
                         </Badge>
                       </div>
 

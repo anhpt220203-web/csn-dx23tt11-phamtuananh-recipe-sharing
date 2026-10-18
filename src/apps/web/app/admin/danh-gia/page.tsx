@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { ExternalLink, Star, User as UserIcon, Utensils } from 'lucide-react';
@@ -7,7 +8,13 @@ import { ExternalLink, Star, User as UserIcon, Utensils } from 'lucide-react';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { Badge } from '@kit/ui/badge';
 import { Button } from '@kit/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@kit/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@kit/ui/card';
 
 import { PaginationNav } from '~/(marketing)/_components/pagination-nav';
 import type { RecipeSchema } from '~/lib/recipes/database';
@@ -16,13 +23,49 @@ import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import { DeleteRatingButton } from './_components/delete-rating-button';
 
 export const metadata: Metadata = {
-  title: 'Kiểm duyệt đánh giá',
+  title: 'Quản lý đánh giá',
 };
 
 export const instant = false;
 
-// 12 đánh giá/trang chia đều đẹp mắt cho cả lưới 2 cột và 3 cột
-const PAGE_SIZE = 12;
+const PER_PAGE = 8;
+
+const RATING_FILTERS = [
+  { value: 'all', label: 'Tất cả' },
+  { value: '5', label: '5 sao ★★★★★' },
+  { value: '4', label: '4 sao ★★★★' },
+  { value: '3', label: '3 sao ★★★' },
+  { value: '2', label: '2 sao ★★' },
+  { value: '1', label: '1 sao ★' },
+] as const;
+
+type RatingFilter = (typeof RATING_FILTERS)[number]['value'];
+
+function parsePage(value: string | undefined): number {
+  const page = Number.parseInt(value ?? '1', 10);
+  return Number.isFinite(page) && page > 0 ? page : 1;
+}
+
+function buildRatingsHref({
+  rating = 'all',
+  page = 1,
+}: {
+  rating?: RatingFilter;
+  page?: number;
+}): string {
+  const params = new URLSearchParams();
+
+  if (rating !== 'all') {
+    params.set('rating', rating);
+  }
+
+  if (page > 1) {
+    params.set('page', String(page));
+  }
+
+  const queryString = params.toString();
+  return queryString ? `/admin/danh-gia?${queryString}` : '/admin/danh-gia';
+}
 
 function getDisplayName(user: User): string {
   const meta = user.user_metadata ?? {};
@@ -63,7 +106,7 @@ function Stars({ value }: { value: number }) {
 }
 
 type RatingsPageProps = {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ rating?: string; page?: string }>;
 };
 
 type RecipeRelation = {
@@ -79,22 +122,29 @@ export default async function RatingsAdminPage({
   await connection();
 
   const params = await searchParams;
+  const page = parsePage(params.page);
+  const ratingFilter: RatingFilter =
+    params.rating && ['1', '2', '3', '4', '5'].includes(params.rating)
+      ? (params.rating as RatingFilter)
+      : 'all';
 
-  const rawPage = Number(params.page ?? '1');
-  const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
-
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  const from = (page - 1) * PER_PAGE;
+  const to = from + PER_PAGE - 1;
 
   const admin = getSupabaseServerAdminClient<RecipeSchema>();
 
-  const { data: ratings, count, error } = await admin
+  let query = admin
     .from('ratings')
     .select('id,user_id,recipe_id,rating,created_at,recipes(title,slug,image_url)', {
       count: 'exact',
     })
-    .order('created_at', { ascending: false })
-    .range(from, to);
+    .order('created_at', { ascending: false });
+
+  if (ratingFilter !== 'all') {
+    query = query.eq('rating', Number.parseInt(ratingFilter, 10));
+  }
+
+  const { data: ratings, count, error } = await query.range(from, to);
 
   if (error) {
     throw new Error(`Không tải được danh sách đánh giá: ${error.message}`);
@@ -135,140 +185,185 @@ export default async function RatingsAdminPage({
   });
 
   const total = count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+
+  if (page > totalPages && total > 0) {
+    redirect(
+      buildRatingsHref({
+        rating: ratingFilter,
+        page: totalPages,
+      }),
+    );
+  }
+
+  const hasActiveFilter = ratingFilter !== 'all';
 
   return (
     <div className={'flex flex-col gap-6'}>
-      <div className={'flex flex-wrap items-center justify-between gap-4'}>
+      {/* Header trang */}
+      <div className={'flex flex-wrap items-start justify-between gap-3'}>
         <div>
           <h1 className={'text-2xl font-bold tracking-tight'}>
-            Kiểm duyệt đánh giá
+            Quản lý đánh giá
           </h1>
 
           <p className={'text-muted-foreground mt-1 text-sm'}>
-            Quản lý {total} lượt đánh giá món ăn từ cộng đồng — sắp xếp mới nhất trước.
+            Tổng cộng {total} đánh giá trong hệ thống. Theo dõi phản hồi và mức độ hài lòng của người dùng về các món ăn.
           </p>
         </div>
+      </div>
 
-        {total > 0 && (
-          <span className={'text-xs font-medium text-muted-foreground'}>
-            Trang {page} / {totalPages} ({rows.length} mục trên trang này)
-          </span>
+      {/* Tabs lọc theo số sao */}
+      <div className={'flex flex-wrap items-center gap-2'}>
+        <div className={'flex flex-wrap gap-2'}>
+          {RATING_FILTERS.map((filter) => {
+            const active = ratingFilter === filter.value;
+
+            return (
+              <Link
+                key={filter.value}
+                href={buildRatingsHref({
+                  rating: filter.value,
+                  page: 1,
+                })}
+                aria-current={active ? 'page' : undefined}
+                className={
+                  active
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-1.5 text-sm font-medium'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-3 py-1.5 text-sm font-medium'
+                }
+              >
+                {filter.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {hasActiveFilter && (
+          <Button
+            nativeButton={false}
+            size={'sm'}
+            variant={'outline'}
+            render={
+              <Link href={'/admin/danh-gia'}>
+                Xoá lọc
+              </Link>
+            }
+          />
         )}
       </div>
 
+      {/* Danh sách đánh giá */}
       {rows.length === 0 ? (
         <Card>
-          <CardContent className={'py-12 text-center'}>
+          <CardContent className={'py-10 text-center'}>
             <Star className={'mx-auto h-10 w-10 text-muted-foreground/30 mb-2'} />
-            <p className={'text-muted-foreground text-sm font-medium'}>
-              {total === 0
-                ? 'Chưa có đánh giá nào từ người dùng.'
-                : 'Trang này hiện chưa có dữ liệu, hãy quay lại trang trước.'}
+            <p className={'text-muted-foreground text-sm'}>
+              {hasActiveFilter
+                ? 'Không tìm thấy đánh giá nào với bộ lọc hiện tại.'
+                : 'Chưa có đánh giá nào từ người dùng.'}
             </p>
           </CardContent>
         </Card>
       ) : (
-        /* Danh sách đánh giá dạng lưới (Grid 2 cột trên md, 3 cột trên lg/xl) */
-        <div className={'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}>
-          {rows.map((row) => (
-            <Card
-              key={row.id}
-              className={'flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-sm transition-shadow'}
-            >
-              <CardHeader className={'p-4 pb-3 space-y-3 border-b border-border/40 bg-muted/10'}>
-                {/* Thông tin món ăn: Ảnh bìa nhỏ + Tiêu đề món + Số sao */}
-                <div className={'flex items-start gap-3 min-w-0'}>
-                  {row.recipeImage ? (
-                    <div className={'h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/60 bg-muted'}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+        <div className={'flex flex-col gap-4'}>
+          {total > 0 && (
+            <div className={'flex items-center justify-between text-xs text-muted-foreground'}>
+              <span>
+                Hiển thị {from + 1}–{Math.min(to + 1, total)} trên tổng số {total} đánh giá
+              </span>
+            </div>
+          )}
+
+          <div className={'grid grid-cols-1 gap-3 lg:grid-cols-2'}>
+            {rows.map((row) => (
+              <Card key={row.id} className={'hover:shadow-xs transition-shadow'}>
+                <CardHeader className={'pb-3'}>
+                  <div className={'flex gap-3'}>
+                    {row.recipeImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={row.recipeImage}
                         alt={row.recipeTitle}
-                        className={'h-full w-full object-cover'}
+                        className={'h-16 w-16 shrink-0 rounded-md object-cover border'}
+                        loading={'lazy'}
                       />
-                    </div>
-                  ) : (
-                    <div className={'flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted text-muted-foreground'}>
-                      <Utensils className={'h-5 w-5'} />
-                    </div>
-                  )}
+                    ) : (
+                      <div
+                        className={
+                          'bg-muted flex h-16 w-16 shrink-0 items-center justify-center rounded-md text-xs text-muted-foreground border'
+                        }
+                      >
+                        <Utensils className={'h-6 w-6'} />
+                      </div>
+                    )}
 
-                  <div className={'min-w-0 flex-1 space-y-1'}>
-                    <p className={'font-semibold text-sm leading-snug text-foreground line-clamp-1'} title={row.recipeTitle}>
-                      {row.recipeTitle}
-                    </p>
+                    <div className={'min-w-0 flex-1'}>
+                      <CardTitle className={'truncate text-base'} title={row.recipeTitle}>
+                        {row.recipeTitle}
+                      </CardTitle>
 
-                    <div className={'flex items-center gap-1.5'}>
-                      <Stars value={row.rating} />
-                      <Badge variant={'secondary'} className={'h-4 px-1.5 text-[10px] font-mono'}>
-                        {row.rating}/5
-                      </Badge>
+                      <div className={'flex items-center gap-2 mt-0.5'}>
+                        <Stars value={row.rating} />
+                        <Badge variant={'secondary'} className={'h-4 px-1.5 text-[10px] font-mono'}>
+                          {row.rating}/5 sao
+                        </Badge>
+                      </div>
+
+                      <div className={'mt-1.5 flex flex-col gap-0.5 text-xs text-muted-foreground'}>
+                        <div className={'flex items-center gap-1.5'}>
+                          <UserIcon className={'h-3.5 w-3.5 shrink-0'} />
+                          <span className={'truncate font-medium text-foreground'} title={row.userEmail}>
+                            {row.userEmail}
+                            {row.userName !== 'Chưa đặt tên' ? ` (${row.userName})` : ''}
+                          </span>
+                        </div>
+                        <span className={'text-[11px]'}>Thời gian: {formatDateTime(row.created_at)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardHeader>
+                </CardHeader>
 
-              <CardContent className={'p-4 py-3 space-y-1.5 text-xs'}>
-                {/* Thông tin người đánh giá */}
-                <div className={'flex items-center gap-1.5 text-muted-foreground'}>
-                  <UserIcon className={'h-3.5 w-3.5 shrink-0'} />
-                  <span className={'truncate font-medium text-foreground'} title={row.userEmail}>
-                    {row.userEmail}
-                  </span>
-                </div>
+                <CardContent className={'flex items-center gap-2 pt-0'}>
+                  {row.recipeSlug ? (
+                    <Button
+                      nativeButton={false}
+                      variant={'outline'}
+                      size={'sm'}
+                      className={'gap-1.5'}
+                      render={
+                        <Link
+                          href={`/cong-thuc/${row.recipeSlug}`}
+                          target={'_blank'}
+                          rel={'noopener noreferrer'}
+                        >
+                          <ExternalLink className={'h-3.5 w-3.5'} />
+                          <span>Đi đến công thức</span>
+                        </Link>
+                      }
+                    />
+                  ) : null}
 
-                {row.userName !== 'Chưa đặt tên' && (
-                  <p className={'text-muted-foreground pl-5 truncate'}>
-                    Tên: <span className={'text-foreground font-medium'}>{row.userName}</span>
-                  </p>
-                )}
+                  <DeleteRatingButton id={row.id} recipeTitle={row.recipeTitle} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-                <p className={'text-[11px] text-muted-foreground pl-5'}>
-                  Thời gian: {formatDateTime(row.created_at)}
-                </p>
-              </CardContent>
-
-              {/* Nút thao tác: Đi đến công thức & Xóa đánh giá */}
-              <CardFooter className={'p-4 pt-2 border-t border-border/40 flex items-center justify-between gap-2'}>
-                {row.recipeSlug ? (
-                  <Button
-                    nativeButton={false}
-                    variant={'outline'}
-                    size={'sm'}
-                    className={'h-8 gap-1.5 text-xs flex-1'}
-                    render={
-                      <Link
-                        href={`/cong-thuc/${row.recipeSlug}`}
-                        target={'_blank'}
-                        rel={'noreferrer'}
-                      >
-                        <ExternalLink className={'h-3.5 w-3.5'} />
-                        <span>Đi đến công thức</span>
-                      </Link>
-                    }
-                  />
-                ) : (
-                  <span className={'text-xs text-muted-foreground italic'}>Món đã bị xóa</span>
-                )}
-
-                <DeleteRatingButton
-                  id={row.id}
-                  recipeTitle={row.recipeTitle}
-                />
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {totalPages > 1 && (
-        <div className={'flex justify-center pt-2'}>
-          <PaginationNav
-            currentPage={page}
-            totalPages={totalPages}
-            buildHref={(p: number) => `/admin/danh-gia?page=${p}`}
-          />
+          {/* Phân trang */}
+          <div className={'pt-2'}>
+            <PaginationNav
+              currentPage={safePage}
+              totalPages={totalPages}
+              buildHref={(targetPage: number) =>
+                buildRatingsHref({
+                  rating: ratingFilter,
+                  page: targetPage,
+                })
+              }
+            />
+          </div>
         </div>
       )}
     </div>
