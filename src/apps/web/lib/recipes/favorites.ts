@@ -9,6 +9,8 @@ import 'server-only';
 
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
+import type { RecipeSchema } from './database';
+
 export type FavoriteRow = {
   user_id: string;
   recipe_id: number;
@@ -160,7 +162,7 @@ export async function getRecipeFavoriteCounts(
     const { getSupabaseServerAdminClient } = await import(
       '@kit/supabase/server-admin-client'
     );
-    const client = getSupabaseServerAdminClient();
+    const client = getSupabaseServerAdminClient<RecipeSchema>();
     const { data, error } = await client
       .from('favorites')
       .select('recipe_id')

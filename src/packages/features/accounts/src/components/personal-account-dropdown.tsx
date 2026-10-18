@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 import type { JwtPayload } from '@supabase/supabase-js';
 
-import { ChevronsUpDown, Home, LogOut, UserRound } from 'lucide-react';
+import { ChevronsUpDown, Heart, Home, LogOut, UserRound } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -169,6 +169,19 @@ export function PersonalAccountDropdown({
             </span>
           </DropdownMenuItem>
         </If>
+
+        <DropdownMenuItem
+          render={
+            <Link
+              className={'s-full flex cursor-pointer items-center space-x-2'}
+              href={'/yeu-thich'}
+            />
+          }
+        >
+          <Heart className={'h-5 text-red-500 fill-red-500'} />
+
+          <span>Món yêu thích</span>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
