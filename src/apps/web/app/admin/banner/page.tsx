@@ -6,6 +6,7 @@ import { Badge } from '@kit/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 
 import type { ContentSchema } from '~/lib/content/database';
+import { MediaUploadDialog } from '../media/_components/media-upload-dialog';
 
 import { BannerRowActions, CreateBannerForm } from './_components/banner-forms';
 
@@ -36,13 +37,21 @@ export default async function BannersAdminPage() {
 
   return (
     <div className={'flex flex-col gap-6'}>
-      <div>
-        <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý banner</h1>
+      <div className={'flex flex-wrap items-center justify-between gap-4'}>
+        <div>
+          <h1 className={'text-2xl font-bold tracking-tight'}>Quản lý banner</h1>
 
-        <p className={'text-muted-foreground mt-1 text-sm'}>
-          Banner hiển thị ở carousel trang chủ. Chỉ banner đang hoạt động mới
-          hiện ra ngoài.
-        </p>
+          <p className={'text-muted-foreground mt-1 text-sm'}>
+            Banner hiển thị ở carousel trang chủ. Chỉ banner đang hoạt động mới
+            hiện ra ngoài.
+          </p>
+        </div>
+
+        <MediaUploadDialog
+          defaultFolder={'banners'}
+          buttonLabel={'Tải ảnh banner lên'}
+          buttonVariant={'outline'}
+        />
       </div>
 
       <Card>
