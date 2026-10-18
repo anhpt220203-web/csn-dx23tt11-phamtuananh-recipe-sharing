@@ -857,6 +857,15 @@ describe('getTags', () => {
     setMock({ tables: { tags: { data: rows } } });
 
     expect(await getTags()).toEqual(rows);
+    expect(
+      mock.calls.some(
+        (call) =>
+          call.table === 'tags' &&
+          call.method === 'order' &&
+          call.args[0] === 'id' &&
+          (call.args[1] as { ascending: boolean }).ascending === true,
+      ),
+    ).toBe(true);
   });
 
   it('ném lỗi khi Supabase báo lỗi', async () => {
