@@ -295,7 +295,7 @@ export default async function AccountsPage({ searchParams }: AccountsPageProps) 
           <PaginationNav
             currentPage={safePage}
             totalPages={totalPages}
-            getPageHref={(p) => buildAccountsHref({ q: params.q, page: p })}
+            buildHref={(p: number) => buildAccountsHref({ q: params.q, page: p })}
           />
         </div>
       )}
