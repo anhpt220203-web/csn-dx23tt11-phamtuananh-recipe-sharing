@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   title: 'Quản lý banner',
 };
 
+export const instant = false;
+
 export default async function BannersAdminPage() {
   // Trang admin đọc DB mỗi request, không prerender lúc build
   // (tránh gọi service-role key khi biến môi trường chưa có).

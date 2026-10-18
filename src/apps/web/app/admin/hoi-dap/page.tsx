@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   title: 'Quản lý hỏi đáp',
 };
 
+export const instant = false;
+
 type QuestionWithRecipe = {
   id: number;
   question: string;

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { connection } from 'next/server';
 
 import {
   Card,
@@ -18,7 +19,10 @@ export const metadata: Metadata = {
   description: 'Bí quyết, mẹo vặt nấu ăn ngon mỗi ngày.',
 };
 
+export const instant = false;
+
 export default async function TipsPage() {
+  await connection();
   const tips = await getPublishedTips(50);
 
   return (

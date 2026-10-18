@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
+import { useRouter } from 'next/navigation';
 import { PersonalAccountDropdown } from '@kit/accounts/personal-account-dropdown';
 import { useSignOut } from '@kit/supabase/hooks/use-sign-out';
 import { useUser } from '@kit/supabase/hooks/use-user';
@@ -61,6 +62,18 @@ export function SiteHeaderAccountSection() {
 }
 
 function AuthButtons() {
+  const router = useRouter();
+
+  const handleNavigate = (path: string) => (e: React.MouseEvent) => {
+    if (typeof window !== 'undefined') {
+      const current = window.location.pathname + window.location.search;
+      if (current && !current.startsWith('/auth')) {
+        e.preventDefault();
+        router.push(`${path}?next=${encodeURIComponent(current)}`);
+      }
+    }
+  };
+
   return (
     <div className={'flex space-x-2'}>
       <div className={'hidden space-x-0.5 md:flex'}>
@@ -70,7 +83,12 @@ function AuthButtons() {
 
         <Button
           nativeButton={false}
-          render={<Link href={pathsConfig.auth.signIn} />}
+          render={
+            <Link
+              href={pathsConfig.auth.signIn}
+              onClick={handleNavigate(pathsConfig.auth.signIn)}
+            />
+          }
           variant={'ghost'}
         >
           <Trans i18nKey={'auth.signIn'} />
@@ -79,7 +97,12 @@ function AuthButtons() {
 
       <Button
         nativeButton={false}
-        render={<Link href={pathsConfig.auth.signUp} />}
+        render={
+          <Link
+            href={pathsConfig.auth.signUp}
+            onClick={handleNavigate(pathsConfig.auth.signUp)}
+          />
+        }
         className="group"
         variant={'default'}
       >

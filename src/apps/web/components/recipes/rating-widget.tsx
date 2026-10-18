@@ -11,6 +11,7 @@ import { toast } from '@kit/ui/sonner';
 import { cn } from '@kit/ui/utils';
 
 import type { RatingSummary } from '~/lib/recipes/database';
+import { useAuthModal } from '~/components/recipes/auth-modal';
 import {
   removeRatingAction,
   setRatingAction,
@@ -114,14 +115,25 @@ export function RatingWidget({
   isAuthenticated,
 }: RatingWidgetProps) {
   const router = useRouter();
+  const { openSignInModal } = useAuthModal();
   const [isPending, startTransition] = useTransition();
   const [currentSummary, setCurrentSummary] = useState(summary);
   const [currentUserRating, setCurrentUserRating] = useState(userRating);
 
   function handleSelect(score: number) {
     if (!isAuthenticated) {
-      toast.info('Bạn cần đăng nhập để đánh giá món ăn.');
-      router.push('/auth/sign-in');
+      openSignInModal({
+        title: 'Đánh giá món ăn',
+        description: 'Đăng nhập để gửi đánh giá sao cho công thức này.',
+        onSuccess: async () => {
+          const result = await setRatingAction(recipeId, slug, score);
+          if (result.ok) {
+            setCurrentUserRating(result.userRating);
+            setCurrentSummary(result.summary);
+            toast.success('Cảm ơn bạn đã đánh giá!');
+          }
+        },
+      });
       return;
     }
 
@@ -130,8 +142,18 @@ export function RatingWidget({
 
       if (!result.ok) {
         if (result.reason === 'unauthenticated') {
-          toast.info('Bạn cần đăng nhập để đánh giá món ăn.');
-          router.push('/auth/sign-in');
+          openSignInModal({
+            title: 'Đánh giá món ăn',
+            description: 'Đăng nhập để gửi đánh giá sao cho công thức này.',
+            onSuccess: async () => {
+              const retry = await setRatingAction(recipeId, slug, score);
+              if (retry.ok) {
+                setCurrentUserRating(retry.userRating);
+                setCurrentSummary(retry.summary);
+                toast.success('Cảm ơn bạn đã đánh giá!');
+              }
+            },
+          });
           return;
         }
 
@@ -211,7 +233,19 @@ export function RatingWidget({
 
       {!isAuthenticated ? (
         <p className={'text-muted-foreground text-sm'}>
-          Đăng nhập để lưu món yêu thích và đánh giá công thức.
+          <button
+            type={'button'}
+            onClick={() =>
+              openSignInModal({
+                title: 'Đăng nhập',
+                description: 'Đăng nhập để lưu món yêu thích và đánh giá công thức.',
+              })
+            }
+            className={'text-primary font-medium underline underline-offset-4 hover:opacity-80'}
+          >
+            Đăng nhập
+          </button>{' '}
+          để lưu món yêu thích và đánh giá công thức.
         </p>
       ) : null}
     </div>

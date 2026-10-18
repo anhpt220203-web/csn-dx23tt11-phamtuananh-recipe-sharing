@@ -62,6 +62,8 @@ export const instant = false;
 export async function generateMetadata({
   params,
 }: RecipePageProps): Promise<Metadata> {
+  await connection();
+
   const { slug } = await params;
   const recipe = await getRecipeBySlug(slug);
 

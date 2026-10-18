@@ -31,6 +31,8 @@ export const metadata: Metadata = {
   title: 'Quản lý tài khoản',
 };
 
+export const instant = false;
+
 const PAGE_SIZE = 100;
 
 function getDisplayName(user: User): string {

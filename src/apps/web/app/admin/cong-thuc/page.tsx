@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   title: 'Quản lý công thức',
 };
 
+export const instant = false;
+
 const STATUS_FILTERS = [
   { value: 'all', label: 'Tất cả' },
   { value: 'published', label: 'Đã xuất bản' },

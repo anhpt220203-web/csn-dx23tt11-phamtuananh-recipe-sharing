@@ -29,7 +29,7 @@ async function getAuthenticatedUserId(): Promise<string | null> {
  */
 export async function toggleFavoriteAction(
   recipeId: number,
-  slug: string,
+  slug?: string,
 ): Promise<ToggleFavoriteResult> {
   if (!Number.isInteger(recipeId) || recipeId <= 0) {
     return { ok: false, reason: 'invalid' };
@@ -75,8 +75,11 @@ export async function toggleFavoriteAction(
     }
   }
 
-  revalidatePath(`/cong-thuc/${slug}`);
+  if (slug) {
+    revalidatePath(`/cong-thuc/${slug}`);
+  }
   revalidatePath('/yeu-thich');
+  revalidatePath('/');
 
   return { ok: true, favorited: !existing };
 }

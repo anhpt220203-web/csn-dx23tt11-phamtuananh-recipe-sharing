@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   title: 'Quản lý danh mục',
 };
 
+export const instant = false;
+
 export default async function CategoriesAdminPage() {
   // Trang admin đọc DB mỗi request, không prerender lúc build.
   await connection();

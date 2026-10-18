@@ -12,6 +12,52 @@ import { MagicLinkAuthContainer } from './magic-link-auth-container';
 import { OauthProviders } from './oauth-providers';
 import { PasswordSignInContainer } from './password-sign-in-container';
 
+function getRedirectTarget(
+  nextFromQuery: string | null,
+  fallbackHome: string,
+): string {
+  if (
+    nextFromQuery &&
+    nextFromQuery.startsWith('/') &&
+    !nextFromQuery.startsWith('//') &&
+    !nextFromQuery.startsWith('/auth')
+  ) {
+    return nextFromQuery;
+  }
+
+  if (isBrowser()) {
+    try {
+      const stored = sessionStorage.getItem('last_visited_path');
+      if (
+        stored &&
+        stored.startsWith('/') &&
+        !stored.startsWith('//') &&
+        !stored.startsWith('/auth')
+      ) {
+        return stored;
+      }
+    } catch {
+      // ignore storage access error
+    }
+
+    if (document.referrer) {
+      try {
+        const refUrl = new URL(document.referrer);
+        if (refUrl.origin === window.location.origin) {
+          const path = refUrl.pathname + refUrl.search;
+          if (!path.startsWith('/auth')) {
+            return path;
+          }
+        }
+      } catch {
+        // ignore URL parse error
+      }
+    }
+  }
+
+  return fallbackHome;
+}
+
 export function SignInMethodsContainer(props: {
   paths: {
     callback: string;
@@ -25,14 +71,25 @@ export function SignInMethodsContainer(props: {
   };
 }) {
   const router = useRouter();
-  const nextPath = useSearchParams().get('next') ?? props.paths.home;
+  const searchParams = useSearchParams();
+  const nextFromQuery = searchParams.get('next');
+  const targetPath = getRedirectTarget(nextFromQuery, props.paths.home);
 
   const redirectUrl = isBrowser()
-    ? new URL(props.paths.callback, window?.location.origin).toString()
+    ? new URL(
+        `${props.paths.callback}?next=${encodeURIComponent(targetPath)}`,
+        window?.location.origin,
+      ).toString()
     : '';
 
   const onSignIn = () => {
-    router.replace(nextPath);
+    try {
+      sessionStorage.removeItem('last_visited_path');
+    } catch {
+      // ignore
+    }
+
+    router.replace(targetPath);
   };
 
   return (
@@ -56,7 +113,7 @@ export function SignInMethodsContainer(props: {
           shouldCreateUser={false}
           paths={{
             callback: props.paths.callback,
-            returnPath: props.paths.home,
+            returnPath: targetPath,
           }}
         />
       </If>

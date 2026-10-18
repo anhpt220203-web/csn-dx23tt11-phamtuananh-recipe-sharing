@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   title: 'Quản lý mẹo vặt',
 };
 
+export const instant = false;
+
 export default async function TipsAdminPage() {
   // Trang admin đọc DB mỗi request, không prerender lúc build
   // (tránh gọi service-role key khi biến môi trường chưa có).

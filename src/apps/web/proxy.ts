@@ -72,10 +72,16 @@ function getPatterns() {
         const isVerifyMfa = req.nextUrl.pathname === pathsConfig.auth.verifyMfa;
 
         // If user is logged in and does not need to verify MFA,
-        // redirect to home page.
+        // redirect to requested destination or home page.
         if (!isVerifyMfa) {
+          const next = req.nextUrl.searchParams.get('next');
+          const redirectTarget =
+            next && next.startsWith('/') && !next.startsWith('/auth')
+              ? next
+              : pathsConfig.app.home;
+
           return NextResponse.redirect(
-            new URL(pathsConfig.app.home, req.nextUrl.origin).href,
+            new URL(redirectTarget, req.nextUrl.origin).href,
           );
         }
       },
@@ -90,7 +96,41 @@ function getPatterns() {
 
         if (!data?.claims) {
           const signIn = pathsConfig.auth.signIn;
-          const redirectPath = `${signIn}?next=${req.nextUrl.pathname}`;
+          const target = req.nextUrl.pathname + req.nextUrl.search;
+          const redirectPath = `${signIn}?next=${encodeURIComponent(target)}`;
+
+          return NextResponse.redirect(
+            new URL(redirectPath, req.nextUrl.origin).href,
+          );
+        }
+      },
+    },
+    {
+      // Khu vực trang cá nhân và món yêu thích: chuyển hướng về đăng nhập kèm next nếu chưa login
+      pattern: new URLPattern({ pathname: '/yeu-thich/*?' }),
+      handler: async (req: NextRequest, res: NextResponse) => {
+        const { data } = await getUser(req, res);
+
+        if (!data?.claims) {
+          const signIn = pathsConfig.auth.signIn;
+          const target = req.nextUrl.pathname + req.nextUrl.search;
+          const redirectPath = `${signIn}?next=${encodeURIComponent(target)}`;
+
+          return NextResponse.redirect(
+            new URL(redirectPath, req.nextUrl.origin).href,
+          );
+        }
+      },
+    },
+    {
+      pattern: new URLPattern({ pathname: '/profile/*?' }),
+      handler: async (req: NextRequest, res: NextResponse) => {
+        const { data } = await getUser(req, res);
+
+        if (!data?.claims) {
+          const signIn = pathsConfig.auth.signIn;
+          const target = req.nextUrl.pathname + req.nextUrl.search;
+          const redirectPath = `${signIn}?next=${encodeURIComponent(target)}`;
 
           return NextResponse.redirect(
             new URL(redirectPath, req.nextUrl.origin).href,
