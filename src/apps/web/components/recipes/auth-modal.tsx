@@ -35,12 +35,14 @@ type AuthModalContextType = {
 
 const AuthModalContext = createContext<AuthModalContextType | null>(null);
 
+const defaultAuthModalContext: AuthModalContextType = {
+  openSignInModal: () => {},
+  closeSignInModal: () => {},
+};
+
 export function useAuthModal() {
   const context = useContext(AuthModalContext);
-  if (!context) {
-    throw new Error('useAuthModal must be used within an AuthModalProvider');
-  }
-  return context;
+  return context ?? defaultAuthModalContext;
 }
 
 export function AuthModalProvider({ children }: React.PropsWithChildren) {
