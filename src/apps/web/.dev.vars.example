@@ -1,0 +1,11 @@
+# File mẫu cho biến môi trường khi chạy `wrangler dev` / `pnpm preview` local.
+# Copy thành `.dev.vars` (đã gitignore — KHÔNG commit file thật có secret):
+#   cp .dev.vars.example .dev.vars
+#
+# NEXT_PUBLIC_* được nội tuyến lúc BUILD, nên cũng cần khai báo ở đây
+# (hoặc export trong shell) trước khi chạy `pnpm preview`.
+
+NEXTJS_ENV=development
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_LOCAL_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_LOCAL_SERVICE_ROLE_KEY
