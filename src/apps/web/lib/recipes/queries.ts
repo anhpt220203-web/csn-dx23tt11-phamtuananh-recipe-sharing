@@ -340,6 +340,27 @@ export async function getRecipesByCategorySlug(
 }
 
 /**
+ * Lấy danh sách công thức đã xuất bản (status='published') sắp theo created_at mới nhất.
+ */
+export async function getPublishedRecipes(): Promise<RecipeWithCategory[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from('recipes')
+    .select(RECIPE_COLUMNS)
+    .eq('status', 'published')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Không tải được công thức: ${error.message}`);
+  }
+
+  return ((data ?? []) as unknown as RecipeQueryRow[]).map(
+    toRecipeWithCategory,
+  );
+}
+
+/**
  * Tìm kiếm công thức theo tên món, mô tả, TÊN NGUYÊN LIỆU hoặc
  * TÊN NHÓM MÓN (không phân biệt hoa thường, không phân biệt dấu tiếng Việt
  * nhờ RPC `public.search_recipes` dùng kit.unaccent trên DB).
@@ -616,6 +637,44 @@ export async function getRatingSummary(
   const total = (data ?? []).reduce((sum, item) => sum + item.rating, 0);
 
   return { average: total / count, count };
+}
+
+/**
+ * Lấy điểm đánh giá tổng hợp theo danh sách ID công thức (batch).
+ */
+export async function getRecipeRatingSummaries(
+  recipeIds: number[],
+): Promise<Map<number, RatingSummary>> {
+  if (recipeIds.length === 0) {
+    return new Map();
+  }
+
+  const client = getClient();
+  const { data } = await client
+    .from('ratings')
+    .select('recipe_id,rating')
+    .in('recipe_id', recipeIds);
+
+  const totals = new Map<number, { sum: number; count: number }>();
+
+  for (const row of data ?? []) {
+    const cur = totals.get(row.recipe_id) ?? { sum: 0, count: 0 };
+    cur.sum += row.rating;
+    cur.count += 1;
+    totals.set(row.recipe_id, cur);
+  }
+
+  const result = new Map<number, RatingSummary>();
+
+  for (const id of recipeIds) {
+    const cur = totals.get(id);
+    result.set(id, {
+      average: cur ? cur.sum / cur.count : null,
+      count: cur?.count ?? 0,
+    });
+  }
+
+  return result;
 }
 
 /**
