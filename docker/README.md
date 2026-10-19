@@ -1,4 +1,4 @@
-# Docker — demo "Công Thức Việt" (Next.js + Supabase self-hosted)
+# Docker — demo (Next.js + Supabase self-hosted)
 
 `docker compose up` dựng **toàn bộ stack local**, không cần Supabase Cloud:
 

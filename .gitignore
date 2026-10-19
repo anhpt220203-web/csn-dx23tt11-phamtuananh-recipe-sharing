@@ -52,3 +52,9 @@ src/.diag2.json
 /.swc-cache
 /supabase/.branches
 /supabase/.temp
+
+# Large media & presentations (>100MB exceeds GitHub limit)
+thesis/abs/*.mp4
+thesis/abs/*.pptx
+*.mp4
+*.pptx
