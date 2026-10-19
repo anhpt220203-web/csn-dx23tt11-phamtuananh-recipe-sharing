@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Poster - Website Quản lý và Chia sẻ Công thức Nấu ăn</title>
+<style>
+  @page { size: 600mm 900mm; margin: 0; }
+  :root { --or:#F26B1D; --or2:#FFE3CC; --cream:#FBF1DC; --card:#F3E3B8; --ink:#2b2118; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 600mm; height: 900mm; }
+  body { background: var(--cream); color: var(--ink); font-family: "Segoe UI", Arial, sans-serif;
+         font-size: 33px; line-height: 1.32; position: relative; display:flex; flex-direction:column; overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  header { background: var(--or); color: #fff; height: 150mm; padding: 10mm 22mm 0; flex:none; position: relative; }
+  header .school { display: flex; align-items: center; gap: 14mm; }
+  header img.logo { width: 36mm; height: 36mm; border-radius: 50%; background:#fff; }
+  header .school p { font-size: 40px; line-height: 1.25; }
+  header .school p strong { display:block; font-size: 66px; letter-spacing: 1px; text-transform: uppercase; font-weight: 800; }
+  header .me { position: absolute; right: 22mm; top: 12mm; text-align: right; font-weight: 700; font-size: 38px; line-height: 1.3; }
+  header h1 { margin-top: 6mm; text-align: center; font-size: 96px; line-height: 1.1; letter-spacing: .5px; }
+  header .sub { text-align:center; margin-top: 5mm; font-size: 40px; opacity:.95; }
+  main { flex:1; min-height:0; padding: 9mm 20mm 9mm; display: grid; gap: 7mm; grid-template-rows: auto auto 1fr; }
+  .row { display: grid; gap: 11mm; }
+  .r1 { grid-template-columns: 1fr 1fr 1fr; }
+  .r2 { grid-template-columns: 1.15fr 1fr; }
+  .r3 { grid-template-columns: 1fr 1fr 1fr; }
+  .r4 { grid-template-columns: 1.75fr 1fr; }
+  section { position: relative; padding-top: 25mm; min-height:0; }
+  section h2 { position: absolute; top: 0; left: 0; background: var(--or); color: #fff; font-style: italic;
+               font-size: 50px; line-height:1.2; padding: 2mm 11mm; height: 23mm; display:flex; align-items:center; font-weight: 600; }
+  .box { background: var(--card); padding: 8mm 9mm 7mm; height: 100%; }
+  .box p + p { margin-top: 3mm; }
+  ul { padding-left: 9mm; } li { margin-bottom: 2.5mm; }
+  b { font-weight: 700; }
+  .chips { display:flex; flex-wrap:wrap; gap: 4mm; margin: 2mm 0 6mm; }
+  .chip { background:#fff; border:2px solid var(--or); color:#b04a08; border-radius: 4mm; padding: 1.5mm 6mm; font-weight:700; font-size: 29px; }
+  figure { margin: 0; } figure img { width:100%; display:block; border: 2px solid #d9c690; background:#fff; }
+  figcaption { font-size: 27px; text-align:center; margin-top: 2.5mm; color:#5c4a2e; font-style: italic; }
+  .stats { display:grid; grid-template-columns: repeat(4,1fr); gap: 6mm; margin-bottom: 5mm; }
+  .stat { background:#fff; text-align:center; padding: 3mm 2mm; border-bottom: 2mm solid var(--or); }
+  .stat b { display:block; font-size: 64px; color: var(--or); line-height:1.1; }
+  .stat span { font-size: 28px; }
+  .shots { display:grid; grid-template-columns: 1.7fr 1fr; gap: 7mm; align-items:start; }
+  .shots2 { display:grid; grid-template-columns: 1fr 1fr; gap: 7mm; margin-top: 7mm; }
+  .phone img { max-height: 190mm; object-fit: contain; object-position: top; }
+  .qr { display:flex; gap: 8mm; justify-content:center; margin-top: 6mm; }
+  .qr div { text-align:center; font-size: 24px; } .qr img { width: 48mm; display:block; margin: 0 auto 2mm; border: 3px solid #fff; background:#fff; }
+  .res { display:grid; grid-template-columns: 1.7fr 1fr; gap: 6mm; }
+  .grid4 { display:grid; grid-template-columns: 1fr 1fr; gap: 5mm 6mm; align-content:start; }
+  .phones { display:grid; grid-template-columns: 1fr 1fr; gap: 5mm; align-content:start; }
+  .phones img { height:auto; }
+  footer { flex:none; height: 56mm; background: var(--or); color:#fff;
+           display:grid; grid-template-columns: 1fr 1fr; align-items:center; text-align:center; font-weight:700; font-size: 44px; line-height:1.35; }
+  footer div + div { border-left: 3px solid rgba(255,255,255,.7); }
+  footer small { display:block; font-weight:400; font-size:30px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="school">
+    <img class="logo" src="img/image1.png" alt="Logo TVU">
+    <p><strong>Trường Đại học Trà Vinh</strong>Khoa Kỹ thuật và Công nghệ</p>
+  </div>
+  <div class="me">Phạm Tuấn Anh<br>MSSV 170123497<br>DX23TT11</div>
+  <h1>WEBSITE QUẢN LÝ VÀ CHIA SẺ<br>CÔNG THỨC NẤU ĂN</h1>
+  <div class="sub">Thực tập đồ án chuyên ngành (220266) · Ứng dụng “Công Thức Món Ngon”</div>
+</header>
+
+<main>
+  <div class="row r1">
+    <section><h2>Lý do chọn đề tài</h2><div class="box">
+      <p><b>Thông tin phân tán:</b> công thức nấu ăn nằm rải rác trên nhiều trang web, mạng xã hội, diễn đàn.</p>
+      <p><b>Thiếu phân loại:</b> khó tìm món phù hợp với nguyên liệu đang có hoặc nhóm món mong muốn.</p>
+      <p><b>Nhu cầu lưu và chia sẻ:</b> người dùng muốn lưu món yêu thích, đánh giá và hỏi đáp ngay trên công thức.</p>
+    </div></section>
+    <section><h2>Mục tiêu</h2><div class="box">
+      <p>Xây dựng website giúp xem công thức theo danh mục, <b>tìm kiếm theo tên, nguyên liệu (không cần gõ dấu)</b>, lưu yêu thích, đánh giá sao, hỏi đáp.</p>
+      <p>Cung cấp trang quản trị để quản lý nội dung; giao diện tiếng Việt, <b>mobile-first từ 375px</b>; phân quyền 3 vai trò: Khách, Thành viên, Quản trị viên.</p>
+    </div></section>
+    <section><h2>Công nghệ sử dụng</h2><div class="box">
+      <div class="chips"><span class="chip">Next.js 16</span><span class="chip">TypeScript</span><span class="chip">Supabase</span><span class="chip">PostgreSQL</span><span class="chip">Tailwind CSS v4</span><span class="chip">shadcn/ui</span><span class="chip">Vitest</span><span class="chip">Vercel</span></div>
+      <p>Monorepo MakerKit (pnpm + Turborepo); Supabase Auth, Row Level Security và Storage; quản lý mã nguồn bằng Git/GitHub, Pull Request.</p>
+    </div></section>
+  </div>
+
+  <div class="row r2">
+    <section><h2>Hiện thực hóa nghiên cứu</h2><div class="box">
+      <ul>
+        <li><b>10 nhóm chức năng</b> (7 cốt lõi + 3 bổ sung): công thức theo danh mục, chi tiết, tìm kiếm, tài khoản, yêu thích, đánh giá sao, quản trị, mẹo vặt, hỏi đáp, banner &amp; thẻ.</li>
+        <li><b>Kiến trúc ba lớp</b> trên Next.js: giao diện (App Router) → Server Actions → Supabase/PostgreSQL.</li>
+        <li><b>Tìm kiếm bỏ dấu</b> bằng hàm <code>search_recipes</code> + <code>unaccent</code> trong PostgreSQL.</li>
+        <li><b>Bảo mật hai tầng:</b> kiểm tra quyền ở ứng dụng và chính sách RLS trong cơ sở dữ liệu.</li>
+      </ul>
+      <div class="shots2" style="margin-top:3mm">
+        <figure><img src="img/image3.png" alt=""><figcaption>Sơ đồ use case tổng quát</figcaption></figure>
+        <figure><img src="img/image8.png" alt=""><figcaption>Kiến trúc hệ thống</figcaption></figure>
+      </div>
+    </div></section>
+    <section><h2>Cơ sở dữ liệu</h2><div class="box">
+      <figure><img src="img/image7.png" alt=""><figcaption>Sơ đồ thực thể – quan hệ (ERD)</figcaption></figure>
+      <ul style="margin-top:7mm">
+        <li>11 bảng nghiệp vụ, 23 tệp migration SQL.</li>
+        <li>Khóa chính kép / ràng buộc UNIQUE đảm bảo mỗi người dùng chỉ một lượt yêu thích, đánh giá cho mỗi công thức.</li>
+      </ul>
+    </div></section>
+  </div>
+
+  <div class="row r4">
+    <section><h2>Kết quả đạt được</h2><div class="box">
+      <div class="stats">
+        <div class="stat"><b>10/10</b><span>nhóm chức năng</span></div>
+        <div class="stat"><b>37</b><span>công thức mẫu có ảnh</span></div>
+        <div class="stat"><b>11</b><span>bảng dữ liệu</span></div>
+        <div class="stat"><b>375px</b><span>hiển thị tốt trên di động</span></div>
+      </div>
+      <div class="res">
+        <div class="grid4">
+          <figure><img src="img/image9.png" alt=""><figcaption>Trang chủ</figcaption></figure>
+          <figure><img src="img/image13.png" alt=""><figcaption>Chi tiết công thức</figcaption></figure>
+          <figure><img src="img/image15.png" alt=""><figcaption>Tìm kiếm có và không dấu</figcaption></figure>
+          <figure><img src="img/image23.png" alt=""><figcaption>Trang quản trị</figcaption></figure>
+        </div>
+        <div class="phones">
+          <figure><img src="img/image10.png" alt=""><figcaption>Di động 375px</figcaption></figure>
+          <figure><img src="img/image25.png" alt=""><figcaption>Quản trị di động</figcaption></figure>
+        </div>
+      </div>
+    </div></section>
+    <section><h2>Đánh giá &amp; hướng phát triển</h2><div class="box">
+      <ul>
+        <li>Kiểm thử đơn vị bằng Vitest; kiểm thử thủ công desktop và 375px.</li>
+        <li>Mật khẩu do Supabase Auth băm; thao tác ghi bị chặn ở cả tầng ứng dụng và cơ sở dữ liệu.</li>
+        <li>Triển khai tự động trên Vercel + Supabase Cloud.</li>
+      </ul>
+      <p style="margin-top:7mm"><b>Hạn chế:</b> thành viên chưa tự đăng công thức; chưa có bình luận thảo luận.</p>
+      <p><b>Hướng phát triển:</b> thành viên đăng công thức kèm duyệt nội dung, bình luận, chia sẻ mạng xã hội, PWA/mobile app, gợi ý món theo nguyên liệu.</p>
+      <div class="qr">
+        <div><img src="img/qr-demo.png" alt="QR demo">Bản demo</div>
+        <div><img src="img/qr-github.png" alt="QR GitHub">Mã nguồn GitHub</div>
+      </div>
+    </div></section>
+  </div>
+</main>
+
+<footer>
+  <div>Giảng viên hướng dẫn<small>ThS. Trầm Hoàng Nam</small></div>
+  <div>Sinh viên thực hiện<small>Phạm Tuấn Anh · DX23TT11 · Trà Vinh, 10/2026</small></div>
+</footer>
+</body>
+</html>

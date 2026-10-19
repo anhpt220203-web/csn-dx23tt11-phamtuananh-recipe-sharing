@@ -1,7 +1,8 @@
 # Website Quản lý & Chia sẻ Công thức Nấu Ăn
 
-Đồ án học phần **Thực tập đồ án cơ sở ngành (220265)** — Trường Đại học Trà Vinh.
+Đồ án học phần **Thực tập đồ án chuyên ngành (220266)** — Trường Đại học Trà Vinh.
 Sinh viên: Phạm Tuấn Anh (DX23TT11) | GVHD: ThS. Trầm Hoàng Nam.
+Liên hệ sinh viên: Phạm Tuấn Anh — MSSV 170123497 — Điện thoại: 0395938960 — Email: anhpt220203@sv-onuni.edu.vn.
 
 ## Tech Stack
 
@@ -117,3 +118,10 @@ Xem chi tiết tại [SECURITY.md](./SECURITY.md). Tóm tắt:
 - **Xác thực**: Supabase Auth (email/mật khẩu + magic link), mật khẩu hash bcrypt.
 - **Phân quyền**: RLS trên mọi bảng, kiểm tra quyền phía server cho mọi API ghi.
 - **Dữ liệu**: bài `draft` không lộ ra trang công khai; không commit secret vào git.
+
+## Tài liệu & Sản phẩm đồ án
+
+- **Demo trực tuyến (Production):** [https://congthucmonngon.vercel.app/](https://congthucmonngon.vercel.app/)
+- **Video thuyết trình:** [Xem trên Google Drive](https://drive.google.com/file/d/1Js6hktgXg87k_ujcDFoxUNEDk5Ned2Hc/view?usp=drive_link)
+- **Slide thuyết trình (PPTX):** [Mở trên Google Slides / Drive](https://docs.google.com/presentation/d/1aqfQHe6DhOZyawVVkuZ3dp2ga1ycWgZp/edit?usp=drive_link&ouid=113373514251718277949&rtpof=true&sd=true)
+- **Đặc tả yêu cầu phần mềm:** [SRS v2.0 (Next.js 16 + Supabase)](./thesis/refs/SRS.md)
