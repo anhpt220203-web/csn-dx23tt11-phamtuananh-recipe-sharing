@@ -2,7 +2,7 @@
 
 Đồ án học phần **Thực tập đồ án chuyên ngành (220266)** — Trường Đại học Trà Vinh.
 Sinh viên: Phạm Tuấn Anh (DX23TT11) | GVHD: ThS. Trầm Hoàng Nam.
-Liên hệ sinh viên: Phạm Tuấn Anh — MSSV 170123497 — Điện thoại: 0395938960.
+Liên hệ sinh viên: Phạm Tuấn Anh — MSSV 170123497 — Điện thoại: 0395938960 — Email: anhpt220203@sv-onuni.edu.vn.
 
 ## Tech Stack
 
