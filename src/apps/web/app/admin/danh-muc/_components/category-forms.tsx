@@ -1,11 +1,16 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import { Button } from '@kit/ui/button';
 import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
 import { Textarea } from '@kit/ui/textarea';
+
+import { AdminImagePicker } from '../../_components/admin-image-picker';
 
 import type { CategoryRow } from '~/lib/recipes/database';
 
@@ -28,16 +33,36 @@ function FormError({ message }: { message?: string }) {
   );
 }
 
-export function CreateCategoryForm() {
+export function CreateCategoryForm({
+  redirectTo,
+  onSuccess,
+}: {
+  redirectTo?: string;
+  onSuccess?: (category?: CategoryRow) => void;
+} = {}) {
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     createCategoryAction,
     CATEGORY_ACTION_INITIAL,
   );
 
+  useEffect(() => {
+    if (state.ok && !state.initial) {
+      toast.success('Đã thêm danh mục thành công!');
+      formRef.current?.reset();
+      onSuccess?.(state.category);
+      if (redirectTo) {
+        router.push(redirectTo);
+      }
+    }
+  }, [state, onSuccess, redirectTo, router]);
+
   return (
     <form
+      ref={formRef}
       action={formAction}
-      className={'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'}
+      className={'grid grid-cols-1 gap-4 sm:grid-cols-2'}
     >
       <div className={'grid gap-1.5'}>
         <Label htmlFor={'new-name'}>Tên danh mục *</Label>
@@ -47,7 +72,7 @@ export function CreateCategoryForm() {
           name={'name'}
           required
           maxLength={80}
-          placeholder={'VD: Món chay'}
+          placeholder={'VD: Món chay, Canh & Súp, Món nướng...'}
         />
       </div>
 
@@ -59,17 +84,6 @@ export function CreateCategoryForm() {
           name={'slug'}
           maxLength={80}
           placeholder={'VD: mon-chay'}
-        />
-      </div>
-
-      <div className={'grid gap-1.5 sm:col-span-2 lg:col-span-1'}>
-        <Label htmlFor={'new-description'}>Mô tả</Label>
-
-        <Input
-          id={'new-description'}
-          name={'description'}
-          maxLength={200}
-          placeholder={'Mô tả ngắn'}
         />
       </div>
 
@@ -90,13 +104,46 @@ export function CreateCategoryForm() {
         </select>
       </div>
 
-      <div className={'flex items-end'}>
-        <Button type={'submit'} disabled={pending} className={'w-full'}>
-          {pending ? 'Đang thêm...' : 'Thêm danh mục'}
-        </Button>
+      <div className={'grid gap-1.5'}>
+        <Label htmlFor={'new-description'}>Mô tả</Label>
+
+        <Input
+          id={'new-description'}
+          name={'description'}
+          maxLength={200}
+          placeholder={'Mô tả ngắn gọn về nhóm món ăn này'}
+        />
       </div>
 
-      <FormError message={!state.ok ? state.message : undefined} />
+      <div className={'grid gap-1.5 sm:col-span-2'}>
+        <AdminImagePicker
+          urlName={'image_url'}
+          fileName={'image_file'}
+          existingName={'existing_image_url'}
+          idPrefix={'new-category'}
+          mediaFolder={'categories'}
+        />
+      </div>
+
+      <div className={'flex flex-wrap items-center gap-3 sm:col-span-2 pt-2'}>
+        <Button type={'submit'} disabled={pending} className={'min-w-32'}>
+          {pending ? 'Đang thêm...' : 'Lưu danh mục'}
+        </Button>
+
+        {redirectTo && (
+          <Button
+            nativeButton={false}
+            type={'button'}
+            variant={'outline'}
+            disabled={pending}
+            render={<Link href={redirectTo}>Hủy bỏ</Link>}
+          />
+        )}
+      </div>
+
+      <div className={'sm:col-span-2'}>
+        <FormError message={!state.ok ? state.message : undefined} />
+      </div>
     </form>
   );
 }
@@ -208,6 +255,17 @@ export function CategoryRowActions({ category }: { category: CategoryRow }) {
               <option value={'bua-an'}>Bữa ăn</option>
               <option value={'phong-cach-am-thuc'}>Phong cách ẩm thực</option>
             </select>
+          </div>
+
+          <div className={'sm:col-span-3'}>
+            <AdminImagePicker
+              urlName={'image_url'}
+              fileName={'image_file'}
+              existingName={'existing_image_url'}
+              defaultUrl={category.image_url}
+              idPrefix={`category-${category.id}`}
+              mediaFolder={'categories'}
+            />
           </div>
 
           <div className={'sm:col-span-3'}>

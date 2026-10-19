@@ -9,6 +9,7 @@ import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client'
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { slugify } from '~/lib/recipes/slugify';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
+import { normalizeDirectImageUrl } from '~/lib/server/storage-images';
 
 const IMAGE_BUCKET = 'recipe-images';
 const IMAGE_FOLDER = 'recipes';
@@ -213,17 +214,35 @@ export async function saveRecipeAction(
     const ingredients = splitLines(formData.get('ingredients'));
     const steps = splitLines(formData.get('steps'));
 
-    // Ảnh: file mới (nếu có) -> upload; không thì giữ ảnh cũ.
-    const imageFile = formData.get('image');
+    const rawImage = formData.get('image') ?? formData.get('image_file');
+    const imageFile =
+      rawImage instanceof File && rawImage.size > 0 ? rawImage : null;
     const existingImageUrl = String(formData.get('existing_image_url') ?? '');
+    const imageUrlText = String(formData.get('image_url') ?? '').trim();
 
     let imageUrl: string | null =
       existingImageUrl.length > 0 ? existingImageUrl : null;
 
-    if (imageFile instanceof File && imageFile.size > 0) {
+    if (imageFile) {
       imageUrl = await uploadRecipeImage(admin, imageFile);
 
       // Sửa công thức + đổi ảnh: xóa ảnh cũ cho gọn kho lưu trữ.
+      if (id !== null && existingImageUrl && existingImageUrl !== imageUrl) {
+        await removeRecipeImage(admin, existingImageUrl);
+      }
+    } else if (imageUrlText.length > 0) {
+      const directUrl = normalizeDirectImageUrl(imageUrlText);
+
+      if (!directUrl) {
+        return {
+          ok: false,
+          message: 'Link ảnh đại diện phải bắt đầu bằng http:// hoặc https://.',
+        };
+      }
+
+      imageUrl = directUrl;
+
+      // Sửa công thức + đổi sang link ngoài: xóa ảnh cũ trong Storage.
       if (id !== null && existingImageUrl && existingImageUrl !== imageUrl) {
         await removeRecipeImage(admin, existingImageUrl);
       }
@@ -374,4 +393,97 @@ export async function deleteRecipeAction(
     };
   }
 }
+
+export type RecipePreviewDetail = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  category_id: number;
+  category_name?: string;
+  source_name: string | null;
+  source_url: string | null;
+  servings: number | null;
+  cook_time: number | null;
+  prep_time: number | null;
+  difficulty: string | null;
+  status: string;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  sugar_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
+  ingredients: { id: number; name: string; position: number }[];
+  steps: { id: number; step: string; position: number }[];
+};
+
+/**
+ * Lấy toàn bộ thông tin chi tiết một công thức (nguyên liệu, bước làm, dinh dưỡng)
+ * phục vụ modal xem trước chi tiết trong admin.
+ */
+export async function getRecipePreviewDetailAction(
+  recipeId: number,
+): Promise<{ ok: boolean; data?: RecipePreviewDetail; message?: string }> {
+  try {
+    const { adminClient: admin } = await requireAdminUser();
+
+    if (!Number.isInteger(recipeId) || recipeId <= 0) {
+      return { ok: false, message: 'Mã công thức không hợp lệ.' };
+    }
+
+    const { data: recipe, error: recipeError } = await admin
+      .from('recipes')
+      .select('*')
+      .eq('id', recipeId)
+      .maybeSingle();
+
+    if (recipeError || !recipe) {
+      return {
+        ok: false,
+        message: recipeError?.message ?? 'Không tìm thấy công thức.',
+      };
+    }
+
+    let categoryName = '';
+    if (recipe.category_id) {
+      const { data: category } = await admin
+        .from('categories')
+        .select('name')
+        .eq('id', recipe.category_id)
+        .maybeSingle();
+
+      categoryName = category?.name ?? '';
+    }
+
+    const { data: ingredients } = await admin
+      .from('recipe_ingredients')
+      .select('id, name, position')
+      .eq('recipe_id', recipeId)
+      .order('position', { ascending: true });
+
+    const { data: steps } = await admin
+      .from('recipe_steps')
+      .select('id, step, position')
+      .eq('recipe_id', recipeId)
+      .order('position', { ascending: true });
+
+    return {
+      ok: true,
+      data: {
+        ...recipe,
+        category_name: categoryName,
+        ingredients: ingredients ?? [],
+        steps: steps ?? [],
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : 'Có lỗi xảy ra.',
+    };
+  }
+}
+
 

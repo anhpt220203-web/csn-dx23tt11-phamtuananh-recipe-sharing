@@ -8,6 +8,11 @@ import type { CategoryActionResult } from './category-constants';
 import type { RecipeSchema } from '~/lib/recipes/database';
 import { slugify } from '~/lib/recipes/slugify';
 import { requireAdminUser } from '~/lib/server/require-admin-action';
+import {
+  normalizeDirectImageUrl,
+  removeStorageImage,
+  uploadStorageImage,
+} from '~/lib/server/storage-images';
 
 
 function getAdmin() {
@@ -31,6 +36,9 @@ type ParsedCategory =
         description: string | null;
         dimension: string;
       };
+      imageFile: File | null;
+      imageUrlText: string;
+      existingImageUrl: string;
     }
   | { ok: false; error: string };
 
@@ -42,6 +50,10 @@ function parseCategory(formData: FormData): ParsedCategory {
   const dimension = (VALID_DIMENSIONS as readonly string[]).includes(rawDimension)
     ? rawDimension
     : 'nhom-mon';
+  const imageUrlText = String(formData.get('image_url') ?? '').trim();
+  const existingImageUrl = String(
+    formData.get('existing_image_url') ?? '',
+  ).trim();
 
   if (name.length === 0) {
     return { ok: false, error: 'Vui lòng nhập tên danh mục.' };
@@ -61,7 +73,47 @@ function parseCategory(formData: FormData): ParsedCategory {
       description: description.length > 0 ? description : null,
       dimension,
     },
+    imageFile:
+      formData.get('image_file') instanceof File
+        ? (formData.get('image_file') as File)
+        : null,
+    imageUrlText,
+    existingImageUrl,
   };
+}
+
+/**
+ * Chốt URL ảnh đại diện của danh mục:
+ * - có file mới -> upload vào thư mục `categories/`, dọn ảnh cũ trong Storage;
+ * - không file nhưng có URL dán tay -> dùng URL, dọn ảnh cũ trong Storage;
+ * - còn lại -> giữ ảnh cũ (hoặc null khi tạo mới/xóa ảnh).
+ */
+async function resolveCategoryImageUrl(
+  imageFile: File | null,
+  imageUrlText: string,
+  existingImageUrl: string,
+): Promise<string | null> {
+  if (imageFile && imageFile.size > 0) {
+    const uploadedUrl = await uploadStorageImage(imageFile, 'categories');
+
+    if (existingImageUrl && existingImageUrl !== uploadedUrl) {
+      await removeStorageImage(existingImageUrl);
+    }
+
+    return uploadedUrl;
+  }
+
+  const directUrl = normalizeDirectImageUrl(imageUrlText);
+
+  if (directUrl) {
+    if (existingImageUrl && existingImageUrl !== directUrl) {
+      await removeStorageImage(existingImageUrl);
+    }
+
+    return directUrl;
+  }
+
+  return existingImageUrl.length > 0 ? existingImageUrl : null;
 }
 
 export async function createCategoryAction(
@@ -77,9 +129,29 @@ export async function createCategoryAction(
       return { ok: false, message: parsed.error };
     }
 
-    const { error } = await getAdmin().from('categories').insert(parsed.data);
+    if (parsed.imageUrlText && !normalizeDirectImageUrl(parsed.imageUrlText)) {
+      return {
+        ok: false,
+        message: 'Link ảnh đại diện phải bắt đầu bằng http:// hoặc https://.',
+      };
+    }
+
+    const imageUrl = await resolveCategoryImageUrl(
+      parsed.imageFile,
+      parsed.imageUrlText,
+      '',
+    );
+
+    const { data: inserted, error } = await getAdmin()
+      .from('categories')
+      .insert({ ...parsed.data, image_url: imageUrl })
+      .select('id,name,slug,description,dimension,image_url')
+      .single();
 
     if (error) {
+      // Upload ảnh xong mà insert lỗi -> dọn ảnh vừa upload.
+      await removeStorageImage(imageUrl);
+
       if (error.code === '23505') {
         return { ok: false, message: 'Slug này đã tồn tại, hãy đổi tên khác.' };
       }
@@ -88,8 +160,9 @@ export async function createCategoryAction(
     }
 
     revalidatePath('/admin/danh-muc');
+    revalidatePath('/admin/cong-thuc');
 
-    return { ok: true };
+    return { ok: true, category: inserted };
   } catch (error) {
     return {
       ok: false,
@@ -117,9 +190,22 @@ export async function updateCategoryAction(
       return { ok: false, message: parsed.error };
     }
 
+    if (parsed.imageUrlText && !normalizeDirectImageUrl(parsed.imageUrlText)) {
+      return {
+        ok: false,
+        message: 'Link ảnh đại diện phải bắt đầu bằng http:// hoặc https://.',
+      };
+    }
+
+    const imageUrl = await resolveCategoryImageUrl(
+      parsed.imageFile,
+      parsed.imageUrlText,
+      parsed.existingImageUrl,
+    );
+
     const { error } = await getAdmin()
       .from('categories')
-      .update(parsed.data)
+      .update({ ...parsed.data, image_url: imageUrl })
       .eq('id', id);
 
     if (error) {

@@ -1,7 +1,8 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { Eye, Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Eye, Pencil, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@kit/ui/badge';
@@ -17,6 +18,7 @@ import { Input } from '@kit/ui/input';
 import { Label } from '@kit/ui/label';
 
 import { MarkdownEditor } from '~/components/markdown/markdown-editor';
+import { AdminImagePicker } from '../../_components/admin-image-picker';
 
 import type { TipRow } from '~/lib/content/database';
 
@@ -40,7 +42,40 @@ function FormError({ message }: { message?: string }) {
   );
 }
 
-export function CreateTipForm() {
+export function CreateTipDialog() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)} className={'gap-1.5'}>
+        <Plus className={'h-4 w-4'} />
+        <span>Thêm bài viết mới</span>
+      </Button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className={'max-h-[90vh] overflow-y-auto sm:max-w-3xl'}>
+          <DialogHeader>
+            <DialogTitle>Thêm bài viết mẹo vặt mới</DialogTitle>
+            <DialogDescription>
+              Chia sẻ các bí quyết, mẹo vặt nấu ăn và kinh nghiệm làm bếp cho cộng đồng.
+            </DialogDescription>
+          </DialogHeader>
+
+          <CreateTipForm onSuccess={() => setOpen(false)} />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+export function CreateTipForm({
+  onSuccess,
+  redirectTo,
+}: {
+  onSuccess?: () => void;
+  redirectTo?: string;
+}) {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     createTipAction,
@@ -48,11 +83,15 @@ export function CreateTipForm() {
   );
 
   useEffect(() => {
-    if (state.ok) {
+    if (state.ok && !state.initial) {
       toast.success('Đã thêm bài viết mới thành công!');
       formRef.current?.reset();
+      onSuccess?.();
+      if (redirectTo) {
+        router.push(redirectTo);
+      }
     }
-  }, [state]);
+  }, [state, onSuccess, redirectTo, router]);
 
   return (
     <form ref={formRef} action={formAction} className={'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
@@ -72,22 +111,20 @@ export function CreateTipForm() {
       </div>
 
       <div className={'grid gap-1.5 sm:col-span-2'}>
-        <Label htmlFor={'tip-image'}>URL ảnh</Label>
-        <Input
-          id={'tip-image'}
-          name={'image_url'}
-          type={'url'}
-          maxLength={500}
-          placeholder={'https://...'}
+        <AdminImagePicker
+          urlName={'image_url'}
+          fileName={'image_file'}
+          existingName={'existing_image_url'}
+          mediaFolder={'tips'}
         />
       </div>
 
       <div className={'grid gap-1.5 sm:col-span-2'}>
-        <Label htmlFor={'tip-content'}>Nội dung *</Label>
         <MarkdownEditor
           name={'content'}
-          label={'Nội dung (hỗ trợ Markdown đầy đủ: tiêu đề, bảng, danh sách, ảnh...)'}
-          rows={10}
+          label={'Nội dung * (hỗ trợ Markdown đầy đủ: tiêu đề, bảng, danh sách, ảnh...)'}
+          rows={16}
+          uploadFolder={'tips'}
           required
           placeholder={'Nhập chi tiết nội dung mẹo vặt... (Hỗ trợ định dạng Markdown: tiêu đề ##, bảng, danh sách, in đậm...)'}
           helpText={'Nội dung hiển thị dạng Markdown ở trang mẹo vặt: tiêu đề, bảng, danh sách, in đậm, liên kết, ảnh.'}
@@ -191,7 +228,7 @@ export function EditTipModal({
   );
 
   useEffect(() => {
-    if (state.ok) {
+    if (state.ok && !state.initial) {
       toast.success('Đã cập nhật bài viết thành công!');
       onOpenChange(false);
     }
@@ -242,24 +279,23 @@ export function EditTipModal({
           </div>
 
           <div className={'grid gap-1.5 sm:col-span-2'}>
-            <Label htmlFor={`edit-image-${tip.id}`}>URL ảnh</Label>
-            <Input
-              id={`edit-image-${tip.id}`}
-              name={'image_url'}
-              type={'url'}
-              defaultValue={tip.image_url ?? ''}
-              maxLength={500}
-              placeholder={'https://...'}
+            <AdminImagePicker
+              urlName={'image_url'}
+              fileName={'image_file'}
+              existingName={'existing_image_url'}
+              defaultUrl={tip.image_url}
+              idPrefix={`tip-${tip.id}`}
+              mediaFolder={'tips'}
             />
           </div>
 
           <div className={'grid gap-1.5 sm:col-span-2'}>
-            <Label htmlFor={`edit-content-${tip.id}`}>Nội dung *</Label>
             <MarkdownEditor
               name={'content'}
-              label={'Nội dung (Markdown)'}
+              label={'Nội dung * (Markdown)'}
               defaultValue={tip.content}
-              rows={10}
+              rows={16}
+              uploadFolder={'tips'}
               required
             />
           </div>
@@ -312,13 +348,13 @@ export function TipRowActions({ tip }: { tip: TipRow }) {
   );
 
   useEffect(() => {
-    if (toggleState.ok) {
+    if (toggleState.ok && !toggleState.initial) {
       toast.success(tip.is_published ? 'Đã gỡ bài viết xuống!' : 'Đã xuất bản bài viết thành công!');
     }
   }, [toggleState, tip.is_published]);
 
   useEffect(() => {
-    if (deleteState.ok) {
+    if (deleteState.ok && !deleteState.initial) {
       toast.success('Đã xóa bài viết thành công!');
     }
   }, [deleteState]);

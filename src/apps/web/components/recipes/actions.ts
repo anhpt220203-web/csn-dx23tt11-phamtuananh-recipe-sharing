@@ -52,3 +52,41 @@ export async function askQuestionAction(
 
   return { ok: true, asked: true };
 }
+
+export type LiveSearchItem = {
+  id: number;
+  title: string;
+  slug: string;
+  imageUrl: string | null;
+  categoryName: string | null;
+  cookTime: number | null;
+};
+
+/**
+ * Gợi ý tìm kiếm trực tiếp cho ô tìm kiếm trên thanh điều hướng Header.
+ * Trả về tối đa 5 món ăn phù hợp nhất.
+ */
+export async function getLiveSearchSuggestionsAction(
+  query: string,
+): Promise<LiveSearchItem[]> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  try {
+    const { searchRecipes } = await import('~/lib/recipes/queries');
+    const results = await searchRecipes({ q: trimmed });
+
+    return results.slice(0, 5).map((r) => ({
+      id: r.id,
+      title: r.title,
+      slug: r.slug,
+      imageUrl: r.image_url,
+      categoryName: r.category_name,
+      cookTime: r.cook_time,
+    }));
+  } catch {
+    return [];
+  }
+}

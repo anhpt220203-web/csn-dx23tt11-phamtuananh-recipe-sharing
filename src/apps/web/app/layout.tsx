@@ -34,7 +34,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={getClassName()} suppressHydrationWarning>
-      <body>
+      <body suppressHydrationWarning>
         <RootProviders
           theme={appConfig.theme}
           locale={locale}

@@ -1,6 +1,7 @@
 import {
   ChefHat,
   Image,
+  Images,
   LayoutDashboard,
   Lightbulb,
   MessageCircleQuestion,
@@ -54,6 +55,11 @@ const routes = [
         label: 'Banner',
         path: '/admin/banner',
         Icon: <Image className={iconClasses} />,
+      },
+      {
+        label: 'Quản lý media',
+        path: '/admin/media',
+        Icon: <Images className={iconClasses} />,
       },
       {
         label: 'Mẹo vặt',

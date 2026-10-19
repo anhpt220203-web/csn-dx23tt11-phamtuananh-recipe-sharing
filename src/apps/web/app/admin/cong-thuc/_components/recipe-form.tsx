@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useRef, useState } from 'react';
+import { useActionState, useState } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Input } from '@kit/ui/input';
@@ -9,14 +9,15 @@ import { NativeSelect, NativeSelectOption } from '@kit/ui/native-select';
 import { Textarea } from '@kit/ui/textarea';
 
 import { MarkdownEditor } from '~/components/markdown/markdown-editor';
+import { AdminImagePicker } from '../../_components/admin-image-picker';
 
 import type {
   CategoryRow,
   RecipeDetail,
 } from '~/lib/recipes/database';
-import { resolveRecipeImageSrc } from '~/lib/recipes/images';
 import { slugify } from '~/lib/recipes/slugify';
 
+import { QuickCreateCategoryModal } from './quick-create-category-modal';
 import { saveRecipeAction } from '../actions';
 import { RECIPE_ACTION_INITIAL } from '../cong-thuc-constants';
 
@@ -41,14 +42,16 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [slug, setSlug] = useState(initial?.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(Boolean(initial?.slug));
-  const [existingImageUrl, setExistingImageUrl] = useState(
-    initial?.image_url ?? '',
-  );
-  const [preview, setPreview] = useState<string | null>(
-    resolveRecipeImageSrc(initial?.image_url) ?? null,
+
+  const [categoriesList, setCategoriesList] = useState<CategoryRow[]>(categories);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | number>(
+    initial?.category_id ?? '',
   );
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleCategoryCreated = (newCat: CategoryRow) => {
+    setCategoriesList((prev) => [newCat, ...prev.filter((c) => c.id !== newCat.id)]);
+    setSelectedCategoryId(newCat.id);
+  };
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -58,24 +61,9 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
     }
   };
 
-  const handleFileChange = (file: File | undefined) => {
-    if (!file) {
-      setPreview(resolveRecipeImageSrc(existingImageUrl) ?? null);
-      return;
-    }
-
-    setPreview(URL.createObjectURL(file));
-  };
-
   return (
     <form action={formAction} className={'flex flex-col gap-5'}>
       {initial && <input type={'hidden'} name={'id'} value={initial.id} />}
-
-      <input
-        type={'hidden'}
-        name={'existing_image_url'}
-        value={existingImageUrl}
-      />
 
       <div className={'grid grid-cols-1 gap-4 sm:grid-cols-2'}>
         <div className={'grid gap-1.5'}>
@@ -114,20 +102,24 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
         </div>
 
         <div className={'grid gap-1.5'}>
-          <Label htmlFor={'category_id'}>Danh mục *</Label>
+          <div className={'flex items-center justify-between'}>
+            <Label htmlFor={'category_id'}>Danh mục *</Label>
+            <QuickCreateCategoryModal onCategoryCreated={handleCategoryCreated} />
+          </div>
 
           <NativeSelect
             id={'category_id'}
             name={'category_id'}
             required
-            defaultValue={initial?.category_id ?? ''}
+            value={selectedCategoryId}
+            onChange={(e) => setSelectedCategoryId(e.target.value)}
             className={'w-full'}
           >
             <NativeSelectOption value={''} disabled>
               — Chọn danh mục —
             </NativeSelectOption>
 
-            {categories.map((category) => (
+            {categoriesList.map((category) => (
               <NativeSelectOption key={category.id} value={category.id}>
                 {category.name}
               </NativeSelectOption>
@@ -262,52 +254,16 @@ export function RecipeForm({ categories, initial }: RecipeFormProps) {
         </div>
 
         <div className={'grid gap-1.5 sm:col-span-2'}>
-          <Label htmlFor={'image'}>Ảnh đại diện</Label>
-
-          <Input
-            id={'image'}
-            name={'image'}
-            ref={fileInputRef}
-            type={'file'}
-            accept={'image/jpeg,image/png,image/webp,image/gif'}
-            onChange={(event) =>
-              handleFileChange(event.target.files?.[0])
-            }
+          <AdminImagePicker
+            urlName={'image_url'}
+            fileName={'image'}
+            existingName={'existing_image_url'}
+            defaultUrl={initial?.image_url}
+            label={'Ảnh đại diện'}
+            hint={'JPG/PNG/WEBP/GIF, tối đa 5MB. Tên file được sinh ngẫu nhiên để không trùng. File tải lên sẽ ưu tiên hơn link đã dán.'}
+            mediaFolder={'recipes'}
+            idPrefix={'recipe-image'}
           />
-
-          <p className={'text-muted-foreground text-xs'}>
-            JPG/PNG/WEBP/GIF, tối đa 5MB. Tên file được sinh ngẫu nhiên để
-            không trùng.
-          </p>
-
-          {preview && (
-            <div className={'mt-2 flex flex-col items-start gap-2'}>
-              <div className={'relative overflow-hidden rounded-lg border bg-muted shadow-sm'}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={preview}
-                  alt={'Xem trước ảnh đại diện'}
-                  className={'h-44 w-auto max-w-full rounded-md object-cover'}
-                />
-              </div>
-
-              <Button
-                type={'button'}
-                variant={'outline'}
-                size={'sm'}
-                onClick={() => {
-                  setPreview(null);
-                  setExistingImageUrl('');
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                  }
-                }}
-                className={'text-xs text-destructive hover:text-destructive'}
-              >
-                Xóa ảnh đại diện
-              </Button>
-            </div>
-          )}
         </div>
 
         <div className={'grid gap-1.5 sm:col-span-2'}>

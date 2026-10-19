@@ -23,15 +23,6 @@ async function getCopyrightYear() {
 
 const FOOTER_SECTIONS = [
   {
-    heading: 'Khám phá ẩm thực',
-    links: [
-      { href: '/danh-muc', label: 'Danh mục món ăn' },
-      { href: '/tim-kiem', label: 'Tìm kiếm công thức' },
-      { href: '/meo-vat', label: 'Mẹo vặt bếp núc' },
-      { href: '/yeu-thich', label: 'Món ăn yêu thích' },
-    ],
-  },
-  {
     heading: 'Điều khoản & Chính sách',
     links: [
       { href: '/terms-of-service', label: 'Điều khoản dịch vụ' },

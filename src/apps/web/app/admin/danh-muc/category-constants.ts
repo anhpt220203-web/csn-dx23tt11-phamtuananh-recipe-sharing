@@ -1,9 +1,10 @@
-// Hằng số + type dùng chung cho form danh mục.
-// PHẢI nằm ở file riêng (không "use server"): Next.js 16 chỉ cho phép file
-// "use server" export async function — export object sẽ vỡ lúc build/dev.
+import type { CategoryRow } from '~/lib/recipes/database';
 
 export type CategoryActionResult =
-  | { ok: true }
-  | { ok: false; message: string };
+  | { ok: true; initial?: false; category?: CategoryRow }
+  | { ok: false; message?: string; initial?: boolean };
 
-export const CATEGORY_ACTION_INITIAL: CategoryActionResult = { ok: true };
+export const CATEGORY_ACTION_INITIAL: CategoryActionResult = {
+  ok: false,
+  initial: true,
+};

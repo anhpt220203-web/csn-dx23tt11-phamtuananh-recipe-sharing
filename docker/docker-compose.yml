@@ -215,8 +215,8 @@ services:
       NEXT_PUBLIC_THEME_COLOR_DARK: "#f97316"
       NEXT_PUBLIC_ENABLE_THEME_TOGGLE: "true"
       NEXT_PUBLIC_AUTH_PASSWORD: "true"
-      NEXT_PUBLIC_AUTH_MAGIC_LINK: "false"
-      NEXT_PUBLIC_CAPTCHA_SITE_KEY: ""
+      NEXT_PUBLIC_CAPTCHA_SITE_KEY: "${NEXT_PUBLIC_CAPTCHA_SITE_KEY:-}"
+      CAPTCHA_SECRET_TOKEN: "${CAPTCHA_SECRET_TOKEN:-}"
       # Bắt buộc bật polling để hot reload hoạt động qua bind mount của Docker Desktop.
       WATCHPACK_POLLING: "true"
       # OpenNext spawn workerd (glibc) — alpine không chạy được, app local không dùng CF bindings.

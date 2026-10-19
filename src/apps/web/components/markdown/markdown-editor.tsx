@@ -19,12 +19,16 @@ import {
   Quote,
   Strikethrough,
   Table as TableIcon,
+  UploadCloud,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Label } from '@kit/ui/label';
 import { Textarea } from '@kit/ui/textarea';
 import { cn } from '@kit/ui/utils';
 
+import { MediaUploadDialog } from '~/admin/media/_components/media-upload-dialog';
+import type { UploadedMediaItem } from '~/admin/media/media-constants';
 import { MarkdownRenderer } from '~/components/markdown/markdown-renderer';
 
 /**
@@ -74,11 +78,13 @@ export function MarkdownEditor({
   name,
   label,
   defaultValue = '',
-  rows = 8,
+  rows = 14,
   required,
   placeholder,
   helpText,
   maxLength,
+  allowImageUpload = true,
+  uploadFolder = 'uploads',
 }: {
   /** name trên textarea — giá trị markdown gửi cùng form. */
   name: string;
@@ -89,6 +95,8 @@ export function MarkdownEditor({
   placeholder?: string;
   helpText?: string;
   maxLength?: number;
+  allowImageUpload?: boolean;
+  uploadFolder?: 'uploads' | 'recipes' | 'tips' | 'categories' | 'banners';
 }) {
   const [value, setValue] = useState(defaultValue);
   const [showPreview, setShowPreview] = useState(false);
@@ -140,6 +148,40 @@ export function MarkdownEditor({
     });
   }
 
+  function handleImagesUploaded(items: UploadedMediaItem[]) {
+    if (!items || items.length === 0) return;
+
+    const el = textareaRef.current;
+    const mdSnippet =
+      '\n' +
+      items
+        .map((it) => {
+          const cleanName = it.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+          return `![${cleanName}](${it.proxyUrl})`;
+        })
+        .join('\n') +
+      '\n';
+
+    if (!el) {
+      setValue((prev) => prev + mdSnippet);
+      toast.success(`Đã tự động chèn ${items.length} ảnh vào nội dung!`);
+      return;
+    }
+
+    const start = el.selectionStart ?? value.length;
+    const end = el.selectionEnd ?? value.length;
+    const next = value.slice(0, start) + mdSnippet + value.slice(end);
+    const newCursor = start + mdSnippet.length;
+
+    setValue(next);
+    toast.success(`Đã tự động chèn ${items.length} ảnh vào nội dung!`);
+
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(newCursor, newCursor);
+    });
+  }
+
   function onKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     // phím tắt kiểu Word: Ctrl+B / Ctrl+I
     if (!(event.ctrlKey || event.metaKey)) {
@@ -177,7 +219,7 @@ export function MarkdownEditor({
         {/* ── Thanh công cụ ─────────────────────────────── */}
         <div
           className={
-            'bg-muted/50 flex flex-wrap items-center gap-0.5 border-b p-1.5'
+            'bg-muted/50 flex flex-wrap items-center gap-1 border-b p-1.5'
           }
         >
           {ACTIONS.map((action) => (
@@ -196,6 +238,29 @@ export function MarkdownEditor({
               {action.icon}
             </button>
           ))}
+
+          {/* Nút tải ảnh lên kho & tự động chèn mã Markdown trực tiếp */}
+          {allowImageUpload ? (
+            <MediaUploadDialog
+              defaultFolder={uploadFolder}
+              trigger={
+                <button
+                  type={'button'}
+                  title={'Tải ảnh lên kho & tự động chèn mã Markdown'}
+                  aria-label={'Tải ảnh lên kho & tự động chèn mã Markdown'}
+                  disabled={showPreview}
+                  className={cn(
+                    'hover:bg-primary/10 hover:text-primary inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium text-primary border border-primary/20 bg-primary/5 transition-colors',
+                    'disabled:pointer-events-none disabled:opacity-40',
+                  )}
+                >
+                  <UploadCloud className={'h-3.5 w-3.5 text-primary'} />
+                  <span className={'hidden sm:inline'}>Tải & chèn ảnh</span>
+                </button>
+              }
+              onUploaded={handleImagesUploaded}
+            />
+          ) : null}
 
           <span className={'flex-1'} />
 
@@ -225,7 +290,7 @@ export function MarkdownEditor({
 
         {/* ── Soạn thảo / Xem trước ─────────────────────── */}
         {showPreview ? (
-          <div className={'min-h-32 p-3'}>
+          <div className={'min-h-[380px] p-4 overflow-y-auto'}>
             {value.trim() ? (
               <MarkdownRenderer content={value} />
             ) : (
@@ -245,7 +310,7 @@ export function MarkdownEditor({
             required={required}
             maxLength={maxLength}
             placeholder={placeholder}
-            className={'rounded-t-none border-0 font-mono text-[13px] shadow-none focus-visible:ring-0'}
+            className={'rounded-t-none border-0 font-mono text-[13px] shadow-none focus-visible:ring-0 min-h-[380px] leading-relaxed'}
           />
         )}
       </div>

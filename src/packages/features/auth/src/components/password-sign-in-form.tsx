@@ -22,6 +22,7 @@ import { Input } from '@kit/ui/input';
 import { Trans } from '@kit/ui/trans';
 
 import { PasswordSignInSchema } from '../schemas/password-sign-in.schema';
+import { CaptchaTokenSetter } from '../captcha/client';
 
 export function PasswordSignInForm({
   onSubmit,
@@ -105,6 +106,8 @@ export function PasswordSignInForm({
             </FormItem>
           )}
         />
+
+        <CaptchaTokenSetter />
 
         <Button
           data-test="auth-submit-button"

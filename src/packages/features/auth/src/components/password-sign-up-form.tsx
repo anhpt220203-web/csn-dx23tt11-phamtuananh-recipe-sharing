@@ -21,6 +21,7 @@ import { Trans } from '@kit/ui/trans';
 
 import { PasswordSignUpSchema } from '../schemas/password-sign-up.schema';
 import { TermsAndConditionsFormField } from './terms-and-conditions-form-field';
+import { CaptchaTokenSetter } from '../captcha/client';
 
 export function PasswordSignUpForm({
   defaultValues,
@@ -137,6 +138,8 @@ export function PasswordSignUpForm({
         <If condition={displayTermsCheckbox}>
           <TermsAndConditionsFormField />
         </If>
+
+        <CaptchaTokenSetter />
 
         <Button
           data-test={'auth-submit-button'}
