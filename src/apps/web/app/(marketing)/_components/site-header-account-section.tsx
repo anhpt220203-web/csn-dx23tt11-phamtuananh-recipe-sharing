@@ -60,9 +60,7 @@ export function SiteHeaderAccountSection() {
   return (
     <div className={'flex items-center gap-1.5'}>
       <If condition={features.enableThemeToggle}>
-        <div className={'hidden sm:block'}>
-          <ModeToggle />
-        </div>
+        <ModeToggle />
       </If>
 
       <Button
@@ -117,7 +115,7 @@ function AuthButtons() {
 
   return (
     <div className={'flex space-x-2'}>
-      <div className={'hidden space-x-0.5 md:flex'}>
+      <div className={'flex items-center space-x-0.5'}>
         <If condition={features.enableThemeToggle}>
           <ModeToggle />
         </If>
