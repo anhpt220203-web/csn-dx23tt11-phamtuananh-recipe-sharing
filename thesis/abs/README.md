@@ -1,5 +1,5 @@
 # SẢN PHẨM BÁO CÁO & THUYẾT TRÌNH ĐỒ ÁN
-**Đề tài:** Website Quản lý và Chia sẻ Công thức Nấu Ăn — "Công Thức Việt"  
+**Đề tài:** Website Quản lý và Chia sẻ Công thức Nấu Ăn — "Công Thức Món Ngon"  
 **Sinh viên thực hiện:** Phạm Tuấn Anh — Lớp DX23TT11, Trường Đại học Trà Vinh  
 **GVHD:** ThS. Trầm Hoàng Nam  
 **Demo:** https://congthucmonngon.vercel.app/

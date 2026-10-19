@@ -1,6 +1,6 @@
 # Website Quản lý & Chia sẻ Công thức Nấu Ăn
 
-Đồ án học phần **Thực tập đồ án cơ sở ngành (220265)** — Trường Đại học Trà Vinh.
+Đồ án học phần **Thực tập đồ án chuyên ngành (220266)** — Trường Đại học Trà Vinh.
 Sinh viên: Phạm Tuấn Anh (DX23TT11) | GVHD: ThS. Trầm Hoàng Nam.
 
 ## Tech Stack

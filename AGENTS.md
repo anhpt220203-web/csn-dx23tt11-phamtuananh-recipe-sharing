@@ -2,7 +2,7 @@
 
 ## Repo là gì
 
-Đồ án học phần **Thực tập đồ án cơ sở ngành (220265, 3 tín chỉ)** — Trường Đại học Trà Vinh.
+Đồ án học phần **Thực tập đồ án chuyên ngành (220266, 3 tín chỉ)** — Trường Đại học Trà Vinh.
 Đề tài: **Website Quản lý và Chia sẻ Công thức Nấu Ăn**. Sinh viên Phạm Tuấn Anh (DX23TT11), GVHD ThS. Trầm Hoàng Nam.
 
 **Tech stack**: Next.js 16 (App Router) + TypeScript, Supabase (Postgres + Auth + RLS — Supabase-native, không dùng Prisma/Better-Auth), Tailwind CSS v4 + shadcn/ui (`@kit/ui`), monorepo MakerKit (pnpm workspace + Turbo), deploy Vercel. Xem `.specify/memory/constitution.md` v1.1.0 cho nguyên tắc ràng buộc. **Lưu ý:** `specs/` và `thesis/` vẫn mô tả stack cũ (Prisma/Better-Auth) — cần cập nhật ở giai đoạn hoàn thiện báo cáo, không tự sửa tài liệu luận văn.
@@ -11,7 +11,7 @@
 
 | Đường dẫn | Vai trò |
 |---|---|
-| `src/` | **Monorepo root (MakerKit, pnpm + Turbo)**: `apps/web/` (Next.js app "Công Thức Việt"), `packages/` (`@kit/*`), `tooling/` (config dùng chung) |
+| `src/` | **Monorepo root (MakerKit, pnpm + Turbo)**: `apps/web/` (Next.js app "Công Thức Món Ngon"), `packages/` (`@kit/*`), `tooling/` (config dùng chung) |
 | `src/apps/web/` | App chính: `app/(marketing)/` (trang công khai: `/`, `/danh-muc`, `/cong-thuc/[slug]`, `/tim-kiem`, `/faq`), `app/admin/` (quản trị), `app/auth/` (Supabase Auth), `components/recipes/`, `lib/recipes/` (queries + server actions), `public/images/recipes/` (33 ảnh mẫu) |
 | `supabase/` (repo root) | **Cấu hình Supabase CLI chuẩn duy nhất** (`config.toml`, project_id `recipe-sharing`): `migrations/` (17 migrations), `seed/` (01_demo.sql + 02_demo_users.sql — nạp thủ công sau `db reset`). KHÔNG tạo lại `src/apps/web/supabase/` (bản stale đã xoá 17/10/2026 — supabase CLI tự đi lên tìm config ở repo root) |
 | `src/apps/web/AGENTS.md` | Khối `nextjs-agent-rules` cho Next.js (tạo bởi `next dev` — đọc trước khi sửa code Next.js) |
