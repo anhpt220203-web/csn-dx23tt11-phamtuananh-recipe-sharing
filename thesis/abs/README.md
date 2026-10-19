@@ -20,3 +20,8 @@ Do tệp video chất lượng cao có dung lượng lớn (~180 MB, vượt gi�
 - **Tên tệp:** `cong-thuc-mon-ngon.pptx` (PowerPoint đầy đủ hiệu ứng và nội dung trình chiếu)
 - **Đường dẫn xem trực tuyến & tải về (Google Slides / Drive):**  
   👉 [Mở Slide Thuyết Trình](https://docs.google.com/presentation/d/1aqfQHe6DhOZyawVVkuZ3dp2ga1ycWgZp/edit?usp=drive_link&ouid=113373514251718277949&rtpof=true&sd=true)
+
+---
+
+## 3. Poster
+- Khổ 60×90 cm dọc: [`poster/Poster_PhamTuanAnh_DX23TT11.pdf`](./poster/Poster_PhamTuanAnh_DX23TT11.pdf) (bản xem nhanh: `.png`; nguồn: `poster/poster.html`)
