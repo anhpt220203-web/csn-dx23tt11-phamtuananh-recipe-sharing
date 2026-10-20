@@ -274,7 +274,7 @@ catalogs:
       version: 0.4.6
     node-html-parser:
       specifier: ^9.0.0
-      version: 9.0.4
+      version: 9.0.5
     oxfmt:
       specifier: ^0.73.0
       version: 0.73.0
@@ -387,7 +387,7 @@ importers:
         version: 24.19.2
       node-html-parser:
         specifier: 'catalog:'
-        version: 9.0.4
+        version: 9.0.5
 
   apps/web:
     dependencies:
@@ -5799,8 +5799,8 @@ packages:
       encoding:
         optional: true
 
-  node-html-parser@9.0.4:
-    resolution: {integrity: sha512-reUSrZkF1rO7hEYe5mJwtbVcQ6mB5QrViCZH6Wv+iz3er/PA9Q50gol15dMLQRDfdli4VzqPMPR24HNRFgVKFw==}
+  node-html-parser@9.0.5:
+    resolution: {integrity: sha512-LpUc74Ax3L6AsxTEqoep0GDqCBbsPjtn74sYaiazxGXfwhe6iqD4E5sHTJFCU+wBxVMX+Dd7mvLim0QM1vsvpw==}
 
   node-releases@2.0.59:
     resolution: {integrity: sha512-5qr2okC4ItAI0hG5SaV0HoYMpnM/Y6+Oqr7AmPYy/2uEoGvS+GbSKLeRxSS1uAdu59yz0ouzcuXievSgg///WA==}
@@ -12286,7 +12286,7 @@ snapshots:
     dependencies:
       whatwg-url: 5.0.0
 
-  node-html-parser@9.0.4:
+  node-html-parser@9.0.5:
     dependencies:
       css-select: 5.2.2
       entities: 8.1.0
