@@ -3,7 +3,7 @@ packages:
   - packages/**
   - tooling/*
 catalog:
-  '@hookform/resolvers': ^5.2.2
+  '@hookform/resolvers': ^6.0.0
   '@makerkit/data-loader-supabase-core': ^0.0.10
   '@makerkit/data-loader-supabase-nextjs': ^1.2.5
   '@manypkg/cli': ^0.25.1
