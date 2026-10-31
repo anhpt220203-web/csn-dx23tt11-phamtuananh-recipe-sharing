@@ -18,7 +18,7 @@ name: recipe-sharing
 services:
   # ---------- Supabase self-hosted ----------
   db:
-    image: supabase/postgres:17.11.0.004
+    image: supabase/postgres:17.11.0.016
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: postgres
